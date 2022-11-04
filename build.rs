@@ -1,9 +1,6 @@
-use std::{env::var, path::PathBuf, process::Command};
+use std::{env::var, fs::create_dir, path::PathBuf, process::Command};
 
-use git2::{
-    build::{self, CheckoutBuilder},
-    Repository,
-};
+use git2::{build::CheckoutBuilder, Repository};
 
 const QEMU_GIT_URL: &str = "https://github.com/qemu/qemu.git";
 
@@ -693,8 +690,8 @@ fn main() {
     );
 
     let qemu_repo_path = outdir_path.join("qemu");
-    let qemu_build_path = qemu_repo_path.join("build");
-    let qemu_install_path = qemu_repo_path.join("install");
+    let qemu_build_path = outdir_path.join("build");
+    let qemu_install_path = outdir_path.join("install");
 
     let repo = match Repository::clone(QEMU_GIT_URL, &qemu_repo_path) {
         Err(_) => Repository::open(&qemu_repo_path).expect("Failed to open repository"),
@@ -706,7 +703,10 @@ fn main() {
 
     let configure_args = build_qemu_configure_args(&qemu_install_path);
 
-    let configure_prog = qemu_repo_path.join("configure");
+    let configure_prog = qemu_repo_path
+        .join("configure")
+        .canonicalize()
+        .expect("Failed to canonicalize configure script path");
 
     if !configure_prog.exists() {
         panic!(
@@ -714,6 +714,19 @@ fn main() {
             configure_prog.display()
         );
     }
+
+    if !qemu_build_path.exists() {
+        create_dir(&qemu_build_path).expect("Failed to create build directory");
+    }
+
+    if !qemu_install_path.exists() {
+        create_dir(&qemu_install_path).expect("Failed to create install directory");
+    }
+
+    eprintln!(
+        "Running configure script {:?} with args: {:?}",
+        configure_prog, configure_args
+    );
 
     Command::new(configure_prog)
         .current_dir(&qemu_build_path)
@@ -734,12 +747,22 @@ fn main() {
         .status()
         .expect("Failed to run make");
 
+    Command::new("make")
+        .current_dir(&qemu_build_path)
+        .arg("install")
+        .status()
+        .expect("Failed to run make install");
+
     let enabled_targets = get_target_list();
 
     for enabled_target in enabled_targets {
-        let target_bin = outdir_path.join(&enabled_target);
+        let target_name = match enabled_target.contains("softmmu") {
+            true => "qemu-system-".to_string() + &enabled_target.replace("-softmmu", ""),
+            false => "qemu-".to_string() + &enabled_target.replace("-linux-user", ""),
+        };
+        let target_bin = qemu_install_path.join("bin").join(&target_name);
         if !target_bin.exists() {
-            panic!("Failed to build target {}", enabled_target);
+            panic!("Failed to build target {:?}", target_bin);
         }
     }
 }

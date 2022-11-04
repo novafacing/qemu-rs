@@ -289,7 +289,7 @@ debugging = [
     "gprof",
     "profiler",
 ]
-default-positive-options = ["plugins", "optimized"]
+default-positive-options = ["plugins"]
 
 # Additional enable options. These all default to "enabled if possible" which is a very
 # sane default. Overriding *any* of these will set *ALL* of these to disabled, and only
