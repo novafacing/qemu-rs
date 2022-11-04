@@ -228,7 +228,8 @@ user = ["linux-user", "bsd-user"]
 # Enable all QEMU targets, both user and system mode.
 all-targets = ["system", "user"]
 # Enable all QEMU targets, both user and system mode, and provide the choice as the default.
-default-target-options = ["all-targets"]
+# The default option is to include *nothing* because these binaries are thicc!
+default-target-options = []
 
 # Disable default features. By default, features are enabled if they are available (for example if
 # libcapstone is available, Capstone support will be enabled by default). This option disables all

@@ -1,447 +1,645 @@
 #[cfg(feature = "aarch64-softmmu")]
-pub const QEMU_SYSTEM_AARCH64: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-aarch64"
-));
+pub fn qemu_system_aarch64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-aarch64"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "alpha-softmmu")]
-pub const QEMU_SYSTEM_ALPHA: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-alpha"
-));
+pub fn qemu_system_alpha() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-alpha"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "arm-softmmu")]
-pub const QEMU_SYSTEM_ARM: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-arm"
-));
+pub fn qemu_system_arm() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-arm"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "avr-softmmu")]
-pub const QEMU_SYSTEM_AVR: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-avr"
-));
+pub fn qemu_system_avr() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-avr"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "cris-softmmu")]
-pub const QEMU_SYSTEM_CRIS: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-cris"
-));
+pub fn qemu_system_cris() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-cris"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "hppa-softmmu")]
-pub const QEMU_SYSTEM_HPPA: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-hppa"
-));
+pub fn qemu_system_hppa() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-hppa"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "i386-softmmu")]
-pub const QEMU_SYSTEM_I386: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-i386"
-));
+pub fn qemu_system_i386() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-i386"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "loongarch64-softmmu")]
-pub const QEMU_SYSTEM_LOONGARCH64: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-loongarch64"
-));
+pub fn qemu_system_loongarch64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-loongarch64"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "m68k-softmmu")]
-pub const QEMU_SYSTEM_M68K: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-m68k"
-));
+pub fn qemu_system_m68k() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-m68k"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "microblazeel-softmmu")]
-pub const QEMU_SYSTEM_MICROBLAZEEL: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-microblazeel"
-));
+pub fn qemu_system_microblazeel() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-microblazeel"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "microblaze-softmmu")]
-pub const QEMU_SYSTEM_MICROBLAZE: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-microblaze"
-));
+pub fn qemu_system_microblaze() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-microblaze"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "mips64el-softmmu")]
-pub const QEMU_SYSTEM_MIPS64EL: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-mips64el"
-));
+pub fn qemu_system_mips64el() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-mips64el"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "mips64-softmmu")]
-pub const QEMU_SYSTEM_MIPS64: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-mips64"
-));
+pub fn qemu_system_mips64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-mips64"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "mipsel-softmmu")]
-pub const QEMU_SYSTEM_MIPSEL: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-mipsel"
-));
+pub fn qemu_system_mipsel() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-mipsel"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "mips-softmmu")]
-pub const QEMU_SYSTEM_MIPS: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-mips"
-));
+pub fn qemu_system_mips() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-mips"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "nios2-softmmu")]
-pub const QEMU_SYSTEM_NIOS2: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-nios2"
-));
+pub fn qemu_system_nios2() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-nios2"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "or1k-softmmu")]
-pub const QEMU_SYSTEM_OR1K: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-or1k"
-));
+pub fn qemu_system_or1k() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-or1k"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "ppc64-softmmu")]
-pub const QEMU_SYSTEM_PPC64: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-ppc64"
-));
+pub fn qemu_system_ppc64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-ppc64"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "ppc-softmmu")]
-pub const QEMU_SYSTEM_PPC: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-ppc"
-));
+pub fn qemu_system_ppc() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-ppc"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "riscv32-softmmu")]
-pub const QEMU_SYSTEM_RISCV32: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-riscv32"
-));
+pub fn qemu_system_riscv32() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-riscv32"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "riscv64-softmmu")]
-pub const QEMU_SYSTEM_RISCV64: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-riscv64"
-));
+pub fn qemu_system_riscv64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-riscv64"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "rx-softmmu")]
-pub const QEMU_SYSTEM_RX: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-rx"
-));
+pub fn qemu_system_rx() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-rx"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "s390x-softmmu")]
-pub const QEMU_SYSTEM_S390X: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-s390x"
-));
+pub fn qemu_system_s390x() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-s390x"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "sh4eb-softmmu")]
-pub const QEMU_SYSTEM_SH4EB: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-sh4eb"
-));
+pub fn qemu_system_sh4eb() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-sh4eb"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "sh4-softmmu")]
-pub const QEMU_SYSTEM_SH4: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-sh4"
-));
+pub fn qemu_system_sh4() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-sh4"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "sparc64-softmmu")]
-pub const QEMU_SYSTEM_SPARC64: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-sparc64"
-));
+pub fn qemu_system_sparc64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-sparc64"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "sparc-softmmu")]
-pub const QEMU_SYSTEM_SPARC: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-sparc"
-));
+pub fn qemu_system_sparc() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-sparc"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "tricore-softmmu")]
-pub const QEMU_SYSTEM_TRICORE: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-tricore"
-));
+pub fn qemu_system_tricore() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-tricore"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "x86_64-softmmu")]
-pub const QEMU_SYSTEM_X86_64: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-x86_64"
-));
+pub fn qemu_system_x86_64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-x86_64"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "xtensaeb-softmmu")]
-pub const QEMU_SYSTEM_XTENSAEB: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-xtensaeb"
-));
+pub fn qemu_system_xtensaeb() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-xtensaeb"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "xtensa-softmmu")]
-pub const QEMU_SYSTEM_XTENSA: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-system-xtensa"
-));
+pub fn qemu_system_xtensa() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-system-xtensa"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "aarch64_be-linux-user")]
-pub const QEMU_USER_AARCH64_BE: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-aarch64_be"
-));
+pub fn qemu_user_aarch64_be() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-aarch64_be"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "aarch64-linux-user")]
-pub const QEMU_USER_AARCH64: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-aarch64"
-));
+pub fn qemu_user_aarch64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-aarch64"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "alpha-linux-user")]
-pub const QEMU_USER_ALPHA: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-alpha"));
+pub fn qemu_user_alpha() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-alpha"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "armeb-linux-user")]
-pub const QEMU_USER_ARMEB: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-armeb"));
+pub fn qemu_user_armeb() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-armeb"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "arm-linux-user")]
-pub const QEMU_USER_ARM: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-arm"));
+pub fn qemu_user_arm() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-arm"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "cris-linux-user")]
-pub const QEMU_USER_CRIS: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-cris"));
+pub fn qemu_user_cris() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-cris"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "hexagon-linux-user")]
-pub const QEMU_USER_HEXAGON: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-hexagon"
-));
+pub fn qemu_user_hexagon() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-hexagon"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "hppa-linux-user")]
-pub const QEMU_USER_HPPA: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-hppa"));
+pub fn qemu_user_hppa() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-hppa"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "i386-linux-user")]
-pub const QEMU_USER_I386: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-i386"));
+pub fn qemu_user_i386() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-i386"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "loongarch64-linux-user")]
-pub const QEMU_USER_LOONGARCH64: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-loongarch64"
-));
+pub fn qemu_user_loongarch64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-loongarch64"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "m68k-linux-user")]
-pub const QEMU_USER_M68K: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-m68k"));
+pub fn qemu_user_m68k() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-m68k"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "microblazeel-linux-user")]
-pub const QEMU_USER_MICROBLAZEEL: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-microblazeel"
-));
+pub fn qemu_user_microblazeel() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-microblazeel"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "microblaze-linux-user")]
-pub const QEMU_USER_MICROBLAZE: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-microblaze"
-));
+pub fn qemu_user_microblaze() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-microblaze"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "mips64el-linux-user")]
-pub const QEMU_USER_MIPS64EL: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-mips64el"
-));
+pub fn qemu_user_mips64el() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-mips64el"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "mips64-linux-user")]
-pub const QEMU_USER_MIPS64: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-mips64"));
+pub fn qemu_user_mips64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-mips64"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "mipsel-linux-user")]
-pub const QEMU_USER_MIPSEL: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-mipsel"));
+pub fn qemu_user_mipsel() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-mipsel"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "mips-linux-user")]
-pub const QEMU_USER_MIPS: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-mips"));
+pub fn qemu_user_mips() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-mips"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "mipsn32el-linux-user")]
-pub const QEMU_USER_MIPSN32EL: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-mipsn32el"
-));
+pub fn qemu_user_mipsn32el() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-mipsn32el"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "mipsn32-linux-user")]
-pub const QEMU_USER_MIPSN32: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-mipsn32"
-));
+pub fn qemu_user_mipsn32() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-mipsn32"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "nios2-linux-user")]
-pub const QEMU_USER_NIOS2: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-nios2"));
+pub fn qemu_user_nios2() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-nios2"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "or1k-linux-user")]
-pub const QEMU_USER_OR1K: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-or1k"));
+pub fn qemu_user_or1k() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-or1k"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "ppc64le-linux-user")]
-pub const QEMU_USER_PPC64LE: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-ppc64le"
-));
+pub fn qemu_user_ppc64le() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-ppc64le"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "ppc64-linux-user")]
-pub const QEMU_USER_PPC64: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-ppc64"));
+pub fn qemu_user_ppc64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-ppc64"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "ppc-linux-user")]
-pub const QEMU_USER_PPC: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-ppc"));
+pub fn qemu_user_ppc() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-ppc"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "riscv32-linux-user")]
-pub const QEMU_USER_RISCV32: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-riscv32"
-));
+pub fn qemu_user_riscv32() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-riscv32"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "riscv64-linux-user")]
-pub const QEMU_USER_RISCV64: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-riscv64"
-));
+pub fn qemu_user_riscv64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-riscv64"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "s390x-linux-user")]
-pub const QEMU_USER_S390X: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-s390x"));
+pub fn qemu_user_s390x() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-s390x"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "sh4eb-linux-user")]
-pub const QEMU_USER_SH4EB: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-sh4eb"));
+pub fn qemu_user_sh4eb() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-sh4eb"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "sh4-linux-user")]
-pub const QEMU_USER_SH4: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-sh4"));
+pub fn qemu_user_sh4() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-sh4"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "sparc32plus-linux-user")]
-pub const QEMU_USER_SPARC32PLUS: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-sparc32plus"
-));
+pub fn qemu_user_sparc32plus() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-sparc32plus"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "sparc64-linux-user")]
-pub const QEMU_USER_SPARC64: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-sparc64"
-));
+pub fn qemu_user_sparc64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-sparc64"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "sparc-linux-user")]
-pub const QEMU_USER_SPARC: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-sparc"));
+pub fn qemu_user_sparc() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-sparc"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "x86_64-linux-user")]
-pub const QEMU_USER_X86_64: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-x86_64"));
+pub fn qemu_user_x86_64() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-x86_64"));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "xtensaeb-linux-user")]
-pub const QEMU_USER_XTENSAEB: &[u8] = include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/install",
-    "/bin",
-    "/qemu-xtensaeb"
-));
+pub fn qemu_user_xtensaeb() -> Vec<u8> {
+    pub const PROGRAM: &[u8] = include_bytes!(concat!(
+        env!("OUT_DIR"),
+        "/install",
+        "/bin",
+        "/qemu-xtensaeb"
+    ));
+    return PROGRAM.to_vec();
+}
 
 #[cfg(feature = "xtensa-linux-user")]
-pub const QEMU_USER_XTENSA: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-xtensa"));
+pub fn qemu_user_xtensa() -> Vec<u8> {
+    pub const PROGRAM: &[u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-xtensa"));
+    return PROGRAM.to_vec();
+}
