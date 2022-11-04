@@ -1,6 +1,6 @@
 [package]
 name = "qemu"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "QEMU binary and utility installer"
 license = "MIT"
@@ -15,210 +15,210 @@ num_cpus = "1.13.0"
 
 [features]
 # Enable the aarch64 system target
-aarch64-softmmu = []
+qemu-system-aarch64 = []
 # Enable the alpha system target
-alpha-softmmu = []
+qemu-system-alpha = []
 # Enable the arm system target
-arm-softmmu = []
+qemu-system-arm = []
 # Enable the avr system target
-avr-softmmu = []
+qemu-system-avr = []
 # Enable the cris system target
-cris-softmmu = []
+qemu-system-cris = []
 # Enable the hppa system target
-hppa-softmmu = []
+qemu-system-hppa = []
 # Enable the i386 system target
-i386-softmmu = []
+qemu-system-i386 = []
 # Enable the loongarch64 system target
-loongarch64-softmmu = []
+qemu-system-loongarch64 = []
 # Enable the m68k system target
-m68k-softmmu = []
+qemu-system-m68k = []
 # Enable the microblazeel system target
-microblazeel-softmmu = []
+qemu-system-microblazeel = []
 # Enable the microblaze system target
-microblaze-softmmu = []
+qemu-system-microblaze = []
 # Enable the mips64el system target
-mips64el-softmmu = []
+qemu-system-mips64el = []
 # Enable the mips64 system target
-mips64-softmmu = []
+qemu-system-mips64 = []
 # Enable the mipsel system target
-mipsel-softmmu = []
+qemu-system-mipsel = []
 # Enable the mips system target
-mips-softmmu = []
+qemu-system-mips = []
 # Enable the nios2 system target
-nios2-softmmu = []
+qemu-system-nios2 = []
 # Enable the or1k system target
-or1k-softmmu = []
+qemu-system-or1k = []
 # Enable the ppc64 system target
-ppc64-softmmu = []
+qemu-system-ppc64 = []
 # Enable the ppc system target
-ppc-softmmu = []
+qemu-system-ppc = []
 # Enable the riscv32 system target
-riscv32-softmmu = []
+qemu-system-riscv32 = []
 # Enable the riscv64 system target
-riscv64-softmmu = []
+qemu-system-riscv64 = []
 # Enable the rx system target
-rx-softmmu = []
+qemu-system-rx = []
 # Enable the s390x system target
-s390x-softmmu = []
+qemu-system-s390x = []
 # Enable the sh4eb system target
-sh4eb-softmmu = []
+qemu-system-sh4eb = []
 # Enable the sh4 system target
-sh4-softmmu = []
+qemu-system-sh4 = []
 # Enable the sparc64 system target
-sparc64-softmmu = []
+qemu-system-sparc64 = []
 # Enable the sparc system target
-sparc-softmmu = []
+qemu-system-sparc = []
 # Enable the tricore system target
-tricore-softmmu = []
+qemu-system-tricore = []
 # Enable the x86_64 system target
-x86_64-softmmu = []
+qemu-system-x86_64 = []
 # Enable the xtensaeb system target
-xtensaeb-softmmu = []
+qemu-system-xtensaeb = []
 # Enable the xtensa system target
-xtensa-softmmu = []
+qemu-system-xtensa = []
 # Enable the aarch64_be user target
-aarch64_be-linux-user = []
+qemu-aarch64_be = []
 # Enable the aarch64 user target
-aarch64-linux-user = []
+qemu-aarch64 = []
 # Enable the alpha user target
-alpha-linux-user = []
+qemu-alpha = []
 # Enable the armeb user target
-armeb-linux-user = []
+qemu-armeb = []
 # Enable the arm user target
-arm-linux-user = []
+qemu-arm = []
 # Enable the cris user target
-cris-linux-user = []
+qemu-cris = []
 # Enable the hexagon user target
-hexagon-linux-user = []
+qemu-hexagon = []
 # Enable the hppa user target
-hppa-linux-user = []
+qemu-hppa = []
 # Enable the i386 user target
-i386-linux-user = []
+qemu-i386 = []
 # Enable the loongarch64 user target
-loongarch64-linux-user = []
+qemu-loongarch64 = []
 # Enable the m68k user target
-m68k-linux-user = []
+qemu-m68k = []
 # Enable the microblazeel user target
-microblazeel-linux-user = []
+qemu-microblazeel = []
 # Enable the microblaze user target
-microblaze-linux-user = []
+qemu-microblaze = []
 # Enable the mips64el user target
-mips64el-linux-user = []
+qemu-mips64el = []
 # Enable the mips64 user target
-mips64-linux-user = []
+qemu-mips64 = []
 # Enable the mipsel user target
-mipsel-linux-user = []
+qemu-mipsel = []
 # Enable the mips user target
-mips-linux-user = []
+qemu-mips = []
 # Enable the mipsn32el user target
-mipsn32el-linux-user = []
+qemu-mipsn32el = []
 # Enable the mipsn32 user target
-mipsn32-linux-user = []
+qemu-mipsn32 = []
 # Enable the nios2 user target
-nios2-linux-user = []
+qemu-nios2 = []
 # Enable the or1k user target
-or1k-linux-user = []
+qemu-or1k = []
 # Enable the ppc64le user target
-ppc64le-linux-user = []
+qemu-ppc64le = []
 # Enable the ppc64 user target
-ppc64-linux-user = []
+qemu-ppc64 = []
 # Enable the ppc user target
-ppc-linux-user = []
+qemu-ppc = []
 # Enable the riscv32 user target
-riscv32-linux-user = []
+qemu-riscv32 = []
 # Enable the riscv64 user target
-riscv64-linux-user = []
+qemu-riscv64 = []
 # Enable the s390x user target
-s390x-linux-user = []
+qemu-s390x = []
 # Enable the sh4eb user target
-sh4eb-linux-user = []
+qemu-sh4eb = []
 # Enable the sh4 user target
-sh4-linux-user = []
+qemu-sh4 = []
 # Enable the sparc32plus user target
-sparc32plus-linux-user = []
+qemu-sparc32plus = []
 # Enable the sparc64 user target
-sparc64-linux-user = []
+qemu-sparc64 = []
 # Enable the sparc user target
-sparc-linux-user = []
+qemu-sparc = []
 # Enable the x86_64 user target
-x86_64-linux-user = []
+qemu-x86_64 = []
 # Enable the xtensaeb user target
-xtensaeb-linux-user = []
+qemu-xtensaeb = []
 # Enable the xtensa user target
-xtensa-linux-user = []
+qemu-xtensa = []
 
 # Enable all QEMU system mode targets
 system = [
-    "aarch64-softmmu",
-    "alpha-softmmu",
-    "arm-softmmu",
-    "avr-softmmu",
-    "cris-softmmu",
-    "hppa-softmmu",
-    "i386-softmmu",
-    "loongarch64-softmmu",
-    "m68k-softmmu",
-    "microblazeel-softmmu",
-    "microblaze-softmmu",
-    "mips64el-softmmu",
-    "mips64-softmmu",
-    "mipsel-softmmu",
-    "mips-softmmu",
-    "nios2-softmmu",
-    "or1k-softmmu",
-    "ppc64-softmmu",
-    "ppc-softmmu",
-    "riscv32-softmmu",
-    "riscv64-softmmu",
-    "rx-softmmu",
-    "s390x-softmmu",
-    "sh4eb-softmmu",
-    "sh4-softmmu",
-    "sparc64-softmmu",
-    "sparc-softmmu",
-    "tricore-softmmu",
-    "x86_64-softmmu",
-    "xtensaeb-softmmu",
-    "xtensa-softmmu",
+    "qemu-system-aarch64",
+    "qemu-system-alpha",
+    "qemu-system-arm",
+    "qemu-system-avr",
+    "qemu-system-cris",
+    "qemu-system-hppa",
+    "qemu-system-i386",
+    "qemu-system-loongarch64",
+    "qemu-system-m68k",
+    "qemu-system-microblazeel",
+    "qemu-system-microblaze",
+    "qemu-system-mips64el",
+    "qemu-system-mips64",
+    "qemu-system-mipsel",
+    "qemu-system-mips",
+    "qemu-system-nios2",
+    "qemu-system-or1k",
+    "qemu-system-ppc64",
+    "qemu-system-ppc",
+    "qemu-system-riscv32",
+    "qemu-system-riscv64",
+    "qemu-system-rx",
+    "qemu-system-s390x",
+    "qemu-system-sh4eb",
+    "qemu-system-sh4",
+    "qemu-system-sparc64",
+    "qemu-system-sparc",
+    "qemu-system-tricore",
+    "qemu-system-x86_64",
+    "qemu-system-xtensaeb",
+    "qemu-system-xtensa",
 ]
 
 # Enable all QEMU user mode targets
 linux-user = [
-    "aarch64_be-linux-user",
-    "aarch64-linux-user",
-    "alpha-linux-user",
-    "armeb-linux-user",
-    "arm-linux-user",
-    "cris-linux-user",
-    "hexagon-linux-user",
-    "hppa-linux-user",
-    "i386-linux-user",
-    "loongarch64-linux-user",
-    "m68k-linux-user",
-    "microblazeel-linux-user",
-    "microblaze-linux-user",
-    "mips64el-linux-user",
-    "mips64-linux-user",
-    "mipsel-linux-user",
-    "mips-linux-user",
-    "mipsn32el-linux-user",
-    "mipsn32-linux-user",
-    "nios2-linux-user",
-    "or1k-linux-user",
-    "ppc64le-linux-user",
-    "ppc64-linux-user",
-    "ppc-linux-user",
-    "riscv32-linux-user",
-    "riscv64-linux-user",
-    "s390x-linux-user",
-    "sh4eb-linux-user",
-    "sh4-linux-user",
-    "sparc32plus-linux-user",
-    "sparc64-linux-user",
-    "sparc-linux-user",
-    "x86_64-linux-user",
-    "xtensaeb-linux-user",
-    "xtensa-linux-user",
+    "qemu-aarch64_be",
+    "qemu-aarch64",
+    "qemu-alpha",
+    "qemu-armeb",
+    "qemu-arm",
+    "qemu-cris",
+    "qemu-hexagon",
+    "qemu-hppa",
+    "qemu-i386",
+    "qemu-loongarch64",
+    "qemu-m68k",
+    "qemu-microblazeel",
+    "qemu-microblaze",
+    "qemu-mips64el",
+    "qemu-mips64",
+    "qemu-mipsel",
+    "qemu-mips",
+    "qemu-mipsn32el",
+    "qemu-mipsn32",
+    "qemu-nios2",
+    "qemu-or1k",
+    "qemu-ppc64le",
+    "qemu-ppc64",
+    "qemu-ppc",
+    "qemu-riscv32",
+    "qemu-riscv64",
+    "qemu-s390x",
+    "qemu-sh4eb",
+    "qemu-sh4",
+    "qemu-sparc32plus",
+    "qemu-sparc64",
+    "qemu-sparc",
+    "qemu-x86_64",
+    "qemu-xtensaeb",
+    "qemu-xtensa",
 ]
 
 # Enable all QEMU bsd user mode targets. There are no BSD targets yet.

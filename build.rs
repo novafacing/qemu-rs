@@ -7,204 +7,204 @@ const QEMU_GIT_URL: &str = "https://github.com/qemu/qemu.git";
 fn get_target_list() -> Vec<String> {
     let mut target_architectures = Vec::new();
 
-    if cfg!(feature = "aarch64-softmmu") {
-        target_architectures.push("aarch64-softmmu".to_string());
+    if cfg!(feature = "qemu-system-aarch64") {
+        target_architectures.push("qemu-system-aarch64".to_string());
     }
-    if cfg!(feature = "alpha-softmmu") {
-        target_architectures.push("alpha-softmmu".to_string());
+    if cfg!(feature = "qemu-system-alpha") {
+        target_architectures.push("qemu-system-alpha".to_string());
     }
-    if cfg!(feature = "arm-softmmu") {
-        target_architectures.push("arm-softmmu".to_string());
+    if cfg!(feature = "qemu-system-arm") {
+        target_architectures.push("qemu-system-arm".to_string());
     }
-    if cfg!(feature = "avr-softmmu") {
-        target_architectures.push("avr-softmmu".to_string());
+    if cfg!(feature = "qemu-system-avr") {
+        target_architectures.push("qemu-system-avr".to_string());
     }
-    if cfg!(feature = "cris-softmmu") {
-        target_architectures.push("cris-softmmu".to_string());
+    if cfg!(feature = "qemu-system-cris") {
+        target_architectures.push("qemu-system-cris".to_string());
     }
-    if cfg!(feature = "hppa-softmmu") {
-        target_architectures.push("hppa-softmmu".to_string());
+    if cfg!(feature = "qemu-system-hppa") {
+        target_architectures.push("qemu-system-hppa".to_string());
     }
-    if cfg!(feature = "i386-softmmu") {
-        target_architectures.push("i386-softmmu".to_string());
+    if cfg!(feature = "qemu-system-i386") {
+        target_architectures.push("qemu-system-i386".to_string());
     }
-    if cfg!(feature = "loongarch64-softmmu") {
-        target_architectures.push("loongarch64-softmmu".to_string());
+    if cfg!(feature = "qemu-system-loongarch64") {
+        target_architectures.push("qemu-system-loongarch64".to_string());
     }
-    if cfg!(feature = "m68k-softmmu") {
-        target_architectures.push("m68k-softmmu".to_string());
+    if cfg!(feature = "qemu-system-m68k") {
+        target_architectures.push("qemu-system-m68k".to_string());
     }
-    if cfg!(feature = "microblazeel-softmmu") {
-        target_architectures.push("microblazeel-softmmu".to_string());
+    if cfg!(feature = "qemu-system-microblazeel") {
+        target_architectures.push("qemu-system-microblazeel".to_string());
     }
-    if cfg!(feature = "microblaze-softmmu") {
-        target_architectures.push("microblaze-softmmu".to_string());
+    if cfg!(feature = "qemu-system-microblaze") {
+        target_architectures.push("qemu-system-microblaze".to_string());
     }
-    if cfg!(feature = "mips64el-softmmu") {
-        target_architectures.push("mips64el-softmmu".to_string());
+    if cfg!(feature = "qemu-system-mips64el") {
+        target_architectures.push("qemu-system-mips64el".to_string());
     }
-    if cfg!(feature = "mips64-softmmu") {
-        target_architectures.push("mips64-softmmu".to_string());
+    if cfg!(feature = "qemu-system-mips64") {
+        target_architectures.push("qemu-system-mips64".to_string());
     }
-    if cfg!(feature = "mipsel-softmmu") {
-        target_architectures.push("mipsel-softmmu".to_string());
+    if cfg!(feature = "qemu-system-mipsel") {
+        target_architectures.push("qemu-system-mipsel".to_string());
     }
-    if cfg!(feature = "mips-softmmu") {
-        target_architectures.push("mips-softmmu".to_string());
+    if cfg!(feature = "qemu-system-mips") {
+        target_architectures.push("qemu-system-mips".to_string());
     }
-    if cfg!(feature = "nios2-softmmu") {
-        target_architectures.push("nios2-softmmu".to_string());
+    if cfg!(feature = "qemu-system-nios2") {
+        target_architectures.push("qemu-system-nios2".to_string());
     }
-    if cfg!(feature = "or1k-softmmu") {
-        target_architectures.push("or1k-softmmu".to_string());
+    if cfg!(feature = "qemu-system-or1k") {
+        target_architectures.push("qemu-system-or1k".to_string());
     }
-    if cfg!(feature = "ppc64-softmmu") {
-        target_architectures.push("ppc64-softmmu".to_string());
+    if cfg!(feature = "qemu-system-ppc64") {
+        target_architectures.push("qemu-system-ppc64".to_string());
     }
-    if cfg!(feature = "ppc-softmmu") {
-        target_architectures.push("ppc-softmmu".to_string());
+    if cfg!(feature = "qemu-system-ppc") {
+        target_architectures.push("qemu-system-ppc".to_string());
     }
-    if cfg!(feature = "riscv32-softmmu") {
-        target_architectures.push("riscv32-softmmu".to_string());
+    if cfg!(feature = "qemu-system-riscv32") {
+        target_architectures.push("qemu-system-riscv32".to_string());
     }
-    if cfg!(feature = "riscv64-softmmu") {
-        target_architectures.push("riscv64-softmmu".to_string());
+    if cfg!(feature = "qemu-system-riscv64") {
+        target_architectures.push("qemu-system-riscv64".to_string());
     }
-    if cfg!(feature = "rx-softmmu") {
-        target_architectures.push("rx-softmmu".to_string());
+    if cfg!(feature = "qemu-system-rx") {
+        target_architectures.push("qemu-system-rx".to_string());
     }
-    if cfg!(feature = "s390x-softmmu") {
-        target_architectures.push("s390x-softmmu".to_string());
+    if cfg!(feature = "qemu-system-s390x") {
+        target_architectures.push("qemu-system-s390x".to_string());
     }
-    if cfg!(feature = "sh4eb-softmmu") {
-        target_architectures.push("sh4eb-softmmu".to_string());
+    if cfg!(feature = "qemu-system-sh4eb") {
+        target_architectures.push("qemu-system-sh4eb".to_string());
     }
-    if cfg!(feature = "sh4-softmmu") {
-        target_architectures.push("sh4-softmmu".to_string());
+    if cfg!(feature = "qemu-system-sh4") {
+        target_architectures.push("qemu-system-sh4".to_string());
     }
-    if cfg!(feature = "sparc64-softmmu") {
-        target_architectures.push("sparc64-softmmu".to_string());
+    if cfg!(feature = "qemu-system-sparc64") {
+        target_architectures.push("qemu-system-sparc64".to_string());
     }
-    if cfg!(feature = "sparc-softmmu") {
-        target_architectures.push("sparc-softmmu".to_string());
+    if cfg!(feature = "qemu-system-sparc") {
+        target_architectures.push("qemu-system-sparc".to_string());
     }
-    if cfg!(feature = "tricore-softmmu") {
-        target_architectures.push("tricore-softmmu".to_string());
+    if cfg!(feature = "qemu-system-tricore") {
+        target_architectures.push("qemu-system-tricore".to_string());
     }
-    if cfg!(feature = "x86_64-softmmu") {
-        target_architectures.push("x86_64-softmmu".to_string());
+    if cfg!(feature = "qemu-system-x86_64") {
+        target_architectures.push("qemu-system-x86_64".to_string());
     }
-    if cfg!(feature = "xtensaeb-softmmu") {
-        target_architectures.push("xtensaeb-softmmu".to_string());
+    if cfg!(feature = "qemu-system-xtensaeb") {
+        target_architectures.push("qemu-system-xtensaeb".to_string());
     }
-    if cfg!(feature = "xtensa-softmmu") {
-        target_architectures.push("xtensa-softmmu".to_string());
+    if cfg!(feature = "qemu-system-xtensa") {
+        target_architectures.push("qemu-system-xtensa".to_string());
     }
 
-    if cfg!(feature = "aarch64_be-linux-user") {
-        target_architectures.push("aarch64_be-linux-user".to_string());
+    if cfg!(feature = "qemu-aarch64_be") {
+        target_architectures.push("qemu-aarch64_be".to_string());
     }
-    if cfg!(feature = "aarch64-linux-user") {
-        target_architectures.push("aarch64-linux-user".to_string());
+    if cfg!(feature = "qemu-aarch64") {
+        target_architectures.push("qemu-aarch64".to_string());
     }
-    if cfg!(feature = "alpha-linux-user") {
-        target_architectures.push("alpha-linux-user".to_string());
+    if cfg!(feature = "qemu-alpha") {
+        target_architectures.push("qemu-alpha".to_string());
     }
-    if cfg!(feature = "armeb-linux-user") {
-        target_architectures.push("armeb-linux-user".to_string());
+    if cfg!(feature = "qemu-armeb") {
+        target_architectures.push("qemu-armeb".to_string());
     }
-    if cfg!(feature = "arm-linux-user") {
-        target_architectures.push("arm-linux-user".to_string());
+    if cfg!(feature = "qemu-arm") {
+        target_architectures.push("qemu-arm".to_string());
     }
-    if cfg!(feature = "cris-linux-user") {
-        target_architectures.push("cris-linux-user".to_string());
+    if cfg!(feature = "qemu-cris") {
+        target_architectures.push("qemu-cris".to_string());
     }
-    if cfg!(feature = "hexagon-linux-user") {
-        target_architectures.push("hexagon-linux-user".to_string());
+    if cfg!(feature = "qemu-hexagon") {
+        target_architectures.push("qemu-hexagon".to_string());
     }
-    if cfg!(feature = "hppa-linux-user") {
-        target_architectures.push("hppa-linux-user".to_string());
+    if cfg!(feature = "qemu-hppa") {
+        target_architectures.push("qemu-hppa".to_string());
     }
-    if cfg!(feature = "i386-linux-user") {
-        target_architectures.push("i386-linux-user".to_string());
+    if cfg!(feature = "qemu-i386") {
+        target_architectures.push("qemu-i386".to_string());
     }
-    if cfg!(feature = "loongarch64-linux-user") {
-        target_architectures.push("loongarch64-linux-user".to_string());
+    if cfg!(feature = "qemu-loongarch64") {
+        target_architectures.push("qemu-loongarch64".to_string());
     }
-    if cfg!(feature = "m68k-linux-user") {
-        target_architectures.push("m68k-linux-user".to_string());
+    if cfg!(feature = "qemu-m68k") {
+        target_architectures.push("qemu-m68k".to_string());
     }
-    if cfg!(feature = "microblazeel-linux-user") {
-        target_architectures.push("microblazeel-linux-user".to_string());
+    if cfg!(feature = "qemu-microblazeel") {
+        target_architectures.push("qemu-microblazeel".to_string());
     }
-    if cfg!(feature = "microblaze-linux-user") {
-        target_architectures.push("microblaze-linux-user".to_string());
+    if cfg!(feature = "qemu-microblaze") {
+        target_architectures.push("qemu-microblaze".to_string());
     }
-    if cfg!(feature = "mips64el-linux-user") {
-        target_architectures.push("mips64el-linux-user".to_string());
+    if cfg!(feature = "qemu-mips64el") {
+        target_architectures.push("qemu-mips64el".to_string());
     }
-    if cfg!(feature = "mips64-linux-user") {
-        target_architectures.push("mips64-linux-user".to_string());
+    if cfg!(feature = "qemu-mips64") {
+        target_architectures.push("qemu-mips64".to_string());
     }
-    if cfg!(feature = "mipsel-linux-user") {
-        target_architectures.push("mipsel-linux-user".to_string());
+    if cfg!(feature = "qemu-mipsel") {
+        target_architectures.push("qemu-mipsel".to_string());
     }
-    if cfg!(feature = "mips-linux-user") {
-        target_architectures.push("mips-linux-user".to_string());
+    if cfg!(feature = "qemu-mips") {
+        target_architectures.push("qemu-mips".to_string());
     }
-    if cfg!(feature = "mipsn32el-linux-user") {
-        target_architectures.push("mipsn32el-linux-user".to_string());
+    if cfg!(feature = "qemu-mipsn32el") {
+        target_architectures.push("qemu-mipsn32el".to_string());
     }
-    if cfg!(feature = "mipsn32-linux-user") {
-        target_architectures.push("mipsn32-linux-user".to_string());
+    if cfg!(feature = "qemu-mipsn32") {
+        target_architectures.push("qemu-mipsn32".to_string());
     }
-    if cfg!(feature = "nios2-linux-user") {
-        target_architectures.push("nios2-linux-user".to_string());
+    if cfg!(feature = "qemu-nios2") {
+        target_architectures.push("qemu-nios2".to_string());
     }
-    if cfg!(feature = "or1k-linux-user") {
-        target_architectures.push("or1k-linux-user".to_string());
+    if cfg!(feature = "qemu-or1k") {
+        target_architectures.push("qemu-or1k".to_string());
     }
-    if cfg!(feature = "ppc64le-linux-user") {
-        target_architectures.push("ppc64le-linux-user".to_string());
+    if cfg!(feature = "qemu-ppc64le") {
+        target_architectures.push("qemu-ppc64le".to_string());
     }
-    if cfg!(feature = "ppc64-linux-user") {
-        target_architectures.push("ppc64-linux-user".to_string());
+    if cfg!(feature = "qemu-ppc64") {
+        target_architectures.push("qemu-ppc64".to_string());
     }
-    if cfg!(feature = "ppc-linux-user") {
-        target_architectures.push("ppc-linux-user".to_string());
+    if cfg!(feature = "qemu-ppc") {
+        target_architectures.push("qemu-ppc".to_string());
     }
-    if cfg!(feature = "riscv32-linux-user") {
-        target_architectures.push("riscv32-linux-user".to_string());
+    if cfg!(feature = "qemu-riscv32") {
+        target_architectures.push("qemu-riscv32".to_string());
     }
-    if cfg!(feature = "riscv64-linux-user") {
-        target_architectures.push("riscv64-linux-user".to_string());
+    if cfg!(feature = "qemu-riscv64") {
+        target_architectures.push("qemu-riscv64".to_string());
     }
-    if cfg!(feature = "s390x-linux-user") {
-        target_architectures.push("s390x-linux-user".to_string());
+    if cfg!(feature = "qemu-s390x") {
+        target_architectures.push("qemu-s390x".to_string());
     }
-    if cfg!(feature = "sh4eb-linux-user") {
-        target_architectures.push("sh4eb-linux-user".to_string());
+    if cfg!(feature = "qemu-sh4eb") {
+        target_architectures.push("qemu-sh4eb".to_string());
     }
-    if cfg!(feature = "sh4-linux-user") {
-        target_architectures.push("sh4-linux-user".to_string());
+    if cfg!(feature = "qemu-sh4") {
+        target_architectures.push("qemu-sh4".to_string());
     }
-    if cfg!(feature = "sparc32plus-linux-user") {
-        target_architectures.push("sparc32plus-linux-user".to_string());
+    if cfg!(feature = "qemu-sparc32plus") {
+        target_architectures.push("qemu-sparc32plus".to_string());
     }
-    if cfg!(feature = "sparc64-linux-user") {
-        target_architectures.push("sparc64-linux-user".to_string());
+    if cfg!(feature = "qemu-sparc64") {
+        target_architectures.push("qemu-sparc64".to_string());
     }
-    if cfg!(feature = "sparc-linux-user") {
-        target_architectures.push("sparc-linux-user".to_string());
+    if cfg!(feature = "qemu-sparc") {
+        target_architectures.push("qemu-sparc".to_string());
     }
-    if cfg!(feature = "x86_64-linux-user") {
-        target_architectures.push("x86_64-linux-user".to_string());
+    if cfg!(feature = "qemu-x86_64") {
+        target_architectures.push("qemu-x86_64".to_string());
     }
-    if cfg!(feature = "xtensaeb-linux-user") {
-        target_architectures.push("xtensaeb-linux-user".to_string());
+    if cfg!(feature = "qemu-xtensaeb") {
+        target_architectures.push("qemu-xtensaeb".to_string());
     }
-    if cfg!(feature = "xtensa-linux-user") {
-        target_architectures.push("xtensa-linux-user".to_string());
+    if cfg!(feature = "qemu-xtensa") {
+        target_architectures.push("qemu-xtensa".to_string());
     }
     target_architectures
 }
