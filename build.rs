@@ -28,8 +28,8 @@ fn get_target_list() -> Vec<String> {
     if cfg!(feature = "i386-softmmu") {
         target_architectures.push("i386-softmmu".to_string());
     }
-    if cfg!(feature = "loongarch-softmmu") {
-        target_architectures.push("loongarch-softmmu".to_string());
+    if cfg!(feature = "loongarch64-softmmu") {
+        target_architectures.push("loongarch64-softmmu".to_string());
     }
     if cfg!(feature = "m68k-softmmu") {
         target_architectures.push("m68k-softmmu".to_string());
