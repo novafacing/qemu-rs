@@ -728,10 +728,9 @@ fn main() {
         .expect("Failed to run configure");
 
     Command::new("make")
+        .current_dir(&qemu_build_path)
         .arg("-j")
         .arg(num_cpus::get().to_string())
-        .arg("-C")
-        .arg(&qemu_build_path)
         .status()
         .expect("Failed to run make");
 
