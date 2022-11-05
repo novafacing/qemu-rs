@@ -4,10 +4,9 @@ use qemu::QEMU_FUNCNAME;
 use std::env::args;
 
 fn main() {
-    let qemu = $$QEMU_FUNCNAME$$();
+    let qemu = QEMU_FUNCNAME();
     let mut args: Vec<String> = args().collect();
     args.remove(0);
-    println!("Running qemu with args {:?}", args);
     MemFdExecutable::new("QEMU_PROGNAME", qemu)
         .args(args)
         .stdin(Stdio::inherit())
