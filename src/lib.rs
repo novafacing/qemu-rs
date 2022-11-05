@@ -1,3 +1,31 @@
+//! Qemu library!
+//!
+//! This library provides a way to access QEMU binaries for all supported architectures
+//! from rust code by wrapping the QEMU build system and then giving you binaries as
+//! big constant byte arrays. Stay with me, this is a good way to do this! For example,
+//! if you want to distributed a QEMU plugin written in rust, you can use this library
+//! to build a plugin-supported QEMU binary and distribute it directly along with your
+//! plugin as a rust crate.
+//!
+//! For very simple examples, see the crates named `qemu-<arch>` in this workspace, such as:
+//! * `qemu-x86_64`: https://crates.io/crates/qemu-x86_64
+//!
+//! In addition, if you want to do wild stuff that "doesn't circumvent the GPL", you can build
+//! a debug binary, use something like [goblin](https://github.com/m4b/goblin) to figure out
+//! where to hook, bytepatch the binary, then run it with your hooks. Is that insane? Maybe,
+//! but you can do it, and it's a lot more efficient to just have the binary as bytes to
+//! do so.
+//!
+//! Why not just build executables? Well, good question. There are executables, but they are
+//! distributed as separate binary crates depending on this one. See the `qemu-<arch>` crates
+//! in this workspace for more information.
+//!
+//! To use, just configure your feature flags appropriately (see the README) and then use
+//! one of the `qemu_<arch>` functions here to obtain your binary. Then, you can either
+//! write it to disk and run it, or you can be very efficient and use something like
+//! [memfd-exec](https://crates.io/crates/memfd-exec) to run it from memory directly, or on
+//! a separate thread, whatever!
+
 #[cfg(feature = "qemu-system-aarch64")]
 /// Returns the qemu-system-aarch64 binary
 pub fn qemu_system_aarch64() -> Vec<u8> {
