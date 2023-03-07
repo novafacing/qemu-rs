@@ -3,6 +3,30 @@
 This crate provides an installer for QEMU binaries. You can use it to install QEMU
 system and user mode emulators and use them in your code.
 
+This fork checks out the latest QEMU commit that supports [cannoli](https://github.com/MarginResearch/cannoli)
+and builds a patched version of qemu with the `--with-cannoli` option.
+
+The resulting QEMU binary can be used to launch programs with cannoli tracing hooks, 
+as shown in the Symbolizer example below:
+```rust
+let symbolizer = std::thread::spawn(|| cannoli::create_cannoli::<Symbolizer>(2).unwrap());
+let qemu = qemu_mipsel();
+let mut qemu_mipsel = memfd_exec::MemFdExecutable::new("qemu-mipsel", qemu)
+    .args([
+        "-cannoli",
+        "../../target/release/libjitter_always.so",
+        "example_app",
+    ])
+    .spawn()
+    .unwrap();
+qemu_mipsel.wait().unwrap();
+if symbolizer.is_finished() {
+    symbolizer.join().unwrap();
+} else {
+    exit(0)
+}
+```
+
 ## Usage
 
 See the feature flags section for information on enabling targets, but once you have
