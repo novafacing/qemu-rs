@@ -1,4 +1,4 @@
-use std::{env::var, fs::create_dir, path::PathBuf, process::Command};
+use std::{env::var, fs::create_dir, path::{Path, PathBuf}, process::{Command, Stdio}};
 
 use git2::{build::CheckoutBuilder, Repository};
 
@@ -209,7 +209,7 @@ fn get_target_list() -> Vec<String> {
     target_architectures
 }
 
-fn build_qemu_configure_args(build_path: &PathBuf) -> Vec<String> {
+fn build_qemu_configure_args<P: AsRef<Path>>(build_path: P) -> Vec<String> {
     let mut configure_args = Vec::new();
 
     // Conditional target options
@@ -677,7 +677,7 @@ fn build_qemu_configure_args(build_path: &PathBuf) -> Vec<String> {
     }
 
     // Unconditional arguments used to configure installation via cargo
-    configure_args.push(format!("--prefix={}", build_path.to_string_lossy()));
+    configure_args.push(format!("--prefix={}", build_path.as_ref().to_string_lossy()));
 
     configure_args
 }
@@ -728,30 +728,66 @@ fn main() {
         configure_prog, configure_args
     );
 
-    Command::new(configure_prog)
+    let output = Command::new(configure_prog)
         .current_dir(&qemu_build_path)
         .args(&configure_args)
         .arg(
-            &repo
+            repo
                 .path()
                 .parent()
                 .expect("Could not find parent of repo path"),
         )
-        .status()
-        .expect("Failed to run configure");
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("Failed to run make install")
+        .wait_with_output()
+        .expect("Failed to wait for make install");
 
-    Command::new("make")
+    if !output.status.success() {
+        panic!(
+            "Failed to configure qemu:\nstdout:{}\nstderr:{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    let output = Command::new("make")
         .current_dir(&qemu_build_path)
         .arg("-j")
         .arg(num_cpus::get().to_string())
-        .status()
-        .expect("Failed to run make");
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("Failed to run make install")
+        .wait_with_output()
+        .expect("Failed to wait for make install");
 
-    Command::new("make")
+    if !output.status.success() {
+        panic!(
+            "Failed to build qemu:\nstdout:{}\nstderr:{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    let output = Command::new("make")
         .current_dir(&qemu_build_path)
         .arg("install")
-        .status()
-        .expect("Failed to run make install");
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("Failed to run make install")
+        .wait_with_output()
+        .expect("Failed to wait for make install");
+
+    if !output.status.success() {
+        panic!(
+            "Failed to install qemu:\nstdout:{}\nstderr:{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
 
     let enabled_targets = get_target_list();
 

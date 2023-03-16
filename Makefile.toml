@@ -1,0 +1,25 @@
+[tasks.update-binary-deps]
+script_runner = "@rust"
+cwd = "bin"
+script = '''
+//! ```cargo
+//! [dependencies]
+//! ```
+use std::process::Command;
+use std::fs::read_dir;
+use std::path::PathBuf;
+
+fn main() {
+    for dir in read_dir(PathBuf::from(".")).unwrap() {
+        let dir = dir.unwrap();
+        if dir.file_type().unwrap().is_dir() {
+            let path = dir.path();
+            Command::new("cargo")
+                .arg("update")
+                .current_dir(&path)
+                .status()
+                .unwrap();
+        }
+    }
+}
+'''
