@@ -1,6 +1,6 @@
 [package]
 name = "qemu-system-arm"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "QEMU binary installer for qemu-system-arm"
 license = "MIT"

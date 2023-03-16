@@ -1,6 +1,6 @@
 [package]
 name = "qemu-m68k"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "QEMU binary installer for qemu-m68k"
 license = "MIT"
