@@ -1,425 +1,69 @@
-[package]
-name = "qemu"
-version = "0.1.7"
-edition = "2021"
-description = "QEMU binary and utility installer"
-license = "MIT"
-repository = "https://github.com/novafacing/qemu-rs.git"
-keywords = ["emulation", "qemu", "emulator"]
-categories = ["emulators"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-
-[build-dependencies]
-git2 = "0.15.0"
-num_cpus = "1.13.0"
-
-[features]
-# Enable the aarch64 system target
-qemu-system-aarch64 = []
-# Enable the alpha system target
-qemu-system-alpha = []
-# Enable the arm system target
-qemu-system-arm = []
-# Enable the avr system target
-qemu-system-avr = []
-# Enable the cris system target
-qemu-system-cris = []
-# Enable the hppa system target
-qemu-system-hppa = []
-# Enable the i386 system target
-qemu-system-i386 = []
-# Enable the loongarch64 system target
-qemu-system-loongarch64 = []
-# Enable the m68k system target
-qemu-system-m68k = []
-# Enable the microblazeel system target
-qemu-system-microblazeel = []
-# Enable the microblaze system target
-qemu-system-microblaze = []
-# Enable the mips64el system target
-qemu-system-mips64el = []
-# Enable the mips64 system target
-qemu-system-mips64 = []
-# Enable the mipsel system target
-qemu-system-mipsel = []
-# Enable the mips system target
-qemu-system-mips = []
-# Enable the nios2 system target
-qemu-system-nios2 = []
-# Enable the or1k system target
-qemu-system-or1k = []
-# Enable the ppc64 system target
-qemu-system-ppc64 = []
-# Enable the ppc system target
-qemu-system-ppc = []
-# Enable the riscv32 system target
-qemu-system-riscv32 = []
-# Enable the riscv64 system target
-qemu-system-riscv64 = []
-# Enable the rx system target
-qemu-system-rx = []
-# Enable the s390x system target
-qemu-system-s390x = []
-# Enable the sh4eb system target
-qemu-system-sh4eb = []
-# Enable the sh4 system target
-qemu-system-sh4 = []
-# Enable the sparc64 system target
-qemu-system-sparc64 = []
-# Enable the sparc system target
-qemu-system-sparc = []
-# Enable the tricore system target
-qemu-system-tricore = []
-# Enable the x86_64 system target
-qemu-system-x86_64 = []
-# Enable the xtensaeb system target
-qemu-system-xtensaeb = []
-# Enable the xtensa system target
-qemu-system-xtensa = []
-# Enable the aarch64_be user target
-qemu-aarch64_be = []
-# Enable the aarch64 user target
-qemu-aarch64 = []
-# Enable the alpha user target
-qemu-alpha = []
-# Enable the armeb user target
-qemu-armeb = []
-# Enable the arm user target
-qemu-arm = []
-# Enable the cris user target
-qemu-cris = []
-# Enable the hexagon user target
-qemu-hexagon = []
-# Enable the hppa user target
-qemu-hppa = []
-# Enable the i386 user target
-qemu-i386 = []
-# Enable the loongarch64 user target
-qemu-loongarch64 = []
-# Enable the m68k user target
-qemu-m68k = []
-# Enable the microblazeel user target
-qemu-microblazeel = []
-# Enable the microblaze user target
-qemu-microblaze = []
-# Enable the mips64el user target
-qemu-mips64el = []
-# Enable the mips64 user target
-qemu-mips64 = []
-# Enable the mipsel user target
-qemu-mipsel = []
-# Enable the mips user target
-qemu-mips = []
-# Enable the mipsn32el user target
-qemu-mipsn32el = []
-# Enable the mipsn32 user target
-qemu-mipsn32 = []
-# Enable the nios2 user target
-qemu-nios2 = []
-# Enable the or1k user target
-qemu-or1k = []
-# Enable the ppc64le user target
-qemu-ppc64le = []
-# Enable the ppc64 user target
-qemu-ppc64 = []
-# Enable the ppc user target
-qemu-ppc = []
-# Enable the riscv32 user target
-qemu-riscv32 = []
-# Enable the riscv64 user target
-qemu-riscv64 = []
-# Enable the s390x user target
-qemu-s390x = []
-# Enable the sh4eb user target
-qemu-sh4eb = []
-# Enable the sh4 user target
-qemu-sh4 = []
-# Enable the sparc32plus user target
-qemu-sparc32plus = []
-# Enable the sparc64 user target
-qemu-sparc64 = []
-# Enable the sparc user target
-qemu-sparc = []
-# Enable the x86_64 user target
-qemu-x86_64 = []
-# Enable the xtensaeb user target
-qemu-xtensaeb = []
-# Enable the xtensa user target
-qemu-xtensa = []
-
-# Enable all QEMU system mode targets
-system = [
-    "qemu-system-aarch64",
-    "qemu-system-alpha",
-    "qemu-system-arm",
-    "qemu-system-avr",
-    "qemu-system-cris",
-    "qemu-system-hppa",
-    "qemu-system-i386",
-    "qemu-system-loongarch64",
-    "qemu-system-m68k",
-    "qemu-system-microblazeel",
-    "qemu-system-microblaze",
-    "qemu-system-mips64el",
-    "qemu-system-mips64",
-    "qemu-system-mipsel",
-    "qemu-system-mips",
-    "qemu-system-nios2",
-    "qemu-system-or1k",
-    "qemu-system-ppc64",
-    "qemu-system-ppc",
-    "qemu-system-riscv32",
-    "qemu-system-riscv64",
-    "qemu-system-rx",
-    "qemu-system-s390x",
-    "qemu-system-sh4eb",
-    "qemu-system-sh4",
-    "qemu-system-sparc64",
-    "qemu-system-sparc",
-    "qemu-system-tricore",
-    "qemu-system-x86_64",
-    "qemu-system-xtensaeb",
-    "qemu-system-xtensa",
-]
-
-# Enable all QEMU user mode targets
-linux-user = [
-    "qemu-aarch64_be",
-    "qemu-aarch64",
-    "qemu-alpha",
-    "qemu-armeb",
-    "qemu-arm",
-    "qemu-cris",
-    "qemu-hexagon",
-    "qemu-hppa",
-    "qemu-i386",
-    "qemu-loongarch64",
-    "qemu-m68k",
-    "qemu-microblazeel",
-    "qemu-microblaze",
-    "qemu-mips64el",
-    "qemu-mips64",
-    "qemu-mipsel",
-    "qemu-mips",
-    "qemu-mipsn32el",
-    "qemu-mipsn32",
-    "qemu-nios2",
-    "qemu-or1k",
-    "qemu-ppc64le",
-    "qemu-ppc64",
-    "qemu-ppc",
-    "qemu-riscv32",
-    "qemu-riscv64",
-    "qemu-s390x",
-    "qemu-sh4eb",
-    "qemu-sh4",
-    "qemu-sparc32plus",
-    "qemu-sparc64",
-    "qemu-sparc",
-    "qemu-x86_64",
-    "qemu-xtensaeb",
-    "qemu-xtensa",
-]
-
-# Enable all QEMU bsd user mode targets. There are no BSD targets yet.
-bsd-user = []
-# Enable all QEMU user mode targets.
-user = ["linux-user", "bsd-user"]
-# Enable all QEMU targets, both user and system mode.
-all-targets = ["system", "user"]
-# Enable all QEMU targets, both user and system mode, and provide the choice as the default.
-# The default option is to include *nothing* because these binaries are thicc!
-default-target-options = []
-
-# Disable default features. By default, features are enabled if they are available (for example if
-# libcapstone is available, Capstone support will be enabled by default). This option disables all
-# features by default, and enables them only if they are explicitly enabled. This option is set
-# if any default-enabled feature is enabled.
-disable-default-features = []
-# Disable default devices. This option disables all devices by default, and enables them only if
-# they are explicitly enabled. There is currently no way to enable a specific device, so this
-# option should never be set.
-disable-default-devices = []
-# Enable werror reporting during build. This option cannot be implicitly disabled.
-werror = []
-# Enable the use of stack protectors. This option cannot be implicitly disabled.
-stack-protector = []
-# Enable the use of coroutine pools for efficiency. This option cannot be implicitly disabled.
-coroutine-pool = []
-# Enable installing firmware blobs. This option cannot be implicitly disabled.
-install-blobs = []
-# Default disabled options. These options are disabled by default, but are enabled by default by
-# the default features as best practice.
-default-negative-options = [
-    "werror",
-    "stack-protector",
-    "coroutine-pool",
-    "install-blobs",
-]
-
-# Positive options in configure script
-# These are toggled with `--features` etc, and are *disabled* by default
-static = []
-debug = []
-sanitizers = []
-tsan = []
-plugins = []
-cfi = []
-cfi-debug = []
-debug-mutex = []
-debug-stack-usage = []
-fuzzing = []
-gcov = []
-gprof = []
-lto = []
-module-upgrades = []
-profiler = []
-qom-cast-debug = []
-rng-none = []
-strip = []
-tcg-interpreter = []
-optimized = ["lto", "strip"]
-debugging = [
-    "debug",
-    "sanitizers",
-    "tsan",
-    "cfi-debug",
-    "debug-mutex",
-    "debug-stack-usage",
-    "gcov",
-    "gprof",
-    "profiler",
-]
-default-positive-options = ["plugins"]
-
-# Additional enable options. These all default to "enabled if possible" which is a very
-# sane default. Overriding *any* of these will set *ALL* of these to disabled, and only
-# explicitly enabled options will be enabled. Be careful when using these options!
-alsa = ["disable-default-features"]
-attr = ["disable-default-features"]
-auth-pam = ["disable-default-features"]
-avx2 = ["disable-default-features"]
-avx512f = ["disable-default-features"]
-blkio = ["disable-default-features"]
-bochs = ["disable-default-features"]
-bpf = ["disable-default-features"]
-brlapi = ["disable-default-features"]
-bzip2 = ["disable-default-features"]
-canokey = ["disable-default-features"]
-cap-ng = ["disable-default-features"]
-capstone = ["disable-default-features"]
-cloop = ["disable-default-features"]
-cocoa = ["disable-default-features"]
-coreaudio = ["disable-default-features"]
-crypto-afalg = ["disable-default-features"]
-curl = ["disable-default-features"]
-curses = ["disable-default-features"]
-dbus-display = ["disable-default-features"]
-dmg = ["disable-default-features"]
-docs = ["disable-default-features"]
-dsound = ["disable-default-features"]
-fuse = ["disable-default-features"]
-fuse-lseek = ["disable-default-features"]
-gcrypt = ["disable-default-features"]
-gettext = ["disable-default-features"]
-gio = ["disable-default-features"]
-glusterfs = ["disable-default-features"]
-gnutls = ["disable-default-features"]
-gtk = ["disable-default-features"]
-guest-agent = ["disable-default-features"]
-guest-agent-msi = ["disable-default-features"]
-hax = ["disable-default-features"]
-hvf = ["disable-default-features"]
-iconv = ["disable-default-features"]
-jack = ["disable-default-features"]
-keyring = ["disable-default-features"]
-kvm = ["disable-default-features"]
-l2tpv3 = ["disable-default-features"]
-libdaxctl = ["disable-default-features"]
-libiscsi = ["disable-default-features"]
-libnfs = ["disable-default-features"]
-libpmem = ["disable-default-features"]
-libssh = ["disable-default-features"]
-libudev = ["disable-default-features"]
-libusb = ["disable-default-features"]
-libvduse = ["disable-default-features"]
-linux-aio = ["disable-default-features"]
-linux-io-uring = ["disable-default-features"]
-live-block-migration = ["disable-default-features"]
-lzfse = ["disable-default-features"]
-lzo = ["disable-default-features"]
-malloc-trim = ["disable-default-features"]
-membarrier = ["disable-default-features"]
-mpath = ["disable-default-features"]
-multiprocess = ["disable-default-features"]
-netmap = ["disable-default-features"]
-nettle = ["disable-default-features"]
-numa = ["disable-default-features"]
-nvmm = ["disable-default-features"]
-opengl = ["disable-default-features"]
-oss = ["disable-default-features"]
-pa = ["disable-default-features"]
-parallels = ["disable-default-features"]
-png = ["disable-default-features"]
-pvrdma = ["disable-default-features"]
-qcow1 = ["disable-default-features"]
-qed = ["disable-default-features"]
-qga-vss = ["disable-default-features"]
-rbd = ["disable-default-features"]
-rdma = ["disable-default-features"]
-replication = ["disable-default-features"]
-sdl = ["disable-default-features"]
-sdl-image = ["disable-default-features"]
-seccomp = ["disable-default-features"]
-selinux = ["disable-default-features"]
-slirp = ["disable-default-features"]
-slirp-smbd = ["disable-default-features"]
-smartcard = ["disable-default-features"]
-snappy = ["disable-default-features"]
-sndio = ["disable-default-features"]
-sparse = ["disable-default-features"]
-spice = ["disable-default-features"]
-spice-protocol = ["disable-default-features"]
-tcg = ["disable-default-features"]
-tools = ["disable-default-features"]
-tpm = ["disable-default-features"]
-u2f = ["disable-default-features"]
-usb-redir = ["disable-default-features"]
-vde = ["disable-default-features"]
-vdi = ["disable-default-features"]
-vfio-user-server = ["disable-default-features"]
-vhost-crypto = ["disable-default-features"]
-vhost-kernel = ["disable-default-features"]
-vhost-net = ["disable-default-features"]
-vhost-user = ["disable-default-features"]
-vhost-user-blk-server = ["disable-default-features"]
-vduse-blk-export = ["disable-default-features"]
-vhost-vdpa = ["disable-default-features"]
-virglrenderer = ["disable-default-features"]
-virtfs = ["disable-default-features"]
-virtiofsd = ["disable-default-features"]
-vmnet = ["disable-default-features"]
-vnc = ["disable-default-features"]
-vnc-jpeg = ["disable-default-features"]
-vnc-sasl = ["disable-default-features"]
-vte = ["disable-default-features"]
-vvfat = ["disable-default-features"]
-whpx = ["disable-default-features"]
-xen = ["disable-default-features"]
-xen-pci-passthrough = ["disable-default-features"]
-xkbcommon = ["disable-default-features"]
-zstd = ["disable-default-features"]
-pie = ["disable-default-features"]
-modules = ["disable-default-features"]
-debug-tcg = ["disable-default-features"]
-debug-info = ["disable-default-features"]
-safe-stack = ["disable-default-features"]
-
-default = [
-    "default-target-options",
-    "default-negative-options",
-    "default-positive-options",
+[workspace]
+members = [
+    "qemu",
+    "binaries/qemu-aarch64",
+    "binaries/qemu-alpha",
+    "binaries/qemu-arm",
+    "binaries/qemu-armeb",
+    "binaries/qemu-cris",
+    "binaries/qemu-hexagon",
+    "binaries/qemu-hppa",
+    "binaries/qemu-i386",
+    "binaries/qemu-loongarch64",
+    "binaries/qemu-m68k",
+    "binaries/qemu-microblaze",
+    "binaries/qemu-microblazeel",
+    "binaries/qemu-mips",
+    "binaries/qemu-mips64",
+    "binaries/qemu-mips64el",
+    "binaries/qemu-mipsel",
+    "binaries/qemu-mipsn32",
+    "binaries/qemu-mipsn32el",
+    "binaries/qemu-nios2",
+    "binaries/qemu-or1k",
+    "binaries/qemu-ppc",
+    "binaries/qemu-ppc64",
+    "binaries/qemu-ppc64le",
+    "binaries/qemu-riscv32",
+    "binaries/qemu-riscv64",
+    "binaries/qemu-s390x",
+    "binaries/qemu-sh4",
+    "binaries/qemu-sh4eb",
+    "binaries/qemu-sparc",
+    "binaries/qemu-sparc32plus",
+    "binaries/qemu-sparc64",
+    "binaries/qemu-system-aarch64",
+    "binaries/qemu-system-alpha",
+    "binaries/qemu-system-arm",
+    "binaries/qemu-system-avr",
+    "binaries/qemu-system-cris",
+    "binaries/qemu-system-hppa",
+    "binaries/qemu-system-i386",
+    "binaries/qemu-system-loongarch64",
+    "binaries/qemu-system-m68k",
+    "binaries/qemu-system-microblaze",
+    "binaries/qemu-system-microblazeel",
+    "binaries/qemu-system-mips",
+    "binaries/qemu-system-mips64",
+    "binaries/qemu-system-mips64el",
+    "binaries/qemu-system-mipsel",
+    "binaries/qemu-system-nios2",
+    "binaries/qemu-system-or1k",
+    "binaries/qemu-system-ppc",
+    "binaries/qemu-system-ppc64",
+    "binaries/qemu-system-riscv32",
+    "binaries/qemu-system-riscv64",
+    "binaries/qemu-system-rx",
+    "binaries/qemu-system-s390x",
+    "binaries/qemu-system-sh4",
+    "binaries/qemu-system-sh4eb",
+    "binaries/qemu-system-sparc",
+    "binaries/qemu-system-sparc64",
+    "binaries/qemu-system-tricore",
+    "binaries/qemu-system-x86_64",
+    "binaries/qemu-system-xtensa",
+    "binaries/qemu-system-xtensaeb",
+    "binaries/qemu-x86_64",
+    "binaries/qemu-xtensa",
+    "binaries/qemu-xtensaeb",
 ]
