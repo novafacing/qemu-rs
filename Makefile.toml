@@ -68,17 +68,29 @@ script = '''
 use std::process::Command;
 use std::fs::read_dir;
 use std::path::PathBuf;
+use std::time::Duration;
+use std::thread::sleep;
 
 fn main() {
+    let throttle_limit = 25;
+    let mut count = 1;
     for dir in read_dir(PathBuf::from(".")).unwrap() {
         let dir = dir.unwrap();
         if dir.file_type().unwrap().is_dir() {
             let path = dir.path();
             Command::new("cargo")
                 .arg("publish")
+                .arg("--no-verify")
                 .current_dir(&path)
                 .status()
                 .unwrap();
+            count += 1;
+            if count >= throttle_limit {
+                println!("Published {} (sleeping 60s for ratelimit)", path.display());
+                sleep(Duration::from_secs(60));
+            } else {
+                println!("Published {}", path.display());
+            }
         }
     }
 }

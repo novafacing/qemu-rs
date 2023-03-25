@@ -1,6 +1,9 @@
 [package]
 name = "qemu-loongarch64"
-version = "0.1.2"
+version = "0.1.3"
+repository = "https://github.com/novafacing/qemu-rs.git"
+keywords = ["emulation", "qemu", "emulator"]
+categories = ["emulators"]
 edition = "2021"
 description = "QEMU binary installer for qemu-loongarch64"
 license = "MIT"
