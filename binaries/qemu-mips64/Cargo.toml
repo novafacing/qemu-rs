@@ -1,6 +1,6 @@
 [package]
 name = "qemu-mips64"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "QEMU binary installer for qemu-mips64"
 license = "MIT"

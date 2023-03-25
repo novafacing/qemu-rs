@@ -1,6 +1,6 @@
 [package]
 name = "qemu-x86_64"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "QEMU binary installer for qemu-x86_64"
 license = "MIT"
