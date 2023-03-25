@@ -69,7 +69,7 @@ license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-memfd-exec = "0.1.4"
+memfd-exec = "0.1.5"
 qemu = { version = "0.1.3", features = ["qemu-aarch64"] }
 ```
 
