@@ -693,9 +693,10 @@ fn main() {
     let qemu_build_path = outdir_path.join("build");
     let qemu_install_path = outdir_path.join("install");
 
-    let repo = match Repository::clone(QEMU_GIT_URL, &qemu_repo_path) {
-        Err(_) => Repository::open(&qemu_repo_path).expect("Failed to open repository"),
-        Ok(repo) => repo,
+    let repo = if !qemu_repo_path.exists() {
+        Repository::clone(QEMU_GIT_URL, &qemu_repo_path).expect("Failed to clone repository")
+    } else {
+        Repository::open(&qemu_repo_path).expect("Failed to open repository")
     };
 
     repo.checkout_head(Some(CheckoutBuilder::default().force()))
