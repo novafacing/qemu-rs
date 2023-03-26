@@ -728,77 +728,82 @@ fn main() {
         configure_prog, configure_args
     );
 
-    let output = Command::new(configure_prog)
-        .current_dir(&qemu_build_path)
-        .args(&configure_args)
-        .arg(
-            repo
-                .path()
-                .parent()
-                .expect("Could not find parent of repo path"),
-        )
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("Failed to run make install")
-        .wait_with_output()
-        .expect("Failed to wait for make install");
+    let building_docs = var("DOCS_RS").is_ok();
 
-    if !output.status.success() {
-        panic!(
-            "Failed to configure qemu:\nstdout:{}\nstderr:{}",
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr)
-        );
-    }
+    if !building_docs {
+        let output = Command::new(configure_prog)
+            .current_dir(&qemu_build_path)
+            .args(&configure_args)
+            .arg(
+                repo
+                    .path()
+                    .parent()
+                    .expect("Could not find parent of repo path"),
+            )
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("Failed to run make install")
+            .wait_with_output()
+            .expect("Failed to wait for make install");
 
-    let output = Command::new("make")
-        .current_dir(&qemu_build_path)
-        .arg("-j")
-        .arg(num_cpus::get().to_string())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("Failed to run make install")
-        .wait_with_output()
-        .expect("Failed to wait for make install");
+        if !output.status.success() {
+            panic!(
+                "Failed to configure qemu:\nstdout:{}\nstderr:{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
 
-    if !output.status.success() {
-        panic!(
-            "Failed to build qemu:\nstdout:{}\nstderr:{}",
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr)
-        );
-    }
+        let output = Command::new("make")
+            .current_dir(&qemu_build_path)
+            .arg("-j")
+            .arg(num_cpus::get().to_string())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("Failed to run make install")
+            .wait_with_output()
+            .expect("Failed to wait for make install");
 
-    let output = Command::new("make")
-        .current_dir(&qemu_build_path)
-        .arg("install")
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("Failed to run make install")
-        .wait_with_output()
-        .expect("Failed to wait for make install");
+        if !output.status.success() {
+            panic!(
+                "Failed to build qemu:\nstdout:{}\nstderr:{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
 
-    if !output.status.success() {
-        panic!(
-            "Failed to install qemu:\nstdout:{}\nstderr:{}",
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr)
-        );
-    }
 
-    let enabled_targets = get_target_list();
+        let output = Command::new("make")
+            .current_dir(&qemu_build_path)
+            .arg("install")
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("Failed to run make install")
+            .wait_with_output()
+            .expect("Failed to wait for make install");
 
-    for enabled_target in enabled_targets {
-        let target_name = match enabled_target.contains("softmmu") {
-            true => "qemu-system-".to_string() + &enabled_target.replace("-softmmu", ""),
-            false => "qemu-".to_string() + &enabled_target.replace("-linux-user", ""),
-        };
-        let target_bin = qemu_install_path.join("bin").join(&target_name);
-        if !target_bin.exists() {
-            panic!("Failed to build target {:?}", target_bin);
+        if !output.status.success() {
+            panic!(
+                "Failed to install qemu:\nstdout:{}\nstderr:{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+
+        let enabled_targets = get_target_list();
+
+        for enabled_target in enabled_targets {
+            let target_name = match enabled_target.contains("softmmu") {
+                true => "qemu-system-".to_string() + &enabled_target.replace("-softmmu", ""),
+                false => "qemu-".to_string() + &enabled_target.replace("-linux-user", ""),
+            };
+            let target_bin = qemu_install_path.join("bin").join(&target_name);
+            if !target_bin.exists() {
+                panic!("Failed to build target {:?}", target_bin);
+            }
         }
     }
 }

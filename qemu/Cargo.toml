@@ -1,6 +1,6 @@
 [package]
 name = "qemu"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 description = "QEMU binary and utility installer"
 license = "MIT"
