@@ -694,7 +694,29 @@ fn main() {
     let qemu_install_path = outdir_path.join("install");
 
     let repo = if !qemu_repo_path.exists() {
-        Repository::clone(QEMU_GIT_URL, &qemu_repo_path).expect("Failed to clone repository")
+        if let Ok(repo) = Repository::clone(QEMU_GIT_URL, &qemu_repo_path) {
+            repo
+        } else {
+            let output = Command::new("git")
+                .arg("clone")
+                .arg(QEMU_GIT_URL)
+                .arg(&qemu_repo_path)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("Failed to run git clone")
+            .wait_with_output()
+            .expect("Failed to wait for git clone");
+
+            if !output.status.success() {
+                panic!(
+                    "Failed to configure qemu:\nstdout:{}\nstderr:{}",
+                    String::from_utf8_lossy(&output.stdout),
+                    String::from_utf8_lossy(&output.stderr)
+                );
+            }
+            Repository::open(&qemu_repo_path).expect("Failed to open cli cloned repository")
+        }
     } else {
         Repository::open(&qemu_repo_path).expect("Failed to open repository")
     };
