@@ -8,7 +8,272 @@ repository = "https://github.com/novafacing/qemu-rs.git"
 keywords = ["emulation", "qemu", "emulator"]
 categories = ["emulators"]
 
-[dependencies]
+[[bin]]
+name = "qemu-aarch64"
+required-features = ["binaries", "aarch64-linux-user"]
+
+[[bin]]
+name = "qemu-aarch64_be"
+required-features = ["binaries", "aarch64_be-linux-user"]
+
+[[bin]]
+name = "qemu-alpha"
+required-features = ["binaries", "alpha-linux-user"]
+
+[[bin]]
+name = "qemu-arm"
+required-features = ["binaries", "arm-linux-user"]
+
+[[bin]]
+name = "qemu-armeb"
+required-features = ["binaries", "armeb-linux-user"]
+
+[[bin]]
+name = "qemu-cris"
+required-features = ["binaries", "cris-linux-user"]
+
+[[bin]]
+name = "qemu-hexagon"
+required-features = ["binaries", "hexagon-linux-user"]
+
+[[bin]]
+name = "qemu-hppa"
+required-features = ["binaries", "hppa-linux-user"]
+
+[[bin]]
+name = "qemu-i386"
+required-features = ["binaries", "i386-linux-user"]
+
+[[bin]]
+name = "qemu-loongarch64"
+required-features = ["binaries", "loongarch64-linux-user"]
+
+[[bin]]
+name = "qemu-m68k"
+required-features = ["binaries", "m68k-linux-user"]
+
+[[bin]]
+name = "qemu-microblaze"
+required-features = ["binaries", "microblaze-linux-user"]
+
+[[bin]]
+name = "qemu-microblazeel"
+required-features = ["binaries", "microblazeel-linux-user"]
+
+[[bin]]
+name = "qemu-mips"
+required-features = ["binaries", "mips-linux-user"]
+
+[[bin]]
+name = "qemu-mips64"
+required-features = ["binaries", "mips64-linux-user"]
+
+[[bin]]
+name = "qemu-mips64el"
+required-features = ["binaries", "mips64el-linux-user"]
+
+[[bin]]
+name = "qemu-mipsel"
+required-features = ["binaries", "mipsel-linux-user"]
+
+[[bin]]
+name = "qemu-mipsn32"
+required-features = ["binaries", "mipsn32-linux-user"]
+
+[[bin]]
+name = "qemu-mipsn32el"
+required-features = ["binaries", "mipsn32el-linux-user"]
+
+[[bin]]
+name = "qemu-nios2"
+required-features = ["binaries", "nios2-linux-user"]
+
+[[bin]]
+name = "qemu-or1k"
+required-features = ["binaries", "or1k-linux-user"]
+
+[[bin]]
+name = "qemu-ppc"
+required-features = ["binaries", "ppc-linux-user"]
+
+[[bin]]
+name = "qemu-ppc64"
+required-features = ["binaries", "ppc64-linux-user"]
+
+[[bin]]
+name = "qemu-ppc64le"
+required-features = ["binaries", "ppc64le-linux-user"]
+
+[[bin]]
+name = "qemu-riscv32"
+required-features = ["binaries", "riscv32-linux-user"]
+
+[[bin]]
+name = "qemu-riscv64"
+required-features = ["binaries", "riscv64-linux-user"]
+
+[[bin]]
+name = "qemu-s390x"
+required-features = ["binaries", "s390x-linux-user"]
+
+[[bin]]
+name = "qemu-sh4"
+required-features = ["binaries", "sh4-linux-user"]
+
+[[bin]]
+name = "qemu-sh4eb"
+required-features = ["binaries", "sh4eb-linux-user"]
+
+[[bin]]
+name = "qemu-sparc"
+required-features = ["binaries", "sparc-linux-user"]
+
+[[bin]]
+name = "qemu-sparc32plus"
+required-features = ["binaries", "sparc32plus-linux-user"]
+
+[[bin]]
+name = "qemu-sparc64"
+required-features = ["binaries", "sparc64-linux-user"]
+
+[[bin]]
+name = "qemu-x86_64"
+required-features = ["binaries", "x86_64-linux-user"]
+
+[[bin]]
+name = "qemu-xtensa"
+required-features = ["binaries", "xtensa-linux-user"]
+
+[[bin]]
+name = "qemu-xtensaeb"
+required-features = ["binaries", "xtensaeb-linux-user"]
+
+[[bin]]
+name = "qemu-system-aarch64"
+required-features = ["binaries", "aarch64-softmmu"]
+
+[[bin]]
+name = "qemu-system-alpha"
+required-features = ["binaries", "alpha-softmmu"]
+
+[[bin]]
+name = "qemu-system-arm"
+required-features = ["binaries", "arm-softmmu"]
+
+[[bin]]
+name = "qemu-system-avr"
+required-features = ["binaries", "avr-softmmu"]
+
+[[bin]]
+name = "qemu-system-cris"
+required-features = ["binaries", "cris-softmmu"]
+
+[[bin]]
+name = "qemu-system-hppa"
+required-features = ["binaries", "hppa-softmmu"]
+
+[[bin]]
+name = "qemu-system-i386"
+required-features = ["binaries", "i386-softmmu"]
+
+[[bin]]
+name = "qemu-system-loongarch64"
+required-features = ["binaries", "loongarch64-softmmu"]
+
+[[bin]]
+name = "qemu-system-m68k"
+required-features = ["binaries", "m68k-softmmu"]
+
+[[bin]]
+name = "qemu-system-microblaze"
+required-features = ["binaries", "microblaze-softmmu"]
+
+[[bin]]
+name = "qemu-system-microblazeel"
+required-features = ["binaries", "microblazeel-softmmu"]
+
+[[bin]]
+name = "qemu-system-mips"
+required-features = ["binaries", "mips-softmmu"]
+
+[[bin]]
+name = "qemu-system-mips64"
+required-features = ["binaries", "mips64-softmmu"]
+
+[[bin]]
+name = "qemu-system-mips64el"
+required-features = ["binaries", "mips64el-softmmu"]
+
+[[bin]]
+name = "qemu-system-mipsel"
+required-features = ["binaries", "mipsel-softmmu"]
+
+[[bin]]
+name = "qemu-system-nios2"
+required-features = ["binaries", "nios2-softmmu"]
+
+[[bin]]
+name = "qemu-system-or1k"
+required-features = ["binaries", "or1k-softmmu"]
+
+[[bin]]
+name = "qemu-system-ppc"
+required-features = ["binaries", "ppc-softmmu"]
+
+[[bin]]
+name = "qemu-system-ppc64"
+required-features = ["binaries", "ppc64-softmmu"]
+
+[[bin]]
+name = "qemu-system-riscv32"
+required-features = ["binaries", "riscv32-softmmu"]
+
+[[bin]]
+name = "qemu-system-riscv64"
+required-features = ["binaries", "riscv64-softmmu"]
+
+[[bin]]
+name = "qemu-system-rx"
+required-features = ["binaries", "rx-softmmu"]
+
+[[bin]]
+name = "qemu-system-s390x"
+required-features = ["binaries", "s390x-softmmu"]
+
+[[bin]]
+name = "qemu-system-sh4"
+required-features = ["binaries", "sh4-softmmu"]
+
+[[bin]]
+name = "qemu-system-sh4eb"
+required-features = ["binaries", "sh4eb-softmmu"]
+
+[[bin]]
+name = "qemu-system-sparc"
+required-features = ["binaries", "sparc-softmmu"]
+
+[[bin]]
+name = "qemu-system-sparc64"
+required-features = ["binaries", "sparc64-softmmu"]
+
+[[bin]]
+name = "qemu-system-tricore"
+required-features = ["binaries", "tricore-softmmu"]
+
+[[bin]]
+name = "qemu-system-x86_64"
+required-features = ["binaries", "x86_64-softmmu"]
+
+[[bin]]
+name = "qemu-system-xtensa"
+required-features = ["binaries", "xtensa-softmmu"]
+
+[[bin]]
+name = "qemu-system-xtensaeb"
+required-features = ["binaries", "xtensaeb-softmmu"]
+
+[target.'cfg(all(unix, target_os = "linux"))'.dependencies]
+memfd-exec = { version = "0.2.1", optional = true }
 
 [build-dependencies]
 anyhow = "1.0.75"
@@ -613,3 +878,5 @@ default = [
     "default-trace-backend",
     "default-coroutine-backend",
 ]
+
+binaries = ["dep:memfd-exec"]

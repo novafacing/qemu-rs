@@ -887,6 +887,10 @@ fn install(src: &Path) -> Result<()> {
 }
 
 fn main() -> Result<()> {
+    if var("DOCS_RS").is_ok() {
+        return Ok(());
+    }
+
     let out_dir = out_dir()?;
 
     if !out_dir.join(format!("qemu-{QEMU_VERSION}.tar.xz")).exists() {
