@@ -71,6 +71,10 @@
 //! ```
 
 #![deny(missing_docs)]
+#![cfg_attr(feature = "weak", feature(linkage))]
+
+#[cfg(feature = "weak")]
+mod weak;
 
 use crate::error::{Error, Result};
 use qemu_plugin_sys::{

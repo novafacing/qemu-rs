@@ -4,10 +4,19 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib"]
+name = "tracer"
+crate-type = ["cdylib", "lib"]
 
 [dependencies]
-qemu-plugin.workspace = true
+qemu = { workspace = true, features = ["plugins", "debug-info"] }
+qemu-plugin = { workspace = true, features = ["weak"] }
 anyhow = "1.0.75"
 ffi = "0.1.0"
 ctor = "0.2.6"
+tokio = { version = "1.35.0", features = ["full"] }
+rand = "0.8.5"
+serde_cbor = "0.11.2"
+clap = { version = "4.4.11", features = ["derive", "string"] }
+typed-builder = "0.18.0"
+serde = { version = "1.0.193", features = ["derive"] }
+memfd-exec = "0.2.1"
