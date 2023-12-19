@@ -10,6 +10,7 @@ system and user mode emulators and use them in your code.
   - [Dependencies](#dependencies)
     - [Install Required Dependencies on Ubuntu](#install-required-dependencies-on-ubuntu)
     - [Install Required Dependencies on Fedora](#install-required-dependencies-on-fedora)
+  - [Installation](#installation)
   - [Usage](#usage)
     - [Rust-executable wrapper for user emulator](#rust-executable-wrapper-for-user-emulator)
       - [Cargo.toml](#cargotoml)
@@ -41,6 +42,14 @@ $ sudo apt-get install git libglib2.0-dev libfdt-dev \
 ```sh
 $ sudo dnf install git glib2-devel libfdt-devel \
     pixman-devel zlib-devel bzip2 ninja-build python3
+```
+
+## Installation
+
+To install QEMU binaries (see feature flags for direction on customizing the build):
+
+```sh
+cargo install qemu --features=binaries,lto,plugins
 ```
 
 ## Usage

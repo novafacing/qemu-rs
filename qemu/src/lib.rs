@@ -20,6 +20,8 @@
 //! write it to disk and run it, or you can be very efficient and use something like
 //! [memfd-exec](https://crates.io/crates/memfd-exec) to run it from memory directly, or on
 //! a separate thread, whatever!
+//! 
+//! To install with binaries, `cargo install qemu --features=binaries,plugins,lto`
 
 pub const QEMU_VERSION: &str = "8.1.3";
 
