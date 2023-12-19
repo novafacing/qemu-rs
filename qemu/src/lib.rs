@@ -7,8 +7,7 @@
 //! to build a plugin-supported QEMU binary and distribute it directly along with your
 //! plugin as a rust crate.
 //!
-//! For very simple examples, see the crates named `qemu-<arch>` in this workspace, such as:
-//! * `qemu-x86_64`: https://crates.io/crates/qemu-x86_64
+//! For very simple examples, see the binariesnamed `qemu-<arch>` in this workspace.
 //!
 //! In addition, if you want to do wild stuff that "doesn't circumvent the GPL", you can build
 //! a debug binary, use something like [goblin](https://github.com/m4b/goblin) to figure out
@@ -16,278 +15,274 @@
 //! but you can do it, and it's a lot more efficient to just have the binary as bytes to
 //! do so.
 //!
-//! Why not just build executables? Well, good question. There are executables, but they are
-//! distributed as separate binary crates depending on this one. See the `qemu-<arch>` crates
-//! in this workspace for more information.
-//!
 //! To use, just configure your feature flags appropriately (see the README) and then use
-//! one of the `qemu_<arch>` functions here to obtain your binary. Then, you can either
+//! one of the `QEMU_<arch>` constants here to obtain your binary. Then, you can either
 //! write it to disk and run it, or you can be very efficient and use something like
 //! [memfd-exec](https://crates.io/crates/memfd-exec) to run it from memory directly, or on
 //! a separate thread, whatever!
 
 pub const QEMU_VERSION: &str = "8.1.3";
 
-#[cfg(feature = "aarch64-linux-user")]
+#[cfg(all(feature = "aarch64-linux-user", not(docsrs))]
 /// QEMU binary for qemu-aarch64
 pub const QEMU_AARCH64_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-aarch64"));
 
-#[cfg(feature = "aarch64_be-linux-user")]
+#[cfg(all(feature = "aarch64_be-linux-user", not(docsrs))]
 /// QEMU binary for qemu-aarch64_be
 pub const QEMU_AARCH64_BE_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-aarch64_be"));
 
-#[cfg(feature = "alpha-linux-user")]
+#[cfg(all(feature = "alpha-linux-user", not(docsrs))]
 /// QEMU binary for qemu-alpha
 pub const QEMU_ALPHA_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-alpha"));
 
-#[cfg(feature = "arm-linux-user")]
+#[cfg(all(feature = "arm-linux-user", not(docsrs))]
 /// QEMU binary for qemu-arm
 pub const QEMU_ARM_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-arm"));
 
-#[cfg(feature = "armeb-linux-user")]
+#[cfg(all(feature = "armeb-linux-user", not(docsrs))]
 /// QEMU binary for qemu-armeb
 pub const QEMU_ARMEB_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-armeb"));
 
-#[cfg(feature = "cris-linux-user")]
+#[cfg(all(feature = "cris-linux-user", not(docsrs))]
 /// QEMU binary for qemu-cris
 pub const QEMU_CRIS_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-cris"));
 
-#[cfg(feature = "hexagon-linux-user")]
+#[cfg(all(feature = "hexagon-linux-user", not(docsrs))]
 /// QEMU binary for qemu-hexagon
 pub const QEMU_HEXAGON_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-hexagon"));
 
-#[cfg(feature = "hppa-linux-user")]
+#[cfg(all(feature = "hppa-linux-user", not(docsrs))]
 /// QEMU binary for qemu-hppa
 pub const QEMU_HPPA_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-hppa"));
 
-#[cfg(feature = "i386-linux-user")]
+#[cfg(all(feature = "i386-linux-user", not(docsrs))]
 /// QEMU binary for qemu-i386
 pub const QEMU_I386_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-i386"));
 
-#[cfg(feature = "loongarch64-linux-user")]
+#[cfg(all(feature = "loongarch64-linux-user", not(docsrs))]
 /// QEMU binary for qemu-loongarch64
 pub const QEMU_LOONGARCH64_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-loongarch64"));
 
-#[cfg(feature = "m68k-linux-user")]
+#[cfg(all(feature = "m68k-linux-user", not(docsrs))]
 /// QEMU binary for qemu-m68k
 pub const QEMU_M68K_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-m68k"));
 
-#[cfg(feature = "microblaze-linux-user")]
+#[cfg(all(feature = "microblaze-linux-user", not(docsrs))]
 /// QEMU binary for qemu-microblaze
 pub const QEMU_MICROBLAZE_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-microblaze"));
 
-#[cfg(feature = "microblazeel-linux-user")]
+#[cfg(all(feature = "microblazeel-linux-user", not(docsrs))]
 /// QEMU binary for qemu-microblazeel
 pub const QEMU_MICROBLAZEEL_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-microblazeel"));
 
-#[cfg(feature = "mips-linux-user")]
+#[cfg(all(feature = "mips-linux-user", not(docsrs))]
 /// QEMU binary for qemu-mips
 pub const QEMU_MIPS_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-mips"));
 
-#[cfg(feature = "mips64-linux-user")]
+#[cfg(all(feature = "mips64-linux-user", not(docsrs))]
 /// QEMU binary for qemu-mips64
 pub const QEMU_MIPS64_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-mips64"));
 
-#[cfg(feature = "mips64el-linux-user")]
+#[cfg(all(feature = "mips64el-linux-user", not(docsrs))]
 /// QEMU binary for qemu-mips64el
 pub const QEMU_MIPS64EL_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-mips64el"));
 
-#[cfg(feature = "mipsel-linux-user")]
+#[cfg(all(feature = "mipsel-linux-user", not(docsrs))]
 /// QEMU binary for qemu-mipsel
 pub const QEMU_MIPSEL_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-mipsel"));
 
-#[cfg(feature = "mipsn32-linux-user")]
+#[cfg(all(feature = "mipsn32-linux-user", not(docsrs))]
 /// QEMU binary for qemu-mipsn32
 pub const QEMU_MIPSN32_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-mipsn32"));
 
-#[cfg(feature = "mipsn32el-linux-user")]
+#[cfg(all(feature = "mipsn32el-linux-user", not(docsrs))]
 /// QEMU binary for qemu-mipsn32el
 pub const QEMU_MIPSN32EL_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-mipsn32el"));
 
-#[cfg(feature = "nios2-linux-user")]
+#[cfg(all(feature = "nios2-linux-user", not(docsrs))]
 /// QEMU binary for qemu-nios2
 pub const QEMU_NIOS2_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-nios2"));
 
-#[cfg(feature = "or1k-linux-user")]
+#[cfg(all(feature = "or1k-linux-user", not(docsrs))]
 /// QEMU binary for qemu-or1k
 pub const QEMU_OR1K_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-or1k"));
 
-#[cfg(feature = "ppc-linux-user")]
+#[cfg(all(feature = "ppc-linux-user", not(docsrs))]
 /// QEMU binary for qemu-ppc
 pub const QEMU_PPC_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-ppc"));
 
-#[cfg(feature = "ppc64-linux-user")]
+#[cfg(all(feature = "ppc64-linux-user", not(docsrs))]
 /// QEMU binary for qemu-ppc64
 pub const QEMU_PPC64_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-ppc64"));
 
-#[cfg(feature = "ppc64le-linux-user")]
+#[cfg(all(feature = "ppc64le-linux-user", not(docsrs))]
 /// QEMU binary for qemu-ppc64le
 pub const QEMU_PPC64LE_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-ppc64le"));
 
-#[cfg(feature = "riscv32-linux-user")]
+#[cfg(all(feature = "riscv32-linux-user", not(docsrs))]
 /// QEMU binary for qemu-riscv32
 pub const QEMU_RISCV32_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-riscv32"));
 
-#[cfg(feature = "riscv64-linux-user")]
+#[cfg(all(feature = "riscv64-linux-user", not(docsrs))]
 /// QEMU binary for qemu-riscv64
 pub const QEMU_RISCV64_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-riscv64"));
 
-#[cfg(feature = "s390x-linux-user")]
+#[cfg(all(feature = "s390x-linux-user", not(docsrs))]
 /// QEMU binary for qemu-s390x
 pub const QEMU_S390X_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-s390x"));
 
-#[cfg(feature = "sh4-linux-user")]
+#[cfg(all(feature = "sh4-linux-user", not(docsrs))]
 /// QEMU binary for qemu-sh4
 pub const QEMU_SH4_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-sh4"));
 
-#[cfg(feature = "sh4eb-linux-user")]
+#[cfg(all(feature = "sh4eb-linux-user", not(docsrs))]
 /// QEMU binary for qemu-sh4eb
 pub const QEMU_SH4EB_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-sh4eb"));
 
-#[cfg(feature = "sparc-linux-user")]
+#[cfg(all(feature = "sparc-linux-user", not(docsrs))]
 /// QEMU binary for qemu-sparc
 pub const QEMU_SPARC_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-sparc"));
 
-#[cfg(feature = "sparc32plus-linux-user")]
+#[cfg(all(feature = "sparc32plus-linux-user", not(docsrs))]
 /// QEMU binary for qemu-sparc32plus
 pub const QEMU_SPARC32PLUS_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-sparc32plus"));
 
-#[cfg(feature = "sparc64-linux-user")]
+#[cfg(all(feature = "sparc64-linux-user", not(docsrs))]
 /// QEMU binary for qemu-sparc64
 pub const QEMU_SPARC64_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-sparc64"));
 
-#[cfg(feature = "x86_64-linux-user")]
+#[cfg(all(feature = "x86_64-linux-user", not(docsrs))]
 /// QEMU binary for qemu-x86_64
 pub const QEMU_X86_64_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-x86_64"));
 
-#[cfg(feature = "xtensa-linux-user")]
+#[cfg(all(feature = "xtensa-linux-user", not(docsrs))]
 /// QEMU binary for qemu-xtensa
 pub const QEMU_XTENSA_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-xtensa"));
 
-#[cfg(feature = "xtensaeb-linux-user")]
+#[cfg(all(feature = "xtensaeb-linux-user", not(docsrs))]
 /// QEMU binary for qemu-xtensaeb
 pub const QEMU_XTENSAEB_LINUX_USER: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-xtensaeb"));
 
-#[cfg(feature = "aarch64-softmmu")]
+#[cfg(all(feature = "aarch64-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-aarch64
 pub const QEMU_AARCH64_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-aarch64"));
 
-#[cfg(feature = "alpha-softmmu")]
+#[cfg(all(feature = "alpha-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-alpha
 pub const QEMU_ALPHA_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-alpha"));
 
-#[cfg(feature = "arm-softmmu")]
+#[cfg(all(feature = "arm-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-arm
 pub const QEMU_ARM_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-arm"));
 
-#[cfg(feature = "avr-softmmu")]
+#[cfg(all(feature = "avr-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-avr
 pub const QEMU_AVR_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-avr"));
 
-#[cfg(feature = "cris-softmmu")]
+#[cfg(all(feature = "cris-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-cris
 pub const QEMU_CRIS_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-cris"));
 
-#[cfg(feature = "hppa-softmmu")]
+#[cfg(all(feature = "hppa-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-hppa
 pub const QEMU_HPPA_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-hppa"));
 
-#[cfg(feature = "i386-softmmu")]
+#[cfg(all(feature = "i386-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-i386
 pub const QEMU_I386_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-i386"));
 
-#[cfg(feature = "loongarch64-softmmu")]
+#[cfg(all(feature = "loongarch64-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-loongarch64
 pub const QEMU_LOONGARCH64_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-loongarch64"));
 
-#[cfg(feature = "m68k-softmmu")]
+#[cfg(all(feature = "m68k-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-m68k
 pub const QEMU_M68K_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-m68k"));
 
-#[cfg(feature = "microblaze-softmmu")]
+#[cfg(all(feature = "microblaze-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-microblaze
 pub const QEMU_MICROBLAZE_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-microblaze"));
 
-#[cfg(feature = "microblazeel-softmmu")]
+#[cfg(all(feature = "microblazeel-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-microblazeel
 pub const QEMU_MICROBLAZEEL_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-microblazeel"));
 
-#[cfg(feature = "mips-softmmu")]
+#[cfg(all(feature = "mips-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-mips
 pub const QEMU_MIPS_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-mips"));
 
-#[cfg(feature = "mips64-softmmu")]
+#[cfg(all(feature = "mips64-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-mips64
 pub const QEMU_MIPS64_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-mips64"));
 
-#[cfg(feature = "mips64el-softmmu")]
+#[cfg(all(feature = "mips64el-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-mips64el
 pub const QEMU_MIPS64EL_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-mips64el"));
 
-#[cfg(feature = "mipsel-softmmu")]
+#[cfg(all(feature = "mipsel-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-mipsel
 pub const QEMU_MIPSEL_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-mipsel"));
 
-#[cfg(feature = "nios2-softmmu")]
+#[cfg(all(feature = "nios2-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-nios2
 pub const QEMU_NIOS2_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-nios2"));
 
-#[cfg(feature = "or1k-softmmu")]
+#[cfg(all(feature = "or1k-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-or1k
 pub const QEMU_OR1K_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-or1k"));
 
-#[cfg(feature = "ppc-softmmu")]
+#[cfg(all(feature = "ppc-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-ppc
 pub const QEMU_PPC_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-ppc"));
 
-#[cfg(feature = "ppc64-softmmu")]
+#[cfg(all(feature = "ppc64-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-ppc64
 pub const QEMU_PPC64_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-ppc64"));
 
-#[cfg(feature = "riscv32-softmmu")]
+#[cfg(all(feature = "riscv32-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-riscv32
 pub const QEMU_RISCV32_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-riscv32"));
 
-#[cfg(feature = "riscv64-softmmu")]
+#[cfg(all(feature = "riscv64-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-riscv64
 pub const QEMU_RISCV64_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-riscv64"));
 
-#[cfg(feature = "rx-softmmu")]
+#[cfg(all(feature = "rx-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-rx
 pub const QEMU_RX_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-rx"));
 
-#[cfg(feature = "s390x-softmmu")]
+#[cfg(all(feature = "s390x-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-s390x
 pub const QEMU_S390X_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-s390x"));
 
-#[cfg(feature = "sh4-softmmu")]
+#[cfg(all(feature = "sh4-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-sh4
 pub const QEMU_SH4_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-sh4"));
 
-#[cfg(feature = "sh4eb-softmmu")]
+#[cfg(all(feature = "sh4eb-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-sh4eb
 pub const QEMU_SH4EB_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-sh4eb"));
 
-#[cfg(feature = "sparc-softmmu")]
+#[cfg(all(feature = "sparc-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-sparc
 pub const QEMU_SPARC_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-sparc"));
 
-#[cfg(feature = "sparc64-softmmu")]
+#[cfg(all(feature = "sparc64-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-sparc64
 pub const QEMU_SPARC64_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-sparc64"));
 
-#[cfg(feature = "tricore-softmmu")]
+#[cfg(all(feature = "tricore-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-tricore
 pub const QEMU_TRICORE_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-tricore"));
 
-#[cfg(feature = "x86_64-softmmu")]
+#[cfg(all(feature = "x86_64-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-x86_64
 pub const QEMU_X86_64_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-x86_64"));
 
-#[cfg(feature = "xtensa-softmmu")]
+#[cfg(all(feature = "xtensa-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-xtensa
 pub const QEMU_XTENSA_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-xtensa"));
 
-#[cfg(feature = "xtensaeb-softmmu")]
+#[cfg(all(feature = "xtensaeb-softmmu", not(docsrs))]
 /// QEMU binary for qemu-system-xtensaeb
 pub const QEMU_XTENSAEB_SOFTMMU: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/qemu/bin/qemu-system-xtensaeb"));

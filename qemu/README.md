@@ -17,7 +17,6 @@ system and user mode emulators and use them in your code.
     - [Just install qemu-x86\_64 usermode emulator with default options](#just-install-qemu-x86_64-usermode-emulator-with-default-options)
     - [Install an optimized qemu-x86\_64 usermode emulator](#install-an-optimized-qemu-x86_64-usermode-emulator)
     - [Install qemu-system-arm emulator with customized options](#install-qemu-system-arm-emulator-with-customized-options)
-  - [Important Note](#important-note)
   - [Contributing](#contributing)
 
 ## Dependencies
@@ -69,18 +68,18 @@ license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-memfd-exec = "0.1.5"
-qemu = { version = "0.1.7", features = ["qemu-aarch64"] }
+memfd-exec = "2.1.0"
+qemu = { version = "8.1.3", features = ["qemu-aarch64"] }
 ```
 
 ```rust
 use memfd_exec::{MemFdExecutable, Stdio};
-use qemu::qemu_aarch64;
+use qemu::QEMU_AARCH64_LINUX_USEr;
 
 use std::env::args;
 
 fn main() {
-    let qemu = qemu_aarch64();
+    let qemu = QEMU_AARCH64_LINUX_USEr;
     let mut args: Vec<String> = args().collect();
     args.remove(0);
     MemFdExecutable::new("qemu-aarch64", qemu)
@@ -107,7 +106,7 @@ to configure this crate as a dependency:
 This will make the `qemu-x86_64` binary available.
 
 ```toml
-qemu = { version = "0.1.4", features = ["qemu-x86_64"] }
+qemu = { version = "8.1.3", features = ["qemu-x86_64"] }
 ```
 
 ### Install an optimized qemu-x86_64 usermode emulator
@@ -116,58 +115,16 @@ This will also make the `qemu-x86_64` binary available, but will strip and optim
 with `lto`.
 
 ```toml
-qemu = { version = "0.1.4", features = ["qemu-x86_64", "optimized"]
+qemu = { version = "8.1.3", features = ["qemu-x86_64", "lto", "strip"]
 ```
 
 ### Install qemu-system-arm emulator with customized options
 
-We now selectively opt in to features. These options implicitly set
-"disable-default-features", and enabling *any* of them requires you
-to opt in to all features you need. Use this only if you really need
-it! These are all enabled by default if they are available anyway! See
-the [qemu documentation](https://www.qemu.org/docs/master/devel/build-system.html#stage-1-configure)
+We can also selectively opt in to features.  Use this only if you really need it! These
+are all enabled by default if they are available anyway! See the [qemu
+documentation](https://www.qemu.org/docs/master/devel/build-system.html#stage-1-configure)
 about configure options for more details.
-
-```toml
-qemu = {
-    version = "0.1.4",
-    default-features = false,
-    features = [
-        # Specify just one target we want
-        "qemu-system-x86_64",
-        # Specify compile options
-        "stack-protector",
-        "coroutine-pool",
-        "install-blobs",
-        "werror",
-        "lto",
-        "strip",
-        "debug",
-        # These are default-on options that we have disabled and are now
-        # selectively enabling
-        "blkio",
-        "bpf",
-        "cap-ng",
-        "capstone",
-        "curl",
-        "curses",
-        "fuse",
-        "fuse-lseek",
-        "kvm",
-    ]
-}
-```
-
-## Important Note
-
-Due to [bugs](https://github.com/rust-lang/rust/pull/103812)
-[in](https://github.com/rust-lang/rust/issues/103979) [rustc](https://github.com/rust-lang/rust/issues/65818)
-this crate does *nothing* with the default feature flags. This will be changed once `103812`
-is merged, but for now this crate will cause a `rustc` crash if installed with *all*
-targets enabled.
 
 ## Contributing
 
-If you notice the binary distributions contain out of date dependencies on, for example,
-`memfd-exec`, please run `cargo make update-binary-deps` to update dependencies for all
-of them and PR the resulting diff. Contributions are welcome for any reason!
+Contributions are welcome for any reason!

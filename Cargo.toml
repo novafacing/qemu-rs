@@ -8,7 +8,7 @@ license = "GPL-2.0-only"
 publish = true
 readme = "README.md"
 repository = "https://github.com/novafacing/qemu-rs"
-version = "8.1.3-v1"
+version = "8.1.3-v2"
 
 [workspace]
 resolver = "2"
