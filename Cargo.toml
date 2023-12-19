@@ -20,6 +20,6 @@ members = [
 ]
 
 [workspace.dependencies]
-qemu-plugin-sys = { path = "qemu-plugin-sys" }
-qemu-plugin = { path = "qemu-plugin" }
+qemu-plugin-sys = { version = "8.1.3-v2", path = "qemu-plugin-sys" }
+qemu-plugin = { version = "8.1.3-v2", path = "qemu-plugin" }
 qemu = { path = "qemu" }
