@@ -1,0 +1,10 @@
+[package]
+name = "qemu-plugin"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.75"
+once_cell = "1.19.0"
+qemu-plugin-sys = { workspace = true }
+thiserror = "1.0.51"

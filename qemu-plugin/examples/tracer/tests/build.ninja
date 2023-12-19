@@ -1,0 +1,4 @@
+rule cc
+    command = clang -fuse-ld=lld -target aarch64-unknown-linux-gnu -o $out $in
+
+build test-aarch64: cc test.c

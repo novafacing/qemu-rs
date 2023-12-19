@@ -1,0 +1,13 @@
+[package]
+name = "tracer"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+qemu-plugin.workspace = true
+anyhow = "1.0.75"
+ffi = "0.1.0"
+ctor = "0.2.6"
