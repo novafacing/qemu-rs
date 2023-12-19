@@ -1,13 +1,25 @@
+#!/usr/bin/env -S cargo +nightly -Z script
+
+//! ```cargo
+//! [dependencies]
+//! anyhow = "*"
+//! bindgen = "*"
+//! cargo_metadata = "*"
+//! reqwest = { version = "*", features = ["blocking"] }
+//! tar = "*"
+//! xz2 = "*"
+//! ```
+
 use anyhow::{anyhow, Result};
 use bindgen::{
     builder, AliasVariation, EnumVariation, FieldVisibilityKind, MacroTypeVariation,
     NonCopyUnionStyle,
 };
+use cargo_metadata::MetadataCommand;
 use reqwest::blocking::get;
 use std::{
-    env::var,
-    fs::{File, OpenOptions},
-    path::{Path, PathBuf},
+    fs::{File, OpenOptions, create_dir_all},
+    path::Path,
 };
 use tar::Archive;
 use xz2::read::XzDecoder;
@@ -17,12 +29,6 @@ const QEMU_VERSION: &str = "8.1.3";
 
 fn qemu_src_url() -> String {
     format!("{}qemu-{}.tar.xz", QEMU_SRC_URL_BASE, QEMU_VERSION)
-}
-
-fn out_dir() -> Result<PathBuf> {
-    Ok(PathBuf::from(
-        var("OUT_DIR").map_err(|e| anyhow!("OUT_DIR not set: {e}"))?,
-    ))
 }
 
 /// Download a URL to a destination, using a blocking request
@@ -95,32 +101,51 @@ fn generate_bindings(qemu_plugin_header: &Path, destination: &Path) -> Result<()
 }
 
 fn main() -> Result<()> {
-    let out_dir = out_dir()?;
+    let metadata = MetadataCommand::new()
+        .no_deps()
+        .exec()?;
 
-    if !out_dir.join(format!("qemu-{QEMU_VERSION}.tar.xz")).exists() {
+    let package = metadata.packages.iter()
+        .find(|p| p.name == "qemu-plugin-sys")
+        .ok_or_else(|| anyhow!("Failed to find package"))?;
+
+    let out_dir = package.manifest_path.parent()
+        .ok_or_else(|| anyhow!("Failed to get manifest path"))?
+        .join("src")
+        .into_std_path_buf();
+
+    println!("out_dir: {:?}", out_dir);
+
+    let tmp_dir = metadata.target_directory.join("tmp").into_std_path_buf();
+
+    if !tmp_dir.exists() {
+        create_dir_all(&tmp_dir)?;
+    }
+
+    let src_archive = tmp_dir.join(format!("qemu-{}.tar.xz", QEMU_VERSION));
+    let src_dir = tmp_dir.join(format!("qemu-{}", QEMU_VERSION));
+
+    if !src_archive.exists() {
         download(
             &qemu_src_url(),
-            &out_dir.join(format!("qemu-{QEMU_VERSION}.tar.xz")),
+            &src_archive,
         )?;
     }
 
-    if !out_dir.join(format!("qemu-{QEMU_VERSION}")).exists() {
+    if !src_dir.exists() {
         extract_txz(
-            &out_dir.join(format!("qemu-{QEMU_VERSION}.tar.xz")),
-            &out_dir.join(format!("qemu-{QEMU_VERSION}")),
+            &src_archive,
+            &src_dir,
         )?;
     }
 
     generate_bindings(
-        &out_dir
-            .join(format!("qemu-{QEMU_VERSION}"))
+        &src_dir
             .join("include")
             .join("qemu")
             .join("qemu-plugin.h"),
         &out_dir.join("bindings.rs"),
     )?;
-
-    println!("cargo:rerun-if-changed=build.rs");
 
     Ok(())
 }
