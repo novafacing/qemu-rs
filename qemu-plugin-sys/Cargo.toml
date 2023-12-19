@@ -10,13 +10,3 @@ publish.workspace = true
 readme.workspace = true
 repository.workspace = true
 version.workspace = true
-
-[build-dependencies]
-anyhow = "1.0.75"
-bindgen = "0.69.1"
-reqwest = { version = "0.11.22", features = [
-    "rustls-tls",
-    "blocking",
-], default-features = false }
-tar = "0.4.40"
-xz2 = "0.1.7"
