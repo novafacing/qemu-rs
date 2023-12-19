@@ -4,6 +4,7 @@ use memfd_exec::{MemFdExecutable, Stdio};
 use qemu::QEMU_X86_64_LINUX_USER;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde_cbor::Deserializer;
+use serde_json::to_string;
 use std::{
     fs::OpenOptions,
     io::{stdout, BufRead, BufReader, Write},
@@ -192,7 +193,8 @@ where
     let it = Deserializer::from_reader(&mut stream).into_iter::<Event>();
 
     for event in it {
-        outfile_stream.write_all(format!("{:?}\n", event?).as_bytes())?;
+        outfile_stream.write(to_string(&event?)?.as_bytes())?;
+        outfile_stream.write(b"\n")?;
     }
 
     Ok(())
