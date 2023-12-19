@@ -1,3 +1,15 @@
+[workspace.package]
+authors = ["Rowan Hart <rowanbhart@gmail.com>"]
+categories = ["virtualization", "emulator", "qemu"]
+description = "Rust bindings and binary installers for QEMU"
+edition = "2021"
+homepage = "https://github.com/novafacing/qemu-rs"
+license = "GPL-2.0-only"
+publish = true
+readme = "README.md"
+repository = "https://github.com/novafacing/qemu-rs"
+version = "8.1.3-v1"
+
 [workspace]
 resolver = "2"
 members = [
