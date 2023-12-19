@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install QEMU Build Dependencies
+        run: |
+          sudo apt-get -y install git libglib2.0-dev libfdt-dev \
+            libpixman-1-dev zlib1g-dev ninja-build
+      - uses: actions/checkout@v3
+      - name: Build
+        run: cargo build --verbose --features=binaries,plugins,lto
