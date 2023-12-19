@@ -11,9 +11,6 @@ readme.workspace = true
 repository.workspace = true
 version.workspace = true
 
-[package.metadata.docs.rs]
-rustc-args = ["--cfg", "docsrs"]
-
 [[bin]]
 name = "qemu-aarch64"
 required-features = ["binaries", "aarch64-linux-user"]

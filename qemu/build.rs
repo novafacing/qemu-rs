@@ -888,6 +888,7 @@ fn install(build: &Path) -> Result<()> {
 
 fn main() -> Result<()> {
     if var("DOCS_RS").is_ok() {
+        println!("cargo:rustc-cfg=docs_rs");
         return Ok(());
     }
 

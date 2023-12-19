@@ -189,7 +189,7 @@ pub unsafe extern "C" fn qemu_plugin_install(
     };
 
     plugin
-        .register(id, &args, &info)
+        .register_default(id, &args, &info)
         .expect("Failed to register plugin");
 
     PLUGIN_INSTALL_SUCCESS
