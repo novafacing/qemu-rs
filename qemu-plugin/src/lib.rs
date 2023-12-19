@@ -22,10 +22,6 @@
 //! impl Register for TinyTrace {}
 //!
 //! impl HasCallbacks for TinyTrace {
-//!     fn has_translation_block_translate(&mut self) -> bool {
-//!         true
-//!     }
-//!
 //!     fn on_translation_block_translate(
 //!         &mut self,
 //!         _id: PluginId,
@@ -55,6 +51,26 @@
 //! }
 //! ```
 //!
+//! The above `src/lib.rs` in a Cargo project with the following `Cargo.toml` will compile to
+//! `libtiny.so`, which can be loaded in QEMU by running `qemu-system-ARCH -plugin ./libtiny.so`.
+//!
+//! ```toml
+//! [package]
+//! name = "tiny"
+//! version = "0.1.0"
+//! edition = "2021"
+//!
+//! [lib]
+//! crate-type = ["cdylib"]
+//!
+//! [dependencies]
+//! qemu-plugin = "8.1.3-v1"
+//! anyhow = "1.0.75"
+//! ffi = "0.1.0"
+//! ctor = "0.2.6"
+//! ```
+
+#![deny(missing_docs)]
 
 use crate::error::{Error, Result};
 use qemu_plugin_sys::{
@@ -80,8 +96,13 @@ extern "C" {
     fn g_free(mem: *mut c_void);
 }
 
+/// The index of a vCPU
 pub type VCPUIndex = c_uint;
+/// Flags for callbacks
 pub type CallbackFlags = qemu_plugin_cb_flags;
+/// Memory read/write flags
+pub type MemRW = qemu_plugin_mem_rw;
+/// A plugin ID
 pub type PluginId = qemu_plugin_id_t;
 
 /// A callback that can be called many times, each time a vCPU is initialized
@@ -233,13 +254,14 @@ impl<'a> TranslationBlock<'a> {
                 self.translation_block as *mut qemu_plugin_tb,
                 Some(handle_qemu_plugin_register_vcpu_tb_exec_cb::<F>),
                 // NOTE: Not checked, and is an error to specify any other value
-                qemu_plugin_cb_flags::QEMU_PLUGIN_CB_NO_REGS,
+                CallbackFlags::QEMU_PLUGIN_CB_NO_REGS,
                 userdata,
             )
         };
     }
 }
 
+/// An iterator over the instructions of a translation block
 pub struct TranslationBlockIterator<'a> {
     tb: &'a TranslationBlock<'a>,
     index: usize,
@@ -366,13 +388,19 @@ impl<'a> Instruction<'a> {
                 self.instruction as *mut qemu_plugin_insn,
                 Some(handle_qemu_plugin_register_vcpu_insn_exec_cb::<F>),
                 // NOTE: Not checked, and is an error to specify any other value
-                qemu_plugin_cb_flags::QEMU_PLUGIN_CB_NO_REGS,
+                CallbackFlags::QEMU_PLUGIN_CB_NO_REGS,
                 userdata,
             )
         };
     }
 
-    pub fn register_memory_access_callback<F>(&self, cb: F, rw: qemu_plugin_mem_rw)
+    /// Register a callback to be run on memory access of this instruction
+    ///
+    /// # Arguments
+    ///
+    /// - `cb`: The callback to be run
+    /// - `rw`: The type of memory access to trigger the callback on
+    pub fn register_memory_access_callback<F>(&self, cb: F, rw: MemRW)
     where
         F: FnMut(VCPUIndex, MemoryInfo, u64) + Send + Sync + 'static,
     {
@@ -384,7 +412,7 @@ impl<'a> Instruction<'a> {
             crate::sys::qemu_plugin_register_vcpu_mem_cb(
                 self.instruction as *mut qemu_plugin_insn,
                 Some(handle_qemu_plugin_register_vcpu_mem_cb::<F>),
-                qemu_plugin_cb_flags::QEMU_PLUGIN_CB_NO_REGS,
+                CallbackFlags::QEMU_PLUGIN_CB_NO_REGS,
                 rw,
                 userdata,
             )
@@ -743,7 +771,7 @@ extern "C" fn handle_qemu_plugin_register_vcpu_mem_cb<F>(
 /// - `insn`: The instruction handle to register the callback for
 /// - `cb`: The callback to be called
 /// - `rw`: Whether the callback should be called for reads, writes, or both
-pub fn qemu_plugin_register_vcpu_mem_cb<F>(insn: Instruction, cb: F, rw: qemu_plugin_mem_rw)
+pub fn qemu_plugin_register_vcpu_mem_cb<F>(insn: Instruction, cb: F, rw: MemRW)
 where
     F: FnMut(VCPUIndex, MemoryInfo, u64) + Send + Sync + 'static,
 {

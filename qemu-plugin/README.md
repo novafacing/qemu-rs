@@ -1,3 +1,15 @@
+# QEMU-PLUGIN
+
+High level idiomatic Rust bindings to the QEMU Plugin API, including tools to build
+QEMU plugins in Rust.
+
+## Example
+
+Below is a minimal plugin example for a plugin which prints the execution trace of the
+program running in QEMU. Notice that all we do is register a struct which implements
+`Plugin` in a library constructor, and the library takes care of the rest.
+
+```rust,ignore
 use anyhow::Result;
 use ctor::ctor;
 use qemu_plugin::{
@@ -38,3 +50,23 @@ fn init() {
         .map_err(|_| anyhow::anyhow!("Failed to set plugin"))
         .expect("Failed to set plugin");
 }
+```
+
+The above `src/lib.rs` in a Cargo project with the following `Cargo.toml` will compile to
+`libtiny.so`, which can be loaded in QEMU by running `qemu-system-ARCH -plugin ./libtiny.so`.
+
+```toml
+[package]
+name = "tiny"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+qemu-plugin = "8.1.3-v1"
+anyhow = "1.0.75"
+ffi = "0.1.0"
+ctor = "0.2.6"
+```

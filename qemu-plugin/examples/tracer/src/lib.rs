@@ -13,7 +13,7 @@ struct Tracer {
 }
 
 impl Register for Tracer {
-    fn register_custom(&mut self, id: PluginId, _args: &Args, _info: &Info) -> Result<()> {
+    fn register(&mut self, id: PluginId, _args: &Args, _info: &Info) -> Result<()> {
         let tbs = self.tbs.clone();
         let insns = self.insns.clone();
 
@@ -27,10 +27,6 @@ impl Register for Tracer {
 }
 
 impl HasCallbacks for Tracer {
-    fn has_translation_block_translate(&mut self) -> bool {
-        true
-    }
-
     fn on_translation_block_translate(
         &mut self,
         _id: PluginId,

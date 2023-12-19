@@ -1,19 +1,19 @@
+//! Traits and helpers enabling idiomatic QEMU plugin implementation
+
 use std::sync::{Mutex, OnceLock};
 
 use crate::{
     install::{Args, Info},
-    sys::{qemu_plugin_id_t, qemu_plugin_tb},
-    TranslationBlock, VCPUIndex,
+    PluginId, TranslationBlock, VCPUIndex,
 };
 use crate::{
-    qemu_plugin_register_atexit_cb, qemu_plugin_register_flush_cb,
-    qemu_plugin_register_vcpu_exit_cb, qemu_plugin_register_vcpu_idle_cb,
-    qemu_plugin_register_vcpu_init_cb, qemu_plugin_register_vcpu_resume_cb,
-    qemu_plugin_register_vcpu_syscall_cb, qemu_plugin_register_vcpu_syscall_ret_cb,
-    qemu_plugin_register_vcpu_tb_trans_cb,
+    qemu_plugin_register_flush_cb, qemu_plugin_register_vcpu_exit_cb,
+    qemu_plugin_register_vcpu_idle_cb, qemu_plugin_register_vcpu_init_cb,
+    qemu_plugin_register_vcpu_resume_cb, qemu_plugin_register_vcpu_syscall_cb,
+    qemu_plugin_register_vcpu_syscall_ret_cb, qemu_plugin_register_vcpu_tb_trans_cb,
 };
 
-extern "C" fn handle_qemu_plugin_register_vcpu_init_cb(id: qemu_plugin_id_t, vcpu_id: VCPUIndex) {
+extern "C" fn handle_qemu_plugin_register_vcpu_init_cb(id: PluginId, vcpu_id: VCPUIndex) {
     let Some(plugin) = PLUGIN.get() else {
         panic!("Plugin not set");
     };
@@ -27,7 +27,7 @@ extern "C" fn handle_qemu_plugin_register_vcpu_init_cb(id: qemu_plugin_id_t, vcp
         .expect("Failed running callback on_vcpu_init");
 }
 
-extern "C" fn handle_qemu_plugin_register_vcpu_exit_cb(id: qemu_plugin_id_t, vcpu_id: VCPUIndex) {
+extern "C" fn handle_qemu_plugin_register_vcpu_exit_cb(id: PluginId, vcpu_id: VCPUIndex) {
     let Some(plugin) = PLUGIN.get() else {
         panic!("Plugin not set");
     };
@@ -41,7 +41,7 @@ extern "C" fn handle_qemu_plugin_register_vcpu_exit_cb(id: qemu_plugin_id_t, vcp
         .expect("Failed running callback on_vcpu_exit");
 }
 
-extern "C" fn handle_qemu_plugin_register_vcpu_idle_cb(id: qemu_plugin_id_t, vcpu_id: VCPUIndex) {
+extern "C" fn handle_qemu_plugin_register_vcpu_idle_cb(id: PluginId, vcpu_id: VCPUIndex) {
     let Some(plugin) = PLUGIN.get() else {
         panic!("Plugin not set");
     };
@@ -55,7 +55,7 @@ extern "C" fn handle_qemu_plugin_register_vcpu_idle_cb(id: qemu_plugin_id_t, vcp
         .expect("Failed running callback on_vcpu_idle");
 }
 
-extern "C" fn handle_qemu_plugin_register_vcpu_resume_cb(id: qemu_plugin_id_t, vcpu_id: VCPUIndex) {
+extern "C" fn handle_qemu_plugin_register_vcpu_resume_cb(id: PluginId, vcpu_id: VCPUIndex) {
     let Some(plugin) = PLUGIN.get() else {
         panic!("Plugin not set");
     };
@@ -70,8 +70,8 @@ extern "C" fn handle_qemu_plugin_register_vcpu_resume_cb(id: qemu_plugin_id_t, v
 }
 
 extern "C" fn handle_qemu_plugin_register_vcpu_tb_trans_cb(
-    id: qemu_plugin_id_t,
-    tb: *mut qemu_plugin_tb,
+    id: PluginId,
+    tb: *mut crate::sys::qemu_plugin_tb,
 ) {
     let Some(plugin) = PLUGIN.get() else {
         panic!("Plugin not set");
@@ -88,7 +88,7 @@ extern "C" fn handle_qemu_plugin_register_vcpu_tb_trans_cb(
         .expect("Failed running callback on_translation_block_translate");
 }
 
-extern "C" fn handle_qemu_plugin_register_flush_cb(id: qemu_plugin_id_t) {
+extern "C" fn handle_qemu_plugin_register_flush_cb(id: PluginId) {
     let Some(plugin) = PLUGIN.get() else {
         panic!("Plugin not set");
     };
@@ -103,7 +103,7 @@ extern "C" fn handle_qemu_plugin_register_flush_cb(id: qemu_plugin_id_t) {
 }
 
 extern "C" fn handle_qemu_plugin_register_syscall_cb(
-    id: qemu_plugin_id_t,
+    id: PluginId,
     vcpu_index: VCPUIndex,
     num: i64,
     a1: u64,
@@ -129,7 +129,7 @@ extern "C" fn handle_qemu_plugin_register_syscall_cb(
 }
 
 extern "C" fn handle_qemu_plugin_register_syscall_ret_cb(
-    id: qemu_plugin_id_t,
+    id: PluginId,
     vcpu_index: VCPUIndex,
     num: i64,
     ret: i64,
@@ -147,162 +147,144 @@ extern "C" fn handle_qemu_plugin_register_syscall_ret_cb(
         .expect("Failed running callback on_syscall_return");
 }
 
+/// Trait which implemenents registering the callbacks implemented on a struct which
+/// `HasCallbacks` with QEMU
 pub trait Register: HasCallbacks + Send + Sync + 'static {
     #[allow(unused)]
-    /// Called by QEMu when registering the plugin
-    fn register(
+    /// Called by QEMu when registering the plugin. This method should only be overridden if no
+    /// default callbacks are desired, and will require re-implementing handlers which is not
+    /// recommended.
+    fn register_default(
         &mut self,
-        id: qemu_plugin_id_t,
+        id: PluginId,
         args: &Args,
         info: &Info,
     ) -> Result<(), anyhow::Error> {
-        if self.has_vcpu_init() {
-            qemu_plugin_register_vcpu_init_cb(id, Some(handle_qemu_plugin_register_vcpu_init_cb))?;
-        }
+        qemu_plugin_register_vcpu_init_cb(id, Some(handle_qemu_plugin_register_vcpu_init_cb))?;
 
-        if self.has_vcpu_exit() {
-            qemu_plugin_register_vcpu_exit_cb(id, Some(handle_qemu_plugin_register_vcpu_exit_cb))?;
-        }
+        qemu_plugin_register_vcpu_exit_cb(id, Some(handle_qemu_plugin_register_vcpu_exit_cb))?;
 
-        if self.has_vcpu_idle() {
-            qemu_plugin_register_vcpu_idle_cb(id, Some(handle_qemu_plugin_register_vcpu_idle_cb))?;
-        }
+        qemu_plugin_register_vcpu_idle_cb(id, Some(handle_qemu_plugin_register_vcpu_idle_cb))?;
 
-        if self.has_vcpu_resume() {
-            qemu_plugin_register_vcpu_resume_cb(
-                id,
-                Some(handle_qemu_plugin_register_vcpu_resume_cb),
-            )?;
-        }
+        qemu_plugin_register_vcpu_resume_cb(id, Some(handle_qemu_plugin_register_vcpu_resume_cb))?;
 
-        if self.has_translation_block_translate() {
-            qemu_plugin_register_vcpu_tb_trans_cb(
-                id,
-                Some(handle_qemu_plugin_register_vcpu_tb_trans_cb),
-            )?;
-        }
+        qemu_plugin_register_vcpu_tb_trans_cb(
+            id,
+            Some(handle_qemu_plugin_register_vcpu_tb_trans_cb),
+        )?;
 
-        if self.has_flush() {
-            qemu_plugin_register_flush_cb(id, Some(handle_qemu_plugin_register_flush_cb));
-        }
+        qemu_plugin_register_flush_cb(id, Some(handle_qemu_plugin_register_flush_cb));
 
-        if self.has_syscall() {
-            qemu_plugin_register_vcpu_syscall_cb(id, Some(handle_qemu_plugin_register_syscall_cb));
-        }
+        qemu_plugin_register_vcpu_syscall_cb(id, Some(handle_qemu_plugin_register_syscall_cb));
 
-        if self.has_syscall_return() {
-            qemu_plugin_register_vcpu_syscall_ret_cb(
-                id,
-                Some(handle_qemu_plugin_register_syscall_ret_cb),
-            );
-        }
+        qemu_plugin_register_vcpu_syscall_ret_cb(
+            id,
+            Some(handle_qemu_plugin_register_syscall_ret_cb),
+        );
 
-        qemu_plugin_register_atexit_cb(id, |_| {});
-
-        self.register_custom(id, args, info)?;
+        self.register(id, args, info)?;
 
         Ok(())
     }
 
     #[allow(unused)]
-    /// Called by the default `register` implementation when unregistering the plugin
-    fn register_custom(
-        &mut self,
-        id: qemu_plugin_id_t,
-        args: &Args,
-        info: &Info,
-    ) -> Result<(), anyhow::Error> {
+    /// Called when registering the plugin. User definition of on-registration behavior should
+    /// be implemented here.
+    fn register(&mut self, id: PluginId, args: &Args, info: &Info) -> Result<(), anyhow::Error> {
         Ok(())
     }
 }
 
+/// Trait implemented by structs which have callbacks which should be registered with QEMU
 pub trait HasCallbacks: Send + Sync + 'static {
-    fn has_vcpu_init(&mut self) -> bool {
-        false
-    }
-
-    fn has_vcpu_exit(&mut self) -> bool {
-        false
-    }
-
-    fn has_vcpu_idle(&mut self) -> bool {
-        false
-    }
-
-    fn has_vcpu_resume(&mut self) -> bool {
-        false
-    }
-
-    fn has_translation_block_translate(&mut self) -> bool {
-        false
-    }
-
-    fn has_flush(&mut self) -> bool {
-        false
-    }
-
-    fn has_syscall(&mut self) -> bool {
-        false
-    }
-
-    fn has_syscall_return(&mut self) -> bool {
-        false
-    }
-
     #[allow(unused)]
-    fn on_vcpu_init(
-        &mut self,
-        id: qemu_plugin_id_t,
-        vcpu_id: VCPUIndex,
-    ) -> Result<(), anyhow::Error> {
+    /// Callback triggered on vCPU init
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the plugin
+    /// * `vcpu_id` - The ID of the vCPU
+    fn on_vcpu_init(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<(), anyhow::Error> {
         Ok(())
     }
 
     #[allow(unused)]
-    fn on_vcpu_exit(
-        &mut self,
-        id: qemu_plugin_id_t,
-        vcpu_id: VCPUIndex,
-    ) -> Result<(), anyhow::Error> {
+    /// Callback triggered on vCPU exit
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the plugin
+    /// * `vcpu_id` - The ID of the vCPU
+    fn on_vcpu_exit(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<(), anyhow::Error> {
         Ok(())
     }
 
     #[allow(unused)]
-    fn on_vcpu_idle(
-        &mut self,
-        id: qemu_plugin_id_t,
-        vcpu_id: VCPUIndex,
-    ) -> Result<(), anyhow::Error> {
+    /// Callback triggered on vCPU idle
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the plugin
+    /// * `vcpu_id` - The ID of the vCPU
+    fn on_vcpu_idle(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<(), anyhow::Error> {
         Ok(())
     }
 
     #[allow(unused)]
-    fn on_vcpu_resume(
-        &mut self,
-        id: qemu_plugin_id_t,
-        vcpu_id: VCPUIndex,
-    ) -> Result<(), anyhow::Error> {
+    /// Callback triggered on vCPU resume
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the plugin
+    /// * `vcpu_id` - The ID of the vCPU
+    fn on_vcpu_resume(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<(), anyhow::Error> {
         Ok(())
     }
 
     #[allow(unused)]
+    /// Callback triggered on translation block translation
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the plugin
+    /// * `tb` - The translation block
     fn on_translation_block_translate(
         &mut self,
-        id: qemu_plugin_id_t,
+        id: PluginId,
         tb: TranslationBlock,
     ) -> Result<(), anyhow::Error> {
         Ok(())
     }
 
     #[allow(unused)]
-    fn on_flush(&mut self, id: qemu_plugin_id_t) -> Result<(), anyhow::Error> {
+    /// Callback triggered on flush
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the plugin
+    fn on_flush(&mut self, id: PluginId) -> Result<(), anyhow::Error> {
         Ok(())
     }
 
     #[allow(unused, clippy::too_many_arguments)]
+    /// Callback triggered on syscall
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the plugin
+    /// * `vcpu_index` - The ID of the vCPU
+    /// * `num` - The syscall number
+    /// * `a1` - The first syscall argument
+    /// * `a2` - The second syscall argument
+    /// * `a3` - The third syscall argument
+    /// * `a4` - The fourth syscall argument
+    /// * `a5` - The fifth syscall argument
+    /// * `a6` - The sixth syscall argument
+    /// * `a7` - The seventh syscall argument
+    /// * `a8` - The eighth syscall argument
     fn on_syscall(
         &mut self,
-        id: qemu_plugin_id_t,
+        id: PluginId,
         vcpu_index: VCPUIndex,
         num: i64,
         a1: u64,
@@ -318,9 +300,17 @@ pub trait HasCallbacks: Send + Sync + 'static {
     }
 
     #[allow(unused)]
+    /// Callback triggered on syscall return
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the plugin
+    /// * `vcpu_index` - The ID of the vCPU
+    /// * `num` - The syscall number
+    /// * `ret` - The return value of the syscall
     fn on_syscall_return(
         &mut self,
-        id: qemu_plugin_id_t,
+        id: PluginId,
         vcpu_index: VCPUIndex,
         num: i64,
         ret: i64,
@@ -329,6 +319,8 @@ pub trait HasCallbacks: Send + Sync + 'static {
     }
 }
 
+/// Trait implemented by structs which are QEMU plugin contexts
 pub trait Plugin: Register + HasCallbacks {}
 
+/// The global plugin item
 pub static PLUGIN: OnceLock<Mutex<Box<dyn Plugin>>> = OnceLock::new();

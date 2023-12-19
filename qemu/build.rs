@@ -3,7 +3,7 @@ use command_ext::CommandExtCheck;
 use reqwest::blocking::get;
 use std::{
     env::var,
-    fs::{File, OpenOptions},
+    fs::{File, OpenOptions, create_dir_all},
     path::{Path, PathBuf},
     process::Command,
 };
@@ -857,30 +857,30 @@ fn extract_txz(archive: &Path, destination: &Path) -> Result<()> {
     Ok(())
 }
 
-fn configure(src: &Path, prefix: &Path) -> Result<()> {
-    Command::new("./configure")
-        .current_dir(src)
+fn configure(build: &Path, src: &Path, prefix: &Path) -> Result<()> {
+    Command::new(src.join("configure"))
+        .current_dir(build)
         .args(ConfigureArgs::from_features().with_prefix(prefix).as_args())
         .check()
         .map(|_| ())
         .map_err(Error::from)
 }
 
-fn make(src: &Path) -> Result<()> {
+fn make(build: &Path) -> Result<()> {
     #[cfg(unix)]
     Command::new("make")
         .arg(format!("-j{}", num_cpus::get()))
-        .current_dir(src)
+        .current_dir(build)
         .check()
         .map(|_| ())
         .map_err(Error::from)
 }
 
-fn install(src: &Path) -> Result<()> {
+fn install(build: &Path) -> Result<()> {
     #[cfg(unix)]
     Command::new("make")
         .arg("install")
-        .current_dir(src)
+        .current_dir(build)
         .check()
         .map(|_| ())
         .map_err(Error::from)
@@ -892,35 +892,39 @@ fn main() -> Result<()> {
     }
 
     let out_dir = out_dir()?;
+    let src_archive = out_dir.join(format!("qemu-{}.tar.xz", QEMU_VERSION));
+    let src_dir = out_dir.join(format!("qemu-{}", QEMU_VERSION));
+    let build_dir = out_dir.join("qemu-build");
+    let install_dir = out_dir.join("qemu");
 
-    if !out_dir.join(format!("qemu-{QEMU_VERSION}.tar.xz")).exists() {
+
+    if !src_archive.exists() {
         download(
             &qemu_src_url(),
-            &out_dir.join(format!("qemu-{QEMU_VERSION}.tar.xz")),
+            &src_archive,
         )?;
     }
 
-    if !out_dir.join(format!("qemu-{QEMU_VERSION}")).exists() {
+    if !src_dir.exists() {
         extract_txz(
-            &out_dir.join(format!("qemu-{QEMU_VERSION}.tar.xz")),
-            &out_dir.join(format!("qemu-{QEMU_VERSION}")),
+            &src_archive,
+            &src_dir,
         )?;
     }
 
-    if !out_dir
-        .join(format!("qemu-{QEMU_VERSION}"))
-        .join("build")
-        .exists()
-    {
+    if !build_dir.exists() {
+        create_dir_all(&build_dir)?;
         configure(
-            &out_dir.join(format!("qemu-{QEMU_VERSION}")),
-            &out_dir.join("qemu"),
+            &build_dir,
+            &src_dir,
+            &install_dir,
         )?;
-        make(&out_dir.join(format!("qemu-{QEMU_VERSION}")))?;
+        make(&build_dir)?;
     }
 
-    if !out_dir.join(out_dir.join("qemu")).exists() {
-        install(&out_dir.join(format!("qemu-{QEMU_VERSION}")))?;
+    if !install_dir.exists() {
+        create_dir_all(&install_dir)?;
+        install(&build_dir)?;
     }
 
     println!("cargo:rerun-if-changed=build.rs");

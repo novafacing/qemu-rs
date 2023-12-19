@@ -18,6 +18,7 @@ pub static qemu_plugin_version: c_int = QEMU_PLUGIN_VERSION as c_int;
 /// Code returned from `qemu_plugin_install` to indicate successful installation
 pub const PLUGIN_INSTALL_SUCCESS: c_int = 0;
 
+/// A value passed to a QEMU plugin via the command line
 pub enum Value {
     /// A boolean argument to a QEMU plugin, for example `val=true` or `val=on`
     /// see https://www.qemu.org/docs/master/devel/tcg-plugins.html#c.qemu_plugin_bool_parse
