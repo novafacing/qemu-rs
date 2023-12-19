@@ -737,26 +737,3 @@ pub fn qemu_xtensa() -> Vec<u8> {
         include_bytes!(concat!(env!("OUT_DIR"), "/install", "/bin", "/qemu-xtensa"));
     PROGRAM.to_vec()
 }
-
-pub fn include_qemu_plugin_h() -> Vec<u8> {
-    pub const INCLUDE: &[u8] = include_bytes!(concat!(
-        env!("OUT_DIR"),
-        "/install",
-        "/include",
-        "/qemu-plugin.h"
-    ));
-    INCLUDE.to_vec()
-}
-
-/// This function is exported only to use to include the qemu-plugin.h header without
-/// having to build and install qemu. For all real usages you should use `include_qemu_plugin_h`
-pub fn __unbuilt_qemu_plugin_h() -> Vec<u8> {
-    pub const INCLUDE: &[u8] = include_bytes!(concat!(
-        env!("OUT_DIR"),
-        "/qemu",
-        "/include",
-        "/qemu",
-        "/qemu-plugin.h"
-    ));
-    INCLUDE.to_vec()
-}
