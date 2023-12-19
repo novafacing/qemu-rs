@@ -22,3 +22,4 @@ members = [
 [workspace.dependencies]
 qemu-plugin-sys = { path = "qemu-plugin-sys" }
 qemu-plugin = { path = "qemu-plugin" }
+qemu = { path = "qemu" }
