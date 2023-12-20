@@ -14,6 +14,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 use typed_builder::TypedBuilder;
+use yaxpeax_x86::amd64::InstDecoder;
 
 #[derive(TypedBuilder, Clone, Debug, Deserialize, Serialize)]
 pub struct InstructionEvent {
@@ -28,12 +29,19 @@ impl TryFrom<&Instruction<'_>> for InstructionEvent {
     type Error = Error;
 
     fn try_from(value: &Instruction) -> Result<Self> {
+        let data = value.data();
+        let decoder = InstDecoder::default();
+        let disas = decoder
+            .decode_slice(&data)
+            .map(|d| d.to_string())
+            .or_else(|_| value.disas())?;
+
         Ok(Self::builder()
             .vaddr(value.vaddr())
             .haddr(value.haddr())
-            .disas(value.disas()?)
+            .disas(disas)
             .symbol(value.symbol()?)
-            .data(value.data())
+            .data(data)
             .build())
     }
 }
