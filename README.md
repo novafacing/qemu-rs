@@ -14,3 +14,11 @@ The crates work together to enable building QEMU utilities in Rust and running Q
 Rust code in a machine-specified way.
 
 
+## Try it Out
+
+To see what the crate can do, trace the execution (including syscalls, memory accesses,
+and instructions) of a program like:
+
+```sh
+cargo run -r --bin tracer -- -a /bin/ls -- -lah
+```
