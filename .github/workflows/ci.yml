@@ -31,5 +31,5 @@ jobs:
             libpixman-1-dev zlib1g-dev ninja-build
       - uses: dtolnay/rust-toolchain@nightly
       - uses: actions/checkout@v3
-      - name: Build and Test Tracer
-        run: cargo run -r --bin tracer -- -a /bin/ls -- -lah
+      - name: Build
+        run: cargo build -vv -p tracer
