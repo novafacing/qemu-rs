@@ -74,6 +74,8 @@ fn extract_txz(archive: &Path, destination: &Path) -> Result<()> {
         })?;
     Ok(())
 }
+
+#[cfg(windows)]
 fn generate_windows_delaylink_library(qemu_plugin_symbols: &Path, out_dir: &Path) -> Result<()> {
     let def_file = out_dir.join("qemu_plugin_api.def");
     let all_commands = std::fs::read_to_string(qemu_plugin_symbols)?;
@@ -151,6 +153,7 @@ fn main() -> Result<()> {
         )?;
     }
 
+    #[cfg(windows)]
     generate_windows_delaylink_library(
         &src_dir.join("plugins").join("qemu-plugins.symbols"),
         &out_dir,
