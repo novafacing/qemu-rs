@@ -1,6 +1,8 @@
-#!/usr/bin/env -S cargo +nightly -Z script
+#!/usr/bin/env -S cargo +nightly-gnu -Z script
 
 //! ```cargo
+//! [package]
+//! edition = "2021"
 //! [dependencies]
 //! anyhow = "*"
 //! bindgen = "*"
@@ -8,6 +10,8 @@
 //! reqwest = { version = "*", features = ["blocking"] }
 //! tar = "*"
 //! xz2 = "*"
+//![lints.rust]
+//!non_snake_case = "allow"
 //! ```
 
 use anyhow::{anyhow, Result};
@@ -25,7 +29,7 @@ use tar::Archive;
 use xz2::read::XzDecoder;
 
 const QEMU_SRC_URL_BASE: &str = "https://download.qemu.org/";
-const QEMU_VERSION: &str = "8.1.3";
+const QEMU_VERSION: &str = "8.2.0";
 
 fn qemu_src_url() -> String {
     format!("{}qemu-{}.tar.xz", QEMU_SRC_URL_BASE, QEMU_VERSION)
@@ -68,6 +72,14 @@ fn extract_txz(archive: &Path, destination: &Path) -> Result<()> {
                 .map(|_| ())
                 .map_err(|e| anyhow!(e))
         })?;
+    Ok(())
+}
+fn generate_windows_delaylink_library(qemu_plugin_symbols: &Path, out_dir: &Path) -> Result<()> {
+    let def_file = out_dir.join("qemu_plugin_api.def");
+    let all_commands = std::fs::read_to_string(qemu_plugin_symbols)?;
+    let all_commands = all_commands.replace(|x| "{};".contains(x), "");
+    std::fs::write(&def_file, format!("EXPORTS\n{all_commands}"))?;
+
     Ok(())
 }
 
@@ -138,6 +150,11 @@ fn main() -> Result<()> {
             &src_dir,
         )?;
     }
+
+    generate_windows_delaylink_library(
+        &src_dir.join("plugins").join("qemu-plugins.symbols"),
+        &out_dir,
+    )?;
 
     generate_bindings(
         &src_dir

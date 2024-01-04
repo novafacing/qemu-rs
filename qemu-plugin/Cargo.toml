@@ -17,6 +17,14 @@ once_cell = "1.19.0"
 qemu-plugin-sys = { version = "8.1.3-v3", workspace = true }
 thiserror = "1.0.51"
 
+[target.'cfg(windows)'.dependencies.windows]
+version ="0.52"
+features = [
+    "Win32_System_WindowsProgramming",
+    "Win32_System_LibraryLoader",
+    "Win32_Foundation"
+]
+
 [features]
 # Define external symbols with weak definitions
 weak = []

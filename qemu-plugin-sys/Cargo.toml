@@ -10,3 +10,9 @@ publish.workspace = true
 readme.workspace = true
 repository.workspace = true
 version.workspace = true
+
+[build-dependencies]
+anyhow = "1.0.75"
+
+[lints.rust]
+non_snake_case = "allow"

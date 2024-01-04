@@ -95,9 +95,21 @@ pub mod install;
 pub mod plugin;
 pub mod sys;
 
+#[cfg(windows)]
+mod win_link_hook;
+
+#[cfg(not(windows))]
 extern "C" {
     /// glib g_free is provided by the QEMU program we are being linked into
     fn g_free(mem: *mut c_void);
+}
+#[cfg(windows)]
+unsafe fn g_free(_mem: *mut c_void){
+    //TODO: We would really like to call g_free in the qemu binary here
+    //but we can't, because windows doesn't export symbols unless you explicitly export them
+    //and g_free isn't so exported.
+
+    //For now, we're just going to leak.
 }
 
 /// The index of a vCPU
