@@ -22,14 +22,14 @@ use bindgen::{
 use cargo_metadata::MetadataCommand;
 use reqwest::blocking::get;
 use std::{
-    fs::{File, OpenOptions, create_dir_all},
+    fs::{create_dir_all, read_to_string, write, File, OpenOptions},
     path::Path,
 };
 use tar::Archive;
 use xz2::read::XzDecoder;
 
 const QEMU_SRC_URL_BASE: &str = "https://download.qemu.org/";
-const QEMU_VERSION: &str = "8.2.0";
+const QEMU_VERSION: &str = "8.1.3";
 
 fn qemu_src_url() -> String {
     format!("{}qemu-{}.tar.xz", QEMU_SRC_URL_BASE, QEMU_VERSION)
@@ -78,9 +78,9 @@ fn extract_txz(archive: &Path, destination: &Path) -> Result<()> {
 #[cfg(windows)]
 fn generate_windows_delaylink_library(qemu_plugin_symbols: &Path, out_dir: &Path) -> Result<()> {
     let def_file = out_dir.join("qemu_plugin_api.def");
-    let all_commands = std::fs::read_to_string(qemu_plugin_symbols)?;
+    let all_commands = read_to_string(qemu_plugin_symbols)?;
     let all_commands = all_commands.replace(|x| "{};".contains(x), "");
-    std::fs::write(&def_file, format!("EXPORTS\n{all_commands}"))?;
+    write(&def_file, format!("EXPORTS\n{all_commands}"))?;
 
     Ok(())
 }
@@ -115,15 +115,17 @@ fn generate_bindings(qemu_plugin_header: &Path, destination: &Path) -> Result<()
 }
 
 fn main() -> Result<()> {
-    let metadata = MetadataCommand::new()
-        .no_deps()
-        .exec()?;
+    let metadata = MetadataCommand::new().no_deps().exec()?;
 
-    let package = metadata.packages.iter()
+    let package = metadata
+        .packages
+        .iter()
         .find(|p| p.name == "qemu-plugin-sys")
         .ok_or_else(|| anyhow!("Failed to find package"))?;
 
-    let out_dir = package.manifest_path.parent()
+    let out_dir = package
+        .manifest_path
+        .parent()
         .ok_or_else(|| anyhow!("Failed to get manifest path"))?
         .join("src")
         .into_std_path_buf();
@@ -140,17 +142,11 @@ fn main() -> Result<()> {
     let src_dir = tmp_dir.join(format!("qemu-{}", QEMU_VERSION));
 
     if !src_archive.exists() {
-        download(
-            &qemu_src_url(),
-            &src_archive,
-        )?;
+        download(&qemu_src_url(), &src_archive)?;
     }
 
     if !src_dir.exists() {
-        extract_txz(
-            &src_archive,
-            &src_dir,
-        )?;
+        extract_txz(&src_archive, &src_dir)?;
     }
 
     #[cfg(windows)]
@@ -160,10 +156,7 @@ fn main() -> Result<()> {
     )?;
 
     generate_bindings(
-        &src_dir
-            .join("include")
-            .join("qemu")
-            .join("qemu-plugin.h"),
+        &src_dir.join("include").join("qemu").join("qemu-plugin.h"),
         &out_dir.join("bindings.rs"),
     )?;
 

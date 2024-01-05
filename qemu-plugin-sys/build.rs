@@ -1,11 +1,12 @@
-use std::{path::PathBuf, str::FromStr, env::var};
 use anyhow::{anyhow, Result};
+use std::{env::var, path::PathBuf, process::Command, str::FromStr};
 
 fn out_dir() -> Result<PathBuf> {
     Ok(PathBuf::from(
         var("OUT_DIR").map_err(|e| anyhow!("OUT_DIR not set: {e}"))?,
     ))
 }
+
 fn main() -> Result<()> {
     #[cfg(windows)]
     {
@@ -14,7 +15,7 @@ fn main() -> Result<()> {
         let def_file_str = def_file.to_string_lossy();
         let lib_file = out_dir.join("qemu_plugin_api.lib");
         let lib_file_str = lib_file.to_string_lossy();
-        let ch = std::process::Command::new("dlltool")
+        let ch = Command::new("dlltool")
             .args([
                 "--input-def",
                 &def_file_str,

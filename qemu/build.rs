@@ -1,9 +1,12 @@
+//! Build script for QEMU binaries. Configures QEMU by converting crate features to configure
+//! arguments, then builds it into the crate OUT_DIR.
+
 use anyhow::{anyhow, Error, Result};
 use command_ext::CommandExtCheck;
 use reqwest::blocking::get;
 use std::{
     env::var,
-    fs::{File, OpenOptions, create_dir_all},
+    fs::{create_dir_all, File, OpenOptions},
     path::{Path, PathBuf},
     process::Command,
 };
@@ -898,28 +901,17 @@ fn main() -> Result<()> {
     let build_dir = out_dir.join("qemu-build");
     let install_dir = out_dir.join("qemu");
 
-
     if !src_archive.exists() {
-        download(
-            &qemu_src_url(),
-            &src_archive,
-        )?;
+        download(&qemu_src_url(), &src_archive)?;
     }
 
     if !src_dir.exists() {
-        extract_txz(
-            &src_archive,
-            &src_dir,
-        )?;
+        extract_txz(&src_archive, &src_dir)?;
     }
 
     if !build_dir.exists() {
         create_dir_all(&build_dir)?;
-        configure(
-            &build_dir,
-            &src_dir,
-            &install_dir,
-        )?;
+        configure(&build_dir, &src_dir, &install_dir)?;
         make(&build_dir)?;
     }
 
