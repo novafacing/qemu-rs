@@ -21,8 +21,10 @@ use bindgen::{
 };
 use cargo_metadata::MetadataCommand;
 use reqwest::blocking::get;
+#[cfg(windows)]
+use std::fs::{read_to_string, write};
 use std::{
-    fs::{create_dir_all, read_to_string, write, File, OpenOptions},
+    fs::{create_dir_all, File, OpenOptions},
     path::Path,
 };
 use tar::Archive;
