@@ -1,6 +1,10 @@
-use anyhow::{anyhow, Result};
+#[cfg(windows)]
+use anyhow::anyhow;
+use anyhow::Result;
+#[cfg(windows)]
 use std::{env::var, path::PathBuf, process::Command, str::FromStr};
 
+#[cfg(windows)]
 fn out_dir() -> Result<PathBuf> {
     Ok(PathBuf::from(
         var("OUT_DIR").map_err(|e| anyhow!("OUT_DIR not set: {e}"))?,
