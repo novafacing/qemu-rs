@@ -26,5 +26,5 @@ features = [
 ]
 
 [features]
-# Define external symbols with weak definitions
+# Define external symbols with weak definition
 unix-weak-link = []

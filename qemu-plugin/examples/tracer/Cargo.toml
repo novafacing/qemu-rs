@@ -9,7 +9,7 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 qemu = { workspace = true, features = ["plugins", "debug-info"] }
-qemu-plugin = { workspace = true, features = ["weak"] }
+qemu-plugin = { workspace = true, features = ["unix-weak-link"] }
 anyhow = "1.0.75"
 ffi = "0.1.0"
 ctor = "0.2.6"
