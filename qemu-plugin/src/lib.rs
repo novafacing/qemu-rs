@@ -104,12 +104,20 @@ extern "C" {
     fn g_free(mem: *mut c_void);
 }
 #[cfg(windows)]
-unsafe fn g_free(_mem: *mut c_void){
+unsafe fn g_free(mem: *mut c_void){
     //TODO: We would really like to call g_free in the qemu binary here
     //but we can't, because windows doesn't export symbols unless you explicitly export them
-    //and g_free isn't so exported.
+    //and qemu doesn't export g_free.
 
-    //For now, we're just going to leak.
+    //Instead we'll rely on glib only using stdlib.h's malloc/free and call it directly.
+    //On glib docs, it says
+    //> Since GLib 2.46 g_malloc() is hardcoded to always use the system malloc implementation.
+    //So should be safe to call free ourselves.
+    unsafe {
+        if !mem.is_null() {
+            libc::free(mem);
+        }
+    }
 }
 
 /// The index of a vCPU
