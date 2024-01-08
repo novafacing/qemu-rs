@@ -12,24 +12,23 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Free build space
         uses: easimon/maximize-build-space@master
         with:
-            root-reserve-mb: 2048
-            temp-reserve-mb: 256
-            swap-size-mb: 1024
-            remove-dotnet: 'true'
-            remove-android: 'true'
-            remove-haskell: 'true'
-            remove-codeql: 'true'
-            remove-docker-images: 'true'
+          root-reserve-mb: 2048
+          temp-reserve-mb: 256
+          swap-size-mb: 1024
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
+          remove-docker-images: "true"
       - name: Install QEMU Build Dependencies
         run: |
           sudo apt-get -y update && \
           sudo apt-get -y install bison flex git curl libglib2.0-dev libfdt-dev \
-          libpixman-1-dev zlib1g-dev ninja-build build-essential python3 python3-pip python3-venv && \
+            libpixman-1-dev zlib1g-dev ninja-build build-essential python3 python3-pip python3-venv && \
           python3 -m pip install sphinx sphinx_rtd_theme
       - uses: dtolnay/rust-toolchain@nightly
       - uses: actions/checkout@v3

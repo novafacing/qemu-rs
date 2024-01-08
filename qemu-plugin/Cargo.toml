@@ -25,6 +25,9 @@ features = [
     "Win32_Foundation",
 ]
 
+[target.'cfg(windows)'.dependencies.libc]
+version = "0.2.152"
+
 [features]
 # Define external symbols with weak definition
 unix-weak-link = []
