@@ -14,17 +14,6 @@ jobs:
     name: Build And Test
     runs-on: ubuntu-latest
     steps:
-      - name: Free build space
-        uses: easimon/maximize-build-space@master
-        with:
-          root-reserve-mb: 2048
-          temp-reserve-mb: 256
-          swap-size-mb: 1024
-          remove-dotnet: "true"
-          remove-android: "true"
-          remove-haskell: "true"
-          remove-codeql: "true"
-          remove-docker-images: "true"
       - uses: actions/checkout@v4
       - name: Build Test Container
         run: |
