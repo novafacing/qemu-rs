@@ -11,6 +11,7 @@ env:
 
 jobs:
   build:
+    name: Build And Test
     runs-on: ubuntu-latest
     steps:
       - name: Free build space
@@ -24,13 +25,6 @@ jobs:
           remove-haskell: "true"
           remove-codeql: "true"
           remove-docker-images: "true"
-      - name: Install QEMU Build Dependencies
+      - name: Build Test Container
         run: |
-          sudo apt-get -y update && \
-          sudo apt-get -y install bison flex git curl libglib2.0-dev libfdt-dev \
-            libpixman-1-dev zlib1g-dev ninja-build build-essential python3 python3-pip python3-venv && \
-          python3 -m pip install sphinx sphinx_rtd_theme
-      - uses: dtolnay/rust-toolchain@nightly
-      - uses: actions/checkout@v3
-      - name: Build
-        run: cargo run -r --bin tracer -- -a /bin/ls -- -lah
+          docker build -t qemu-rs-test .
