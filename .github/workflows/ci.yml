@@ -17,4 +17,4 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build Test Container
         run: |
-          docker build -t qemu-rs-test . | tee /tmp/qemu-rs-test.log || { cat /tmp/qemu-rs-test.log; exit 1 }
+          docker build -t qemu-rs-test . | tee /tmp/qemu-rs-test.log || \{ cat /tmp/qemu-rs-test.log; exit 1 \}
