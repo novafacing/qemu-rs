@@ -12,5 +12,6 @@ COPY . /qemu-rs
 
 WORKDIR /qemu-rs
 
-RUN cargo run -r --bin tracer -- -a /bin/ls -- -lah
+RUN cargo build -r && \
+    cargo run -r --bin tracer -- -a /bin/ls -- -lah
 

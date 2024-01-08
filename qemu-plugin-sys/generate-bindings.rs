@@ -1,18 +1,17 @@
 #!/usr/bin/env -S cargo +nightly-gnu -Z script
-
-//! ```cargo
-//! [package]
-//! edition = "2021"
-//! [dependencies]
-//! anyhow = "*"
-//! bindgen = "*"
-//! cargo_metadata = "*"
-//! reqwest = { version = "*", features = ["blocking"] }
-//! tar = "*"
-//! xz2 = "*"
-//![lints.rust]
-//!non_snake_case = "allow"
-//! ```
+```
+[package]
+edition = "2021"
+[dependencies]
+anyhow = "*"
+bindgen = "*"
+cargo_metadata = "*"
+reqwest = { version = "*", features = ["blocking"] }
+tar = "*"
+xz2 = "*"
+[lints.rust]
+non_snake_case = "allow"
+```
 
 use anyhow::{anyhow, Result};
 use bindgen::{
