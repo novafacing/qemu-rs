@@ -15,9 +15,11 @@ resolver = "2"
 members = [
     "qemu",
     "qemu-plugin",
-    "qemu-plugin/examples/tiny",
-    "qemu-plugin/examples/tracer",
+    "qemu-plugin-sys",
+    "plugins/tiny",
+    "plugins/tracer",
 ]
+default-members = ["qemu-plugin", "qemu-plugin-sys"]
 
 [workspace.dependencies]
 qemu-plugin-sys = { version = "8.1.3-v3", path = "qemu-plugin-sys" }

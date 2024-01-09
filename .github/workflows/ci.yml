@@ -10,11 +10,21 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    name: Build And Test
+  test_examples:
     runs-on: ubuntu-latest
+    container: ubuntu:22.04
     steps:
-      - uses: actions/checkout@v4
-      - name: Build Test Container
+      - name: Install QEMU User
         run: |
-          docker build -t qemu-rs-test . | tee /tmp/qemu-rs-test.log || \{ cat /tmp/qemu-rs-test.log; exit 1 \}
+          apt-get -y update && \
+          apt-get -y install qemu-user
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/checkout@v4
+      - name: Test QEMU Install
+        run: |
+          qemu-x86_64 --help
+      - name: Build
+        run: |
+          cd plugins/tracer
+          cargo build -r
+          cargo run -r --bin tracer -- -a /bin/ls -- -lah
