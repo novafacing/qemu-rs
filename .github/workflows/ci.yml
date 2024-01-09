@@ -17,7 +17,7 @@ jobs:
       - name: Install QEMU User
         run: |
           apt-get -y update && \
-          apt-get -y install qemu-user
+          apt-get -y install git curl qemu-user
       - uses: dtolnay/rust-toolchain@nightly
       - uses: actions/checkout@v4
       - name: Test QEMU Install
