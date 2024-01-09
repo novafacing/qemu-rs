@@ -49,6 +49,7 @@ jobs:
       # QEMU 8.1.0
       QEMU_URL: "https://qemu.weilnetz.de/w64/2023/qemu-w64-setup-20230822.exe"
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
+      UBUNTU_CLOUDIMG_URL: "https://cloud-images.ubuntu.com/releases/22.04/release-20231211/ubuntu-22.04-server-cloudimg-amd64.img"
 
     steps:
       - uses: msys2/setup-msys2@v2
@@ -74,12 +75,12 @@ jobs:
       - name: Download Ubuntu Cloud Image
         run: |
           $ProgressPreference = 'SilentlyContinue'
-          Invoke-WebRequest -Uri "
+          Invoke-WebRequest -Uri ${{ env.UBUNTU_CLOUDIMG_URL }} -OutFile ubuntu.img
 
       - name: Build and Test Tiny
         run: |
           cd plugins/tiny
           cargo build -r || exit 0
           cargo build -r
-          qemu-system-x86_64.exe -plugin ../../target/release/libtiny.so
           cd ../..
+          qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -drive if=virtio,format=qcow2,file=ubuntu.img -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/libtiny.so

@@ -9,6 +9,7 @@ mkdir -p .github/rsrc/
 # mkpasswd --method=SHA-512 --rounds=4096
 PASSWD="$6$rounds=4096$EhaOFVl.Hr626Zg2$mIqOEWTXg0U4cfIDDsYYLtqNMoCLRMVQfX4iZnlQTt.dnBoXetHdMzyGdY2MVOWGV18UowbFNSJowTHmBDb4z1"
 cat <<EOF > .github/rsrc/user-data.yml
+#cloud-config
 users:
   - name: user
     passwd: ${PASSWD}
