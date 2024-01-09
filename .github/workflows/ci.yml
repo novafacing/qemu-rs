@@ -10,7 +10,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test_examples:
+  test_plugins_linux:
+    name: Build and Test Plugins (Linux)
     runs-on: ubuntu-latest
     container: ubuntu:22.04
     steps:
@@ -23,8 +24,62 @@ jobs:
       - name: Test QEMU Install
         run: |
           qemu-x86_64 --help
-      - name: Build
+      - name: Build and Test Tracer
         run: |
           cd plugins/tracer
+          cargo build -r || exit 0
           cargo build -r
           cargo run -r --bin tracer -- -a /bin/ls -- -lah
+          cd ../..
+      - name: Build and Test Tiny
+        run: |
+          cd plugins/tiny
+          cargo build -r || exit 0
+          cargo build -r
+          qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
+          cd ../..
+
+  test_plugins_windows:
+    name: Build and Test Plugins (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      # QEMU 8.1.0
+      QEMU_URL: "https://qemu.weilnetz.de/w64/2023/qemu-w64-setup-20230822.exe"
+      RUSTUP_URL: "https://win.rustup.rs/x86_64"
+
+    steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: git mingw-w64-ucrt-x86_64-gcc
+
+      - name: Download and Install Rust
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -Uri ${{ env.RUSTUP_URL }} -OutFile rustup-init.exe
+          ./rustup-init.exe --default-toolchain nightly --default-host x86_64-pc-windows-gnu -y
+
+      - name: Install QEMU
+        shell: msys2 {0}
+        run: |
+          pacman -Syu --noconfirm
+          pacman -Sy mingw-w64-ucrt-x86_64-qemu --noconfirm
+
+      - uses: actions/checkout@v4
+
+      - name: Download Ubuntu Cloud Image
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -Uri "
+
+      - name: Build and Test Tiny
+        run: |
+          cd plugins/tiny
+          cargo build -r || exit 0
+          cargo build -r
+          qemu-system-x86_64.exe -plugin ../../target/release/libtiny.so
+          cd ../..

@@ -31,7 +31,7 @@ const PLUGIN: &[u8] = include_bytes!(concat!(
 #[cfg(not(debug_assertions))]
 const PLUGIN: &[u8] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/../../../target/release/libtracer.so"
+    "/../../target/release/libtracer.so"
 ));
 
 fn tmp(prefix: &str, suffix: &str) -> PathBuf {
