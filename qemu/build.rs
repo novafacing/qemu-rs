@@ -14,7 +14,7 @@ use tar::Archive;
 use xz2::read::XzDecoder;
 
 const QEMU_SRC_URL_BASE: &str = "https://download.qemu.org/";
-const QEMU_VERSION: &str = "8.1.3";
+const QEMU_VERSION: &str = "8.2.0";
 
 pub struct ConfigureArgs(Vec<String>);
 
