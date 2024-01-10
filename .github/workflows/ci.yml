@@ -53,6 +53,7 @@ jobs:
           msystem: UCRT64
           update: true
           install: git mingw-w64-ucrt-x86_64-gcc
+          location: C:\msys-custom
 
       - name: Download and Install Rust
         run: |
@@ -65,8 +66,7 @@ jobs:
         run: |
           pacman -Syu --noconfirm
           pacman -Sy mingw-w64-ucrt-x86_64-qemu --noconfirm
-          qemu-system-x86_64.exe --version
-          which qemu-system-x86_64
+          C:\msys-custom\msys64\ucrt64\bin\qemu-system-x86_64.exe --version
 
       - uses: actions/checkout@v4
 
@@ -80,6 +80,6 @@ jobs:
           cd plugins/tiny-system
           cargo build -r
           cd ../..
-          Start-Process PowerShell.exe -NoNewWindow -ArgumentList "-Command", "C:\msys64\ucrt64\bin\qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=../Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll"
+          Start-Process PowerShell.exe -NoNewWindow -ArgumentList "-Command", "C:\msys-custom\msys64\ucrt64\bin\qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=../Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll"
           Start-Sleep -Seconds 60.0
           ssh -p 2222 -i .github/rsrc/id_rsa fedora@localhost sudo shutdown now
