@@ -7,7 +7,7 @@ use windows::Win32::System::WindowsProgramming::DELAYLOAD_INFO;
 
 /// The helper function for linker-supported delayed loading which is what actually
 /// loads the DLL at runtime.
-type DelayHook = unsafe extern "C" fn(dli_notify: DliNofiy, pdli: DELAYLOAD_INFO) -> HMODULE;
+type DelayHook = unsafe extern "C" fn(dli_notify: DliNotify, pdli: DELAYLOAD_INFO) -> HMODULE;
 
 #[no_mangle]
 /// Helper function invoked when failures occur in delay linking (as opposed to
