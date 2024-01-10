@@ -42,8 +42,9 @@ jobs:
     name: Build and Test Plugins (Windows)
     runs-on: windows-latest
     env:
-      # QEMU 8.1.0
-      QEMU_URL: "https://qemu.weilnetz.de/w64/2023/qemu-w64-setup-20230822.exe"
+      # QEMU 8.2.0
+      # NOTE: This installer does not work headless
+      # QEMU_URL: "https://qemu.weilnetz.de/w64/2023/qemu-w64-setup-20231224.exe"
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
       FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
 

@@ -28,7 +28,7 @@ use tar::Archive;
 use xz2::read::XzDecoder;
 
 const QEMU_SRC_URL_BASE: &str = "https://download.qemu.org/";
-const QEMU_VERSION: &str = "8.1.3";
+const QEMU_VERSION: &str = "8.2.0";
 
 fn qemu_src_url() -> String {
     format!("{}qemu-{}.tar.xz", QEMU_SRC_URL_BASE, QEMU_VERSION)

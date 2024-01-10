@@ -64,7 +64,7 @@
 //! crate-type = ["cdylib"]
 //!
 //! [dependencies]
-//! qemu-plugin = "8.1.3-v1"
+//! qemu-plugin = "8.2.0-v1"
 //! anyhow = "1.0.75"
 //! ffi = "0.1.0"
 //! ctor = "0.2.6"
