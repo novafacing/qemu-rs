@@ -107,11 +107,11 @@ extern "C" {
 }
 
 #[cfg(windows)]
-unsafe fn g_free(_mem: *mut c_void) {
+unsafe fn g_free(mem: *mut c_void) {
     //TODO: We would really like to call g_free in the qemu binary here
     //but we can't, because windows doesn't export symbols unless you explicitly export them
     //and g_free isn't so exported.
-    
+
     // NOTE: glib 2.46 g_malloc always uses system malloc implementation:
     // https://docs.gtk.org/glib/func.mem_is_system_malloc.html
     // So it is safe to call libc free to free a `g_malloc`-ed object

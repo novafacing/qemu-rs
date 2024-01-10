@@ -34,7 +34,6 @@ jobs:
       - name: Build and Test Tiny
         run: |
           cd plugins/tiny
-          cargo build -r || exit 0
           cargo build -r
           qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
           cd ../..
@@ -49,7 +48,7 @@ jobs:
       # QEMU 8.1.0
       QEMU_URL: "https://qemu.weilnetz.de/w64/2023/qemu-w64-setup-20230822.exe"
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
-      UBUNTU_CLOUDIMG_URL: "https://cloud-images.ubuntu.com/releases/22.04/release-20231211/ubuntu-22.04-server-cloudimg-amd64.img"
+      FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
 
     steps:
       - uses: msys2/setup-msys2@v2
@@ -75,12 +74,22 @@ jobs:
       - name: Download Ubuntu Cloud Image
         run: |
           $ProgressPreference = 'SilentlyContinue'
-          Invoke-WebRequest -Uri ${{ env.UBUNTU_CLOUDIMG_URL }} -OutFile ubuntu.img
+          Invoke-WebRequest -Uri ${{ env.FEDORA_CLOUDIMG_URL }} -OutFile Fedora-Cloud-Base-39-1.5.x86_64.qcow2
 
       - name: Build and Test Tiny
+        shell: msys2 {0}
         run: |
           cd plugins/tiny
-          cargo build -r || exit 0
           cargo build -r
           cd ../..
-          qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -drive if=virtio,format=qcow2,file=ubuntu.img -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/libtiny.so
+          $job = Start-Job -ScriptBlock { qemu-system-x86_64 -machine type=q35 -m 2G -nographic -serial stdio -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=../Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img }
+          Start-Sleep -Seconds 45.0
+          $jobEvent = Register-ObjectEvent $job StateChanged -Action {
+            $jobEvent | Unregister-Event
+            Write-Host "Unregistered and succeeded!"
+            Set-Content -Path success ""
+          }
+          ssh -p 2222 -i .github/rsrc/id_rsa fedora@localhost sudo shutdown now
+          Start-Sleep -Seconds 15.0
+          $status = Test-Path -Path success
+          exit $status
