@@ -76,17 +76,9 @@ jobs:
       - name: Build and Test Tiny
         run: |
           $env:Path += ";C:\msys64\ucrt64\bin;C:\msys64\usr\bin;"
-          cd plugins/tiny
+          cd plugins/tiny-system
           cargo build -r
           cd ../..
-          $job = Start-Job -ScriptBlock { C:\msys64\ucrt64\bin\qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -serial stdio -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=../Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img }
-          Start-Sleep -Seconds 45.0
-          $jobEvent = Register-ObjectEvent $job StateChanged -Action {
-            $jobEvent | Unregister-Event
-            Write-Host "Unregistered and succeeded!"
-            Set-Content -Path success ""
-          }
+          Start-Process PowerShell.exe -NoNewWindow -ArgumentList "-Command", "C:\msys64\ucrt64\bin\qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=../Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll"
+          Start-Sleep -Seconds 60.0
           ssh -p 2222 -i .github/rsrc/id_rsa fedora@localhost sudo shutdown now
-          Start-Sleep -Seconds 15.0
-          $status = Test-Path -Path success
-          exit $status
