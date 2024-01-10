@@ -1,10 +1,14 @@
 use anyhow::{anyhow, Error, Result};
 use clap::Parser;
+#[cfg(feature = "memfd-exec")]
 use memfd_exec::{MemFdExecutable, Stdio};
+#[cfg(feature = "qemu")]
 use qemu::QEMU_X86_64_LINUX_USER;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde_cbor::Deserializer;
 use serde_json::to_string;
+#[cfg(not(feature = "qemu"))]
+use std::process::{Command, Stdio};
 use std::{
     fs::OpenOptions,
     io::{stdout, BufRead, BufReader, Write},
@@ -21,13 +25,13 @@ use tracer::Event;
 #[cfg(debug_assertions)]
 const PLUGIN: &[u8] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/../../../target/debug/libtracer.so"
+    "/../../target/debug/libtracer.so"
 ));
 
 #[cfg(not(debug_assertions))]
 const PLUGIN: &[u8] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/../../../target/release/libtracer.so"
+    "/../../target/release/libtracer.so"
 ));
 
 fn tmp(prefix: &str, suffix: &str) -> PathBuf {
@@ -105,8 +109,84 @@ impl Args {
     }
 }
 
+#[cfg(feature = "qemu")]
 async fn run(input: Option<Vec<u8>>, args: Vec<String>) -> Result<()> {
     let mut exe = MemFdExecutable::new("qemu", QEMU_X86_64_LINUX_USER)
+        .args(args)
+        .stdin(if input.is_some() {
+            Stdio::piped()
+        } else {
+            Stdio::inherit()
+        })
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+
+    if let Some(input) = input {
+        let mut stdin = exe.stdin.take().ok_or_else(|| anyhow!("No stdin"))?;
+        spawn_blocking(move || stdin.write_all(&input));
+    }
+
+    let stdout = exe.stdout.take().ok_or_else(|| anyhow!("No stdout"))?;
+
+    let out_reader = spawn_blocking(move || {
+        let mut line = String::new();
+        let mut out_reader = BufReader::new(stdout);
+
+        loop {
+            line.clear();
+
+            if let 0 = out_reader.read_line(&mut line)? {
+                break;
+            }
+
+            let line = line.trim();
+
+            if !line.is_empty() {
+                println!("{line}");
+            }
+        }
+
+        Ok::<(), Error>(())
+    });
+
+    let stderr = exe.stderr.take().ok_or_else(|| anyhow!("No stderr"))?;
+
+    let err_reader = spawn_blocking(move || {
+        let mut line = String::new();
+        let mut err_reader = BufReader::new(stderr);
+
+        loop {
+            line.clear();
+
+            if let 0 = err_reader.read_line(&mut line)? {
+                break;
+            }
+
+            let line = line.trim();
+
+            if !line.is_empty() {
+                eprintln!("{line}");
+            }
+        }
+
+        Ok::<(), Error>(())
+    });
+
+    let waiter = spawn_blocking(move || exe.wait());
+
+    let (out_res, err_res, waiter_res) = join!(out_reader, err_reader, waiter);
+
+    out_res??;
+    err_res??;
+    waiter_res??;
+
+    Ok(())
+}
+
+#[cfg(not(feature = "qemu"))]
+async fn run(input: Option<Vec<u8>>, args: Vec<String>) -> Result<()> {
+    let mut exe = Command::new("qemu-x86_64")
         .args(args)
         .stdin(if input.is_some() {
             Stdio::piped()
@@ -193,8 +273,8 @@ where
     let it = Deserializer::from_reader(&mut stream).into_iter::<Event>();
 
     for event in it {
-        outfile_stream.write(to_string(&event?)?.as_bytes())?;
-        outfile_stream.write(b"\n")?;
+        outfile_stream.write_all(to_string(&event?)?.as_bytes())?;
+        outfile_stream.write_all(b"\n")?;
     }
 
     Ok(())

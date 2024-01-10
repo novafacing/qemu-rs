@@ -71,12 +71,17 @@
 //! ```
 
 #![deny(missing_docs)]
-#![cfg_attr(feature = "weak", feature(linkage))]
+#![cfg_attr(all(unix, feature = "unix-weak-link"), feature(linkage))]
 
-#[cfg(feature = "weak")]
-mod weak;
+#[cfg(all(unix, feature = "unix-weak-link"))]
+mod unix_weak_link;
+
+#[cfg(windows)]
+mod win_link_hook;
 
 use crate::error::{Error, Result};
+#[cfg(windows)]
+use libc::free;
 use qemu_plugin_sys::{
     qemu_plugin_cb_flags, qemu_plugin_hwaddr, qemu_plugin_id_t, qemu_plugin_insn,
     qemu_plugin_mem_rw, qemu_plugin_meminfo_t, qemu_plugin_simple_cb_t, qemu_plugin_tb,
@@ -95,9 +100,26 @@ pub mod install;
 pub mod plugin;
 pub mod sys;
 
+#[cfg(not(windows))]
 extern "C" {
     /// glib g_free is provided by the QEMU program we are being linked into
     fn g_free(mem: *mut c_void);
+}
+
+#[cfg(windows)]
+unsafe fn g_free(mem: *mut c_void) {
+    //TODO: We would really like to call g_free in the qemu binary here
+    //but we can't, because windows doesn't export symbols unless you explicitly export them
+    //and g_free isn't so exported.
+
+    // NOTE: glib 2.46 g_malloc always uses system malloc implementation:
+    // https://docs.gtk.org/glib/func.mem_is_system_malloc.html
+    // So it is safe to call libc free to free a `g_malloc`-ed object
+    unsafe {
+        if !mem.is_null() {
+            free(mem)
+        }
+    }
 }
 
 /// The index of a vCPU

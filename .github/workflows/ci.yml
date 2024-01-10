@@ -10,26 +10,84 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  test_plugins_linux:
+    name: Build and Test Plugins (Linux)
     runs-on: ubuntu-latest
+    container: ubuntu:22.04
+    steps:
+      - name: Install QEMU User
+        run: |
+          apt-get -y update && \
+          apt-get -y install git curl qemu-user build-essential
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/checkout@v4
+      - name: Test QEMU Install
+        run: |
+          qemu-x86_64 --help
+      - name: Build and Test Tracer
+        run: |
+          cd plugins/tracer
+          cargo build -r || exit 0
+          cargo build -r
+          cargo run -r --bin tracer -- -a /bin/ls -- -lah
+          cd ../..
+      - name: Build and Test Tiny
+        run: |
+          cd plugins/tiny
+          cargo build -r
+          qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
+          cd ../..
+
+  test_plugins_windows:
+    name: Build and Test Plugins (Windows)
+    runs-on: windows-latest
+    env:
+      # QEMU 8.1.0
+      QEMU_URL: "https://qemu.weilnetz.de/w64/2023/qemu-w64-setup-20230822.exe"
+      RUSTUP_URL: "https://win.rustup.rs/x86_64"
+      FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
 
     steps:
-      - name: Free build space
-        uses: easimon/maximize-build-space@master
+      - uses: msys2/setup-msys2@v2
         with:
-            root-reserve-mb: 2048
-            temp-reserve-mb: 256
-            swap-size-mb: 1024
-            remove-dotnet: 'true'
-            remove-android: 'true'
-            remove-haskell: 'true'
-            remove-codeql: 'true'
-            remove-docker-images: 'true'
-      - name: Install QEMU Build Dependencies
+          msystem: UCRT64
+          update: true
+          install: git mingw-w64-ucrt-x86_64-gcc
+          location: C:\msys-custom
+
+      - name: Download and Install Rust
         run: |
-          sudo apt-get -y install git libglib2.0-dev libfdt-dev \
-            libpixman-1-dev zlib1g-dev ninja-build
-      - uses: dtolnay/rust-toolchain@nightly
-      - uses: actions/checkout@v3
-      - name: Build
-        run: cargo build -vv -p tracer
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -Uri ${{ env.RUSTUP_URL }} -OutFile rustup-init.exe
+          ./rustup-init.exe --default-toolchain nightly --default-host x86_64-pc-windows-gnu -y
+
+      - name: Install QEMU
+        shell: msys2 {0}
+        run: |
+          pacman -Syu --noconfirm
+          pacman -Sy mingw-w64-ucrt-x86_64-qemu --noconfirm
+
+      - name: Test QEMU
+        run: |
+          C:\msys-custom\msys64\ucrt64\bin\qemu-system-x86_64.exe --version
+
+      - uses: actions/checkout@v4
+
+      - name: Download Cloud Image
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -Uri ${{ env.FEDORA_CLOUDIMG_URL }} -OutFile Fedora-Cloud-Base-39-1.5.x86_64.qcow2
+          ls
+
+      - name: Build and Test Tiny
+        run: |
+          cd plugins/tiny-system
+          cargo build -r
+          cd ../..
+          $process = Start-Process PowerShell.exe -NoNewWindow -RedirectStandardOutput out.txt -RedirectStandardError err.txt -PassThru -ArgumentList "-Command", "C:\msys-custom\msys64\ucrt64\bin\qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll"
+          echo "Sleeping 180.0 seconds until booted (boot process took 118s first time)"
+          Start-Sleep -Seconds 180.0
+          echo "Stopping process"
+          Stop-Process -Id $process.id
+          cat out.txt
+          cat err.txt

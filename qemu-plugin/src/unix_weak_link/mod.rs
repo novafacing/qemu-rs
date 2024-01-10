@@ -1,3 +1,6 @@
+//! Weak linkage for unix hosts allowing this library to be built as an rlib, leaving QEMU
+//! symbols unresolved
+
 use std::ptr::{null, null_mut};
 
 use qemu_plugin_sys::*;
