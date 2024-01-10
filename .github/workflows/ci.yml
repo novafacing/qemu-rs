@@ -65,6 +65,8 @@ jobs:
         run: |
           pacman -Syu --noconfirm
           pacman -Sy mingw-w64-ucrt-x86_64-qemu --noconfirm
+          qemu-system-x86_64.exe --version
+          which qemu-system-x86_64
 
       - uses: actions/checkout@v4
 
@@ -75,7 +77,6 @@ jobs:
 
       - name: Build and Test Tiny
         run: |
-          $env:Path += ";C:\msys64\ucrt64\bin;C:\msys64\usr\bin;"
           cd plugins/tiny-system
           cargo build -r
           cd ../..
