@@ -41,9 +41,6 @@ jobs:
   test_plugins_windows:
     name: Build and Test Plugins (Windows)
     runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
     env:
       # QEMU 8.1.0
       QEMU_URL: "https://qemu.weilnetz.de/w64/2023/qemu-w64-setup-20230822.exe"
@@ -77,12 +74,12 @@ jobs:
           Invoke-WebRequest -Uri ${{ env.FEDORA_CLOUDIMG_URL }} -OutFile Fedora-Cloud-Base-39-1.5.x86_64.qcow2
 
       - name: Build and Test Tiny
-        shell: msys2 {0}
         run: |
+          $env:Path += ";C:\msys64\ucrt64\bin;C:\msys64\usr\bin;"
           cd plugins/tiny
           cargo build -r
           cd ../..
-          $job = Start-Job -ScriptBlock { qemu-system-x86_64 -machine type=q35 -m 2G -nographic -serial stdio -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=../Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img }
+          $job = Start-Job -ScriptBlock { C:\msys64\ucrt64\bin\qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -serial stdio -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=../Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img }
           Start-Sleep -Seconds 45.0
           $jobEvent = Register-ObjectEvent $job StateChanged -Action {
             $jobEvent | Unregister-Event
