@@ -107,6 +107,14 @@ extern "C" {
 }
 
 #[cfg(windows)]
+/// Define g_free, because on Windows we cannot delay link it
+///
+/// # Safety
+///
+/// `g_free` must *only* be used to deallocate values allocated with `g_malloc`, regardless of
+/// its documented guarantees about wrapping the system allocator. QEMU plugin APIs which return
+/// such values are documented to do so, and it is safe to call `g_free` on these values
+/// provided they are not used afterward.
 unsafe fn g_free(mem: *mut c_void) {
     //TODO: We would really like to call g_free in the qemu binary here
     //but we can't, because windows doesn't export symbols unless you explicitly export them
@@ -115,10 +123,9 @@ unsafe fn g_free(mem: *mut c_void) {
     // NOTE: glib 2.46 g_malloc always uses system malloc implementation:
     // https://docs.gtk.org/glib/func.mem_is_system_malloc.html
     // So it is safe to call libc free to free a `g_malloc`-ed object
-    unsafe {
-        if !mem.is_null() {
-            free(mem)
-        }
+    if !mem.is_null() {
+        // SAFETY: `mem` is non-null.
+        unsafe { free(mem) }
     }
 }
 
