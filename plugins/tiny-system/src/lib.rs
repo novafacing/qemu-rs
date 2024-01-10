@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::anyhow;
 use ctor::ctor;
 use qemu_plugin::{
     plugin::{HasCallbacks, Plugin, Register, PLUGIN},
