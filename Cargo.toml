@@ -17,6 +17,7 @@ members = [
     "qemu-plugin",
     "qemu-plugin-sys",
     "plugins/tiny",
+    "plugins/tiny-system",
     "plugins/tracer",
 ]
 default-members = ["qemu-plugin", "qemu-plugin-sys"]
