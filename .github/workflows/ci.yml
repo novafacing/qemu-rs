@@ -66,6 +66,9 @@ jobs:
         run: |
           pacman -Syu --noconfirm
           pacman -Sy mingw-w64-ucrt-x86_64-qemu --noconfirm
+
+      - name: Test QEMU
+        run: |
           C:\msys-custom\msys64\ucrt64\bin\qemu-system-x86_64.exe --version
 
       - uses: actions/checkout@v4
