@@ -12,24 +12,39 @@ impl Plugin for TinyTrace {}
 impl Register for TinyTrace {}
 
 impl HasCallbacks for TinyTrace {
-    fn on_syscall(
+    fn on_vcpu_init(
         &mut self,
         id: PluginId,
-        vcpu_index: qemu_plugin::VCPUIndex,
-        num: i64,
-        a1: u64,
-        a2: u64,
-        a3: u64,
-        a4: u64,
-        a5: u64,
-        a6: u64,
-        a7: u64,
-        a8: u64,
-    ) -> Result<(), anyhow::Error> {
-        println!(
-            "on_syscall: id: {:?}, vcpu_index: {:?}, num: {:?}, a1: {:?}, a2: {:?}, a3: {:?}, a4: {:?}, a5: {:?}, a6: {:?}, a7: {:?}, a8: {:?}",
-            id, vcpu_index, num, a1, a2, a3, a4, a5, a6, a7, a8
-        );
+        vcpu_id: qemu_plugin::VCPUIndex,
+    ) -> std::prelude::v1::Result<(), anyhow::Error> {
+        println!("on_vcpu_init: id: {:?}, vcpu_id: {:?}", id, vcpu_id);
+        Ok(())
+    }
+
+    fn on_vcpu_idle(
+        &mut self,
+        id: PluginId,
+        vcpu_id: qemu_plugin::VCPUIndex,
+    ) -> std::prelude::v1::Result<(), anyhow::Error> {
+        println!("on_vcpu_idle: id: {:?}, vcpu_id: {:?}", id, vcpu_id);
+        Ok(())
+    }
+
+    fn on_vcpu_exit(
+        &mut self,
+        id: PluginId,
+        vcpu_id: qemu_plugin::VCPUIndex,
+    ) -> std::prelude::v1::Result<(), anyhow::Error> {
+        println!("on_vcpu_exit: id: {:?}, vcpu_id: {:?}", id, vcpu_id);
+        Ok(())
+    }
+
+    fn on_vcpu_resume(
+        &mut self,
+        id: PluginId,
+        vcpu_id: qemu_plugin::VCPUIndex,
+    ) -> std::prelude::v1::Result<(), anyhow::Error> {
+        println!("on_vcpu_resume: id: {:?}, vcpu_id: {:?}", id, vcpu_id);
         Ok(())
     }
 }

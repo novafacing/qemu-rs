@@ -84,11 +84,10 @@ jobs:
           cd plugins/tiny-system
           cargo build -r
           cd ../..
-          Start-Process PowerShell.exe -NoNewWindow -ArgumentList "-Command", "C:\msys-custom\msys64\ucrt64\bin\qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll"
+          $process = Start-Process PowerShell.exe -NoNewWindow -RedirectStandardOutput out.txt -RedirectStandardError err.txt -PassThru -ArgumentList "-Command", "C:\msys-custom\msys64\ucrt64\bin\qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll"
           echo "Sleeping 180.0 seconds until booted (boot process took 118s first time)"
           Start-Sleep -Seconds 180.0
-          echo "Sending shutdown command to VM"
-          ssh -p 2222 -i .github/rsrc/id_rsa fedora@localhost sudo shutdown now
-          # Wait for shutdown
-          echo "Waiting 30.0 seconds for shutdown"
-          Start-Sleep -Seconds 30.0
+          echo "Stopping process"
+          Stop-Process -Id $process.id
+          cat out.txt
+          cat err.txt
