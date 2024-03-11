@@ -31,7 +31,7 @@ installs Rust wrappers for QEMU as binaries.
 You can install QEMU with (add any additional features you need, e.g. `plugins`):
 
 ```sh
-cargo install qemu@8.2.0-v1  --features=binaries
+cargo install qemu@8.2.2-v0  --features=binaries
 ```
 
 On some systems, particularly BTRFS systems, `/tmp` may not be large enough for the
