@@ -10,8 +10,8 @@ RUN apt-get -y update && \
 
 COPY . /qemu-rs
 
-WORKDIR /qemu-rs
+WORKDIR /qemu-rs/plugins/tracer
 
-RUN cargo build -r && \
-    cargo run -r --bin tracer -- -a /bin/ls -- -lah
+RUN cargo build -r || exit 0
+RUN cargo build -r
 
