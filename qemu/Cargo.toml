@@ -531,7 +531,8 @@ werror = []
 plugins = []
 # Enable the coroutine pool
 coroutine-pool = []
-# Enable debug symbols and other information
+# Enable debug symbols and other information. Note that this may generate an
+# archive file that is too big!
 debug-info = []
 # Enable the hexagon idef parser
 hexagon-idef-parser = []
