@@ -39,16 +39,23 @@ enum DliNotify {
 ///
 /// # Arguments
 ///
-/// * `dli_notify` - The
+/// * `dli_notify` - The type of notification
+/// * `pdli` - The delay load information
+///
+/// # Return value
+///
+/// * `HMODULE` - The handle to the module
 extern "C" fn delaylink_hook(dli_notify: DliNotify, pdli: DELAYLOAD_INFO) -> HMODULE {
     if let DliNotify::DliFailLoadLib = dli_notify {
         // SAFETY: Conversion of `PCSTR` to String is not safe because it involves an unchecked
-        // nul-byte dependent `strcpy`. In this instance, it is safe because
+        // nul-byte dependent `strcpy`. In this instance, it is as safe as OS guarantees because
+        // the target dll name is provided by Windows and is null-terminated.
         let name = unsafe { pdli.TargetDllName.to_string() }.unwrap_or_default();
+
         let mut module = HMODULE::default();
 
         // NOTE: QEMU executables on windows are named qemu-system.*.exe
-        if name.starts_with("qemu") {
+        if name == "qemu.exe" {
             // SAFETY: Getting the module handle for NULL is safe and does not dereference any
             // pointers except to write the `module` argument which we know is alive here.
             match unsafe { GetModuleHandleExA(0, PCSTR::null(), &mut module as *mut HMODULE) } {
