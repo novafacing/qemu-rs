@@ -89,6 +89,6 @@ jobs:
           echo "Sleeping 180.0 seconds until booted (boot process took 118s first time)"
           Start-Sleep -Seconds 180.0
           echo "Stopping process"
-          Stop-Process -Id $process.id
+          Stop-Process -Id $process.id -ErrorAction SilentlyContinue
           cat out.txt
           cat err.txt
