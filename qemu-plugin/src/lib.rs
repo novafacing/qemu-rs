@@ -80,8 +80,6 @@ mod unix_weak_link;
 mod win_link_hook;
 
 use crate::error::{Error, Result};
-#[cfg(windows)]
-use libc::free;
 use qemu_plugin_sys::{
     qemu_plugin_cb_flags, qemu_plugin_hwaddr, qemu_plugin_id_t, qemu_plugin_insn,
     qemu_plugin_mem_rw, qemu_plugin_meminfo_t, qemu_plugin_simple_cb_t, qemu_plugin_tb,
@@ -107,6 +105,19 @@ extern "C" {
 }
 
 #[cfg(windows)]
+lazy_static::lazy_static! {
+    static ref G_FREE : libloading::os::windows::Symbol<unsafe extern fn(*mut c_void)> = {
+        let lib =
+            libloading::os::windows::Library::open_already_loaded("libglib-2.0-0.dll")
+                .expect("libglib-2.0-0.dll should already be loaded");
+        // SAFETY
+        // "Users of `Library::get` should specify the correct type of the function loaded".
+        // We are specifying the correct type of g_free above (`void g_free(void*)`)
+        unsafe{lib.get(b"g_free").expect("find g_free")}
+    };
+}
+
+#[cfg(windows)]
 /// Define g_free, because on Windows we cannot delay link it
 ///
 /// # Safety
@@ -116,17 +127,7 @@ extern "C" {
 /// such values are documented to do so, and it is safe to call `g_free` on these values
 /// provided they are not used afterward.
 unsafe fn g_free(mem: *mut c_void) {
-    //TODO: We would really like to call g_free in the qemu binary here
-    //but we can't, because windows doesn't export symbols unless you explicitly export them
-    //and g_free isn't so exported.
-
-    // NOTE: glib 2.46 g_malloc always uses system malloc implementation:
-    // https://docs.gtk.org/glib/func.mem_is_system_malloc.html
-    // So it is safe to call libc free to free a `g_malloc`-ed object
-    if !mem.is_null() {
-        // SAFETY: `mem` is non-null.
-        unsafe { free(mem) }
-    }
+    unsafe { G_FREE(mem) }
 }
 
 /// The index of a vCPU

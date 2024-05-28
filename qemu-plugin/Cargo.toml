@@ -17,6 +17,11 @@ once_cell = "1.19.0"
 qemu-plugin-sys = { version = "8.2.2-v0", workspace = true }
 thiserror = "1.0.51"
 
+[target.'cfg(windows)'.dependencies.libloading]
+version = "0.8.3"
+[target.'cfg(windows)'.dependencies.lazy_static]
+version = "1.4"
+
 [target.'cfg(windows)'.dependencies.windows]
 version = "0.52"
 features = [
