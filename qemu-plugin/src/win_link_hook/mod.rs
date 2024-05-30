@@ -1,8 +1,6 @@
 //! Hook for linking against exported QEMU symbols at runtime
 
-use windows::core::PCSTR;
 use windows::Win32::Foundation::HMODULE;
-use windows::Win32::System::LibraryLoader::GetModuleHandleExA;
 use windows::Win32::System::WindowsProgramming::DELAYLOAD_INFO;
 
 /// The helper function for linker-supported delayed loading which is what actually
@@ -12,8 +10,9 @@ type DelayHook = unsafe extern "C" fn(dli_notify: DliNotify, pdli: DELAYLOAD_INF
 #[no_mangle]
 /// Helper function invoked when failures occur in delay linking (as opposed to
 /// notifications)
-pub static __pfnDliFailureHook2: DelayHook = delaylink_hook;
+static __pfnDliFailureHook2: DelayHook = delaylink_hook;
 
+#[allow(dead_code, clippy::enum_variant_names)] //We only need one of these variants.
 #[repr(C)]
 /// Delay load import hook notifications
 ///
@@ -52,16 +51,13 @@ extern "C" fn delaylink_hook(dli_notify: DliNotify, pdli: DELAYLOAD_INFO) -> HMO
         // the target dll name is provided by Windows and is null-terminated.
         let name = unsafe { pdli.TargetDllName.to_string() }.unwrap_or_default();
 
-        let mut module = HMODULE::default();
-
         // NOTE: QEMU executables on windows are named qemu-system.*.exe
         if name == "qemu.exe" {
-            // SAFETY: Getting the module handle for NULL is safe and does not dereference any
-            // pointers except to write the `module` argument which we know is alive here.
-            match unsafe { GetModuleHandleExA(0, PCSTR::null(), &mut module as *mut HMODULE) } {
-                Ok(_) => return module,
-                Err(e) => panic!("Failed to open QEMU module: {e:?}"),
-            }
+            return HMODULE(
+                libloading::os::windows::Library::this()
+                    .expect("Get QEMU module")
+                    .into_raw(),
+            );
         }
     }
 
