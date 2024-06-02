@@ -62,9 +62,21 @@ pub extern "C" fn qemu_plugin_register_vcpu_tb_exec_cb(
 ) {
 }
 
+#[cfg(feature = "plugin-api-v1")]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_register_vcpu_tb_exec_inline(
+    _: *mut qemu_plugin_tb,
+    _: qemu_plugin_op,
+    _: *mut ::std::os::raw::c_void,
+    _: u64,
+) {
+}
+
+#[cfg(feature = "plugin-api-v2")]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_register_vcpu_tb_exec_inline_per_vcpu(
     _: *mut qemu_plugin_tb,
     _: qemu_plugin_op,
     _: *mut ::std::os::raw::c_void,
@@ -82,9 +94,21 @@ pub extern "C" fn qemu_plugin_register_vcpu_insn_exec_cb(
 ) {
 }
 
+#[cfg(feature = "plugin-api-v1")]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_register_vcpu_insn_exec_inline(
+    _: *mut qemu_plugin_insn,
+    _: qemu_plugin_op,
+    _: *mut ::std::os::raw::c_void,
+    _: u64,
+) {
+}
+
+#[cfg(feature = "plugin-api-v2")]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_register_vcpu_insn_exec_inline_per_vcpu(
     _: *mut qemu_plugin_insn,
     _: qemu_plugin_op,
     _: *mut ::std::os::raw::c_void,
@@ -205,9 +229,22 @@ pub extern "C" fn qemu_plugin_register_vcpu_mem_cb(
 ) {
 }
 
+#[cfg(feature = "plugin-api-v1")]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_register_vcpu_mem_inline(
+    _: *mut qemu_plugin_insn,
+    _: qemu_plugin_mem_rw,
+    _: qemu_plugin_op,
+    _: *mut ::std::os::raw::c_void,
+    _: u64,
+) {
+}
+
+#[cfg(feature = "plugin-api-v2")]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_register_vcpu_mem_inline_per_vcpu(
     _: *mut qemu_plugin_insn,
     _: qemu_plugin_mem_rw,
     _: qemu_plugin_op,
@@ -265,12 +302,21 @@ pub extern "C" fn qemu_plugin_register_atexit_cb(
 ) {
 }
 
+#[cfg(feature = "plugin-api-v1")]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_n_vcpus() -> ::std::os::raw::c_int {
     0
 }
 
+#[cfg(feature = "plugin-api-v2")]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_num_vcpus() -> ::std::os::raw::c_int {
+    0
+}
+
+#[cfg(feature = "plugin-api-v1")]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_n_max_vcpus() -> ::std::os::raw::c_int {
@@ -315,6 +361,85 @@ pub extern "C" fn qemu_plugin_entry_code() -> u64 {
     0
 }
 
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_get_registers() -> *mut GArray {
+    null_mut()
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_read_register(
+    _: *mut qemu_plugin_register,
+    _: *mut GByteArray,
+) -> ::std::os::raw::c_int {
+    0
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_scoreboard_new(_: usize) -> *mut qemu_plugin_scoreboard {
+    null_mut()
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_scoreboard_free(_: *mut qemu_plugin_scoreboard) {}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_scoreboard_find(
+    _: *mut qemu_plugin_scoreboard,
+    _: ::std::os::raw::c_uint,
+) -> *mut ::std::os::raw::c_void {
+    null_mut()
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_u64_add(_: qemu_plugin_u64, _: ::std::os::raw::c_uint, _: u64) {}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_u64_get(_: qemu_plugin_u64, _: ::std::os::raw::c_uint) -> u64 {
+    0
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_u64_set(_: qemu_plugin_u64, _: ::std::os::raw::c_uint, _: u64) {}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_u64_sum(_: qemu_plugin_u64) {}
+
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn g_free(_: *mut ::std::ffi::c_void) {}
+
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn g_byte_array_new() -> *mut GByteArray {
+    null_mut()
+}
+
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn g_byte_array_free(_: *mut GByteArray, _: bool) -> *mut u8 {
+    null_mut()
+}
+
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn g_array_free(_: *mut GArray, _: bool) -> *mut u8 {
+    null_mut()
+}

@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Error, Result};
 use clap::Parser;
-#[cfg(feature = "memfd-exec")]
+#[cfg(feature = "qemu")]
 use memfd_exec::{MemFdExecutable, Stdio};
 #[cfg(feature = "qemu")]
 use qemu::QEMU_X86_64_LINUX_USER;
@@ -47,6 +47,7 @@ fn tmp(prefix: &str, suffix: &str) -> PathBuf {
     ))
 }
 
+#[cfg(feature = "plugin-api-v1")]
 #[derive(Parser, Debug, Clone)]
 /// Run QEMU with a plugin that logs events. To pass arguments to QEMU, use the QEMU environment
 /// variables.
@@ -77,14 +78,61 @@ struct Args {
     pub args: Vec<String>,
 }
 
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[derive(Parser, Debug, Clone)]
+/// Run QEMU with a plugin that logs events. To pass arguments to QEMU, use the QEMU environment
+/// variables.
+struct Args {
+    #[clap(short = 'i', long)]
+    /// Whether instructions should be logged
+    pub log_insns: bool,
+    #[clap(short = 'm', long)]
+    /// Whether memory accesses should be logged
+    pub log_mem: bool,
+    #[clap(short = 's', long)]
+    /// Whether syscalls should be logged
+    pub log_syscalls: bool,
+    #[clap(short = 'r', long)]
+    /// Whether registers should be logged
+    pub log_registers: bool,
+    #[clap(short = 'a', long)]
+    /// Whether all events should be logged
+    pub log_all: bool,
+    #[clap(short = 'I', long)]
+    /// An input file to use as the program's stdin, otherwise the driver's stdin is used
+    pub input_file: Option<PathBuf>,
+    #[clap(short = 'O', long)]
+    /// An output file to write the trace to, otherwise stdout is used
+    pub output_file: Option<PathBuf>,
+    /// The program to run
+    #[clap()]
+    pub program: PathBuf,
+    /// The arguments to the program
+    #[clap(num_args = 1.., last = true)]
+    pub args: Vec<String>,
+}
+
 impl Args {
     fn to_plugin_args(&self) -> String {
-        format!(
-            "log_insns={},log_mem={},log_syscalls={}",
-            self.log_insns | self.log_all,
-            self.log_mem | self.log_all,
-            self.log_syscalls | self.log_all
-        )
+        #[cfg(feature = "plugin-api-v1")]
+        {
+            format!(
+                "log_insns={},log_mem={},log_syscalls={}",
+                self.log_insns | self.log_all,
+                self.log_mem | self.log_all,
+                self.log_syscalls | self.log_all,
+            )
+        }
+        #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+        {
+            format!(
+                "log_insns={},log_mem={},log_syscalls={},log_registers={}",
+                self.log_insns | self.log_all,
+                self.log_mem | self.log_all,
+                self.log_syscalls | self.log_all,
+                self.log_registers | self.log_all,
+            )
+        }
     }
 
     fn to_qemu_args(&self, socket_path: &Path, plugin_path: &Path) -> Result<Vec<String>> {
@@ -302,17 +350,14 @@ async fn main() -> Result<()> {
     let listen_sock = UnixListener::bind(&socket_path)?;
 
     let qemu_args = args.to_qemu_args(&socket_path, &plugin_path)?;
-    let qemu_task = spawn(async move { run(input, qemu_args).await });
-
     let socket_task = spawn_blocking(move || listen(listen_sock, args.output_file.as_ref()));
-
-    let (qemu_res, socket_res) = join!(qemu_task, socket_task);
+    let qemu_task = spawn(async move { run(input, qemu_args).await });
+    let (qemu_res, socket_res) = join!(socket_task, qemu_task);
 
     remove_file(&plugin_path).await?;
     remove_file(&socket_path).await?;
 
     qemu_res??;
-
     socket_res??;
 
     Ok(())

@@ -43,6 +43,20 @@ pub enum Error {
     #[error("No disassembly string available for instruction")]
     /// Error when no disassembly string is available for an instruction (i.e. NULL string
     NoDisassemblyString,
+    #[error("Invalid size {size} for read of register {name}")]
+    /// Error when the size of a register read is invalid
+    InvalidRegisterReadSize {
+        /// The register name
+        name: String,
+        /// The size of the attempted read
+        size: usize,
+    },
+    #[error("Error while reading register {name}")]
+    /// Error when reading a register fails
+    RegisterReadError {
+        /// The register name
+        name: String,
+    },
     #[error(transparent)]
     /// A transparently wrapped `std::str::Utf8Error`
     Utf8Error(#[from] std::str::Utf8Error),

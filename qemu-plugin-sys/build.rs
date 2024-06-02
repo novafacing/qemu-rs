@@ -4,6 +4,13 @@ use anyhow::Result;
 #[cfg(windows)]
 use std::{env::var, path::PathBuf, process::Command, str::FromStr};
 
+#[cfg(feature = "plugin-api-v1")]
+pub const PLUGIN_API_DEF_FILE_NAME: &str = "qemu_plugin_api_v1.def";
+#[cfg(feature = "plugin-api-v2")]
+pub const PLUGIN_API_DEF_FILE_NAME: &str = "qemu_plugin_api_v2.def";
+#[cfg(feature = "plugin-api-v3")]
+pub const PLUGIN_API_DEF_FILE_NAME: &str = "qemu_plugin_api_v3.def";
+
 #[cfg(windows)]
 fn out_dir() -> Result<PathBuf> {
     Ok(PathBuf::from(
@@ -15,7 +22,7 @@ fn main() -> Result<()> {
     #[cfg(windows)]
     {
         let out_dir = out_dir()?;
-        let def_file = PathBuf::from_str("src/qemu_plugin_api.def")?;
+        let def_file = PathBuf::from_str(&format!("src/{PLUGIN_API_DEF_FILE_NAME}"))?;
         let def_file_str = def_file.to_string_lossy();
         let lib_file = out_dir.join("qemu_plugin_api.lib");
         let lib_file_str = lib_file.to_string_lossy();
@@ -36,5 +43,6 @@ fn main() -> Result<()> {
         println!("cargo:rustc-link-search={}", out_dir.display());
         println!("cargo:rustc-link-lib=qemu_plugin_api");
     }
+
     Ok(())
 }

@@ -78,7 +78,7 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 memfd-exec = "2.1.0"
-qemu = { version = "8.2.2", features = ["qemu-aarch64"] }
+qemu = { version = "9.0.0", features = ["qemu-aarch64"] }
 ```
 
 ```rust
@@ -115,7 +115,7 @@ to configure this crate as a dependency:
 This will make the `qemu-x86_64` binary available.
 
 ```toml
-qemu = { version = "8.2.2", features = ["qemu-x86_64"] }
+qemu = { version = "9.0.0", features = ["qemu-x86_64"] }
 ```
 
 ### Install an optimized qemu-x86_64 usermode emulator
@@ -124,7 +124,7 @@ This will also make the `qemu-x86_64` binary available, but will strip and optim
 with `lto`.
 
 ```toml
-qemu = { version = "8.2.2", features = ["qemu-x86_64", "lto", "strip"]
+qemu = { version = "9.0.0", features = ["qemu-x86_64", "lto", "strip"]
 ```
 
 ### Install qemu-system-arm emulator with customized options

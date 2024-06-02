@@ -5,6 +5,8 @@ use qemu_plugin::{
     plugin::{HasCallbacks, Plugin, Register, PLUGIN},
     Instruction, MemRW, MemoryInfo, PluginId, TranslationBlock, VCPUIndex,
 };
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+use qemu_plugin::{qemu_plugin_get_registers, RegisterDescriptor};
 use serde::{Deserialize, Serialize};
 use serde_cbor::to_writer;
 use std::{
@@ -95,9 +97,17 @@ pub struct SyscallEvent {
     pub args: [u64; 8],
 }
 
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Registers(pub HashMap<String, Vec<u8>>);
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum Event {
-    Instruction(InstructionEvent),
+    Instruction {
+        event: InstructionEvent,
+        #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+        registers: Registers,
+    },
     Memory(MemoryEvent),
     Syscall(SyscallEvent),
 }
@@ -105,6 +115,8 @@ pub enum Event {
 #[derive(TypedBuilder, Clone, Debug)]
 struct Tracer {
     pub syscalls: Arc<Mutex<HashMap<SyscallSource, SyscallEvent>>>,
+    #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+    pub registers: Arc<Mutex<Vec<RegisterDescriptor<'static>>>>,
     #[builder(default)]
     pub tx: Arc<Mutex<Option<UnixStream>>>,
     #[builder(default)]
@@ -113,17 +125,46 @@ struct Tracer {
     pub log_mem: bool,
     #[builder(default)]
     pub log_syscalls: bool,
+    #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+    #[builder(default)]
+    pub log_registers: bool,
 }
 
 impl Tracer {
     pub fn new() -> Self {
-        Self::builder()
-            .syscalls(Arc::new(Mutex::new(HashMap::new())))
-            .build()
+        #[cfg(feature = "plugin-api-v1")]
+        {
+            Self::builder()
+                .syscalls(Arc::new(Mutex::new(HashMap::new())))
+                .build()
+        }
+        #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+        {
+            Self::builder()
+                .syscalls(Arc::new(Mutex::new(HashMap::new())))
+                .registers(Arc::new(Mutex::new(Vec::new())))
+                .build()
+        }
     }
 }
 
 impl HasCallbacks for Tracer {
+    fn on_vcpu_init(
+        &mut self,
+        _id: PluginId,
+        _vcpu_id: VCPUIndex,
+    ) -> std::prelude::v1::Result<(), anyhow::Error> {
+        #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+        {
+            *self
+                .registers
+                .lock()
+                .map_err(|e| anyhow!("Failed to lock registers: {}", e))? =
+                qemu_plugin_get_registers()?;
+        }
+        Ok(())
+    }
+
     fn on_translation_block_translate(
         &mut self,
         _id: PluginId,
@@ -134,6 +175,11 @@ impl HasCallbacks for Tracer {
 
             if self.log_insns {
                 let tx = self.tx.clone();
+                let registers = self
+                    .registers
+                    .lock()
+                    .map_err(|e| anyhow!("Failed to lock registers: {}", e))?
+                    .clone();
 
                 insn.register_execute_callback(move |_| {
                     tx.lock()
@@ -141,7 +187,22 @@ impl HasCallbacks for Tracer {
                         .and_then(|tx| {
                             to_writer(
                                 tx.as_ref().ok_or_else(|| anyhow!("No tx"))?,
-                                &Event::Instruction(event.clone()),
+                                &Event::Instruction {
+                                    event: event.clone(),
+                                    #[cfg(any(
+                                        feature = "plugin-api-v2",
+                                        feature = "plugin-api-v3"
+                                    ))]
+                                    registers: Registers(
+                                        registers
+                                            .iter()
+                                            .map(|r| {
+                                                let value = r.read().unwrap_or_else(|_| vec![]);
+                                                (r.name.clone(), value)
+                                            })
+                                            .collect(),
+                                    ),
+                                },
                             )
                             .map_err(|e| anyhow!(e))
                         })
@@ -262,6 +323,8 @@ pub struct PluginArgs {
     pub log_insns: bool,
     pub log_mem: bool,
     pub log_syscalls: bool,
+    #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+    pub log_registers: bool,
     pub socket_path: PathBuf,
 }
 
@@ -269,42 +332,91 @@ impl TryFrom<&Args> for PluginArgs {
     type Error = Error;
 
     fn try_from(value: &Args) -> Result<Self> {
-        Ok(Self::builder()
-            .log_insns(
-                value
-                    .parsed
-                    .get("log_insns")
-                    .map(|li| if let Value::Bool(v) = li { *v } else { false })
-                    .unwrap_or_default(),
-            )
-            .log_mem(
-                value
-                    .parsed
-                    .get("log_mem")
-                    .map(|lm| if let Value::Bool(v) = lm { *v } else { false })
-                    .unwrap_or_default(),
-            )
-            .log_syscalls(
-                value
-                    .parsed
-                    .get("log_syscalls")
-                    .map(|ls| if let Value::Bool(v) = ls { *v } else { false })
-                    .unwrap_or_default(),
-            )
-            .socket_path(
-                value
-                    .parsed
-                    .get("socket_path")
-                    .and_then(|sp| {
-                        if let Value::String(v) = sp {
-                            Some(PathBuf::from(v))
-                        } else {
-                            None
-                        }
-                    })
-                    .ok_or_else(|| anyhow!("No socket path provided"))?,
-            )
-            .build())
+        #[cfg(feature = "plugin-api-v1")]
+        {
+            Ok(Self::builder()
+                .log_insns(
+                    value
+                        .parsed
+                        .get("log_insns")
+                        .map(|li| if let Value::Bool(v) = li { *v } else { false })
+                        .unwrap_or_default(),
+                )
+                .log_mem(
+                    value
+                        .parsed
+                        .get("log_mem")
+                        .map(|lm| if let Value::Bool(v) = lm { *v } else { false })
+                        .unwrap_or_default(),
+                )
+                .log_syscalls(
+                    value
+                        .parsed
+                        .get("log_syscalls")
+                        .map(|ls| if let Value::Bool(v) = ls { *v } else { false })
+                        .unwrap_or_default(),
+                )
+                .socket_path(
+                    value
+                        .parsed
+                        .get("socket_path")
+                        .and_then(|sp| {
+                            if let Value::String(v) = sp {
+                                Some(PathBuf::from(v))
+                            } else {
+                                None
+                            }
+                        })
+                        .ok_or_else(|| anyhow!("No socket path provided"))?,
+                )
+                .build())
+        }
+        #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+        {
+            Ok(Self::builder()
+                .log_insns(
+                    value
+                        .parsed
+                        .get("log_insns")
+                        .map(|li| if let Value::Bool(v) = li { *v } else { false })
+                        .unwrap_or_default(),
+                )
+                .log_mem(
+                    value
+                        .parsed
+                        .get("log_mem")
+                        .map(|lm| if let Value::Bool(v) = lm { *v } else { false })
+                        .unwrap_or_default(),
+                )
+                .log_syscalls(
+                    value
+                        .parsed
+                        .get("log_syscalls")
+                        .map(|ls| if let Value::Bool(v) = ls { *v } else { false })
+                        .unwrap_or_default(),
+                )
+                .log_registers(
+                    value
+                        .parsed
+                        .get("log_registers")
+                        .map(|lr| if let Value::Bool(v) = lr { *v } else { false })
+                        .unwrap_or_default(),
+                )
+                .socket_path(
+                    value
+                        .parsed
+                        .get("socket_path")
+                        .and_then(|sp| {
+                            if let Value::String(v) = sp {
+                                Some(PathBuf::from(v))
+                            } else {
+                                None
+                            }
+                        })
+                        .ok_or_else(|| anyhow!("No socket path provided"))?,
+                )
+                .build())
+        }
     }
 }
 
@@ -319,6 +431,11 @@ impl Register for Tracer {
         self.log_insns = plugin_args.log_insns;
         self.log_mem = plugin_args.log_mem;
         self.log_syscalls = plugin_args.log_syscalls;
+
+        #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+        {
+            self.log_registers = plugin_args.log_registers;
+        }
 
         Ok(())
     }
