@@ -13,7 +13,7 @@ jobs:
   test_plugins_linux:
     name: Build and Test Plugins (Linux)
     runs-on: ubuntu-latest
-    container: ubuntu:22.04
+    container: ubuntu:24.04
     steps:
       - name: Install QEMU User
         run: |
@@ -27,14 +27,87 @@ jobs:
       - name: Build and Test Tracer
         run: |
           cd plugins/tracer
-          cargo build -r || exit 0
-          cargo build -r
-          cargo run -r --bin tracer -- -a /bin/ls -- -lah
+          cargo build -r --features=plugin-api-v1 --no-default-features || exit 0
+          cargo build -r --features=plugin-api-v1 --no-default-features
+          cargo run --features=plugin-api-v1 --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
           cd ../..
       - name: Build and Test Tiny
         run: |
           cd plugins/tiny
-          cargo build -r
+          cargo build -r --features=plugin-api-v1 --no-default-features
+          qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
+          cd ../..
+
+  test_plugins_linux_bleeding:
+    name: Build and Test Plugins (Linux, Bleeding)
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    steps:
+      - name: Set up Sources List
+        run: |
+          cat <<EOF > /etc/apt/sources.list.d/ubuntu.sources
+          Types: deb
+          URIs: http://archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: http://security.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb-src
+          URIs: http://archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: http://security.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          EOF
+      - name: Install QEMU Build Dependencies
+        run: |
+          apt -y update && \
+          apt -y install git curl build-essential && \
+          apt -y source qemu && \
+          apt -y build-dep qemu
+
+      # Clone without history
+      - name: Clone QEMU
+        run: |
+          git clone --depth 1 https://github.com/qemu/qemu qemu-upstream
+
+      - name: Build QEMU
+        run: |
+          pushd qemu-upstream
+          ./configure --enable-plugins
+          pushd build
+          make -j$(nproc)
+          make install
+          popd
+          popd
+
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/checkout@v4
+      - name: Test QEMU Install
+        run: |
+          qemu-x86_64 --help
+      - name: Build and Test Tracer
+        run: |
+          cd plugins/tracer
+          cargo build -r --features=plugin-api-v3 --no-default-features || exit 0
+          cargo build -r --features=plugin-api-v3 --no-default-features
+          cargo run --features=plugin-api-v3 --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
+          cd ../..
+      - name: Build and Test Tiny
+        run: |
+          cd plugins/tiny
+          cargo build -r --features=plugin-api-v3 --no-default-features --no-default-features
           qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
           cd ../..
 
@@ -42,7 +115,7 @@ jobs:
     name: Build and Test Plugins (Windows)
     runs-on: windows-latest
     env:
-      # QEMU 8.2.0
+      # QEMU 9.0.0
       # NOTE: This installer does not work headless
       # QEMU_URL: "https://qemu.weilnetz.de/w64/2023/qemu-w64-setup-20231224.exe"
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
@@ -83,7 +156,7 @@ jobs:
       - name: Build and Test Tiny
         run: |
           cd plugins/tiny-system
-          cargo build -r
+          cargo build -r --features=plugin-api-v3 --no-default-features
           cd ../..
           $process = Start-Process PowerShell.exe -NoNewWindow -RedirectStandardOutput out.txt -RedirectStandardError err.txt -PassThru -ArgumentList "-Command", "C:\msys-custom\msys64\ucrt64\bin\qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll"
           echo "Sleeping 180.0 seconds until booted (boot process took 118s first time)"
