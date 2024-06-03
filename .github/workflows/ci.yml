@@ -84,13 +84,12 @@ jobs:
 
       - name: Build QEMU
         run: |
-          pushd qemu-upstream
+          cd qemu-upstream
           ./configure --enable-plugins
-          pushd build
+          cd build
           make -j$(nproc)
           make install
-          popd
-          popd
+          cd ../..
 
       - uses: dtolnay/rust-toolchain@nightly
       - uses: actions/checkout@v4
