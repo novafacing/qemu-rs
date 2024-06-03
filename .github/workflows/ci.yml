@@ -15,34 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     container: ubuntu:24.04
     steps:
-      - name: Install QEMU User
-        run: |
-          apt-get -y update && \
-          apt-get -y install git curl qemu-user build-essential
-      - uses: dtolnay/rust-toolchain@nightly
-      - uses: actions/checkout@v4
-      - name: Test QEMU Install
-        run: |
-          qemu-x86_64 --help
-      - name: Build and Test Tracer
-        run: |
-          cd plugins/tracer
-          cargo build -r --features=plugin-api-v1 --no-default-features || exit 0
-          cargo build -r --features=plugin-api-v1 --no-default-features
-          cargo run --features=plugin-api-v1 --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
-          cd ../..
-      - name: Build and Test Tiny
-        run: |
-          cd plugins/tiny
-          cargo build -r --features=plugin-api-v1 --no-default-features
-          qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
-          cd ../..
-
-  test_plugins_linux_bleeding:
-    name: Build and Test Plugins (Linux, Bleeding)
-    runs-on: ubuntu-latest
-    container: ubuntu:24.04
-    steps:
       - name: Set up Sources List
         run: |
           cat <<EOF > /etc/apt/sources.list.d/ubuntu.sources
@@ -106,7 +78,7 @@ jobs:
       - name: Build and Test Tiny
         run: |
           cd plugins/tiny
-          cargo build -r --features=plugin-api-v3 --no-default-features --no-default-features
+          cargo build -r --features=plugin-api-v3 --no-default-features
           qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
           cd ../..
 
