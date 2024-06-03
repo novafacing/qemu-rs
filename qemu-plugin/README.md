@@ -70,3 +70,19 @@ anyhow = "1.0.75"
 ffi = "0.1.0"
 ctor = "0.2.6"
 ```
+
+## Versioning
+
+As of QEMU 8.2.4, the QEMU plugin API has more than a single version. This enables some
+great features like register inspection and conditional callbacks. Versioning is
+implemented in the `qemu-plugin` crate via compile-time features, because a dynamic
+library can only be compatible with one version at a time. To choose a version, set a
+listing like:
+
+```toml
+qemu-plugin = { version = "9.0.0-v0", features = ["plugin-api-v2"], default-features = false }
+```
+
+The `qemu-plugin` crate's default plugin version is set to the latest version that is
+officially released in QEMU. Currently, this is V2, released in 8.2.4 and 9.0.0. If you
+need a different version, you *must* set `default-features = false`.
