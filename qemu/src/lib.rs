@@ -23,7 +23,7 @@
 //!
 //! To install with binaries, `cargo install qemu --features=binaries,plugins,lto`
 
-pub const QEMU_VERSION: &str = "8.2.2";
+pub const QEMU_VERSION: &str = "9.0.0";
 
 #[cfg(all(feature = "aarch64-linux-user", not(docs_rs)))]
 /// QEMU binary for qemu-aarch64

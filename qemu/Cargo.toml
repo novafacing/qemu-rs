@@ -279,10 +279,10 @@ required-features = ["binaries", "xtensaeb-softmmu"]
 memfd-exec = { version = "0.2.1", optional = true }
 
 [build-dependencies]
-anyhow = "1.0.75"
-command-ext = "0.1.1"
-num_cpus = "1.13.0"
-reqwest = { version = "0.11.23", default-features = false, features = [
+anyhow = "1.0.86"
+command-ext = "0.1.2"
+num_cpus = "1.16.0"
+reqwest = { version = "0.12.4", default-features = false, features = [
     "rustls-tls",
     "blocking",
 ] }

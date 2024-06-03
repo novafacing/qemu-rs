@@ -1,15 +1,19 @@
 #!/usr/bin/env -S cargo +nightly-gnu -Z script
-## [package]
-## edition = "2021"
-## [dependencies]
-## anyhow = "*"
-## bindgen = "*"
-## cargo_metadata = "*"
-## reqwest = { version = "*", features = ["blocking"] }
-## tar = "*"
-## xz2 = "*"
-## [lints.rust]
-## non_snake_case = "allow"
+---
+[package]
+edition = "2021"
+[dependencies]
+anyhow = "*"
+bindgen = "*"
+cargo_metadata = "*"
+# pkg-config = "*"
+reqwest = { version = "*", features = ["blocking"] }
+tar = "*"
+xz2 = "*"
+zip = "*"
+[lints.rust]
+non_snake_case = "allow"
+---
 
 use anyhow::{anyhow, Result};
 use bindgen::{
@@ -18,20 +22,33 @@ use bindgen::{
 };
 use cargo_metadata::MetadataCommand;
 use reqwest::blocking::get;
-#[cfg(windows)]
-use std::fs::{read_to_string, write};
 use std::{
-    fs::{create_dir_all, File, OpenOptions},
+    fs::{create_dir_all, read_to_string, write, File, OpenOptions},
     path::Path,
 };
 use tar::Archive;
 use xz2::read::XzDecoder;
+use zip::ZipArchive;
 
+const QEMU_GITHUB_URL_BASE: &str = "https://github.com/qemu/qemu/";
 const QEMU_SRC_URL_BASE: &str = "https://download.qemu.org/";
-const QEMU_VERSION: &str = "8.2.0";
+// Plugin V1 is from introduction to 8.2.4
+const QEMU_VERSION_V1: &str = "8.2.4";
+// Plugin V2 is from 9.0.0
+const QEMU_VERSION_V2: &str = "9.0.0";
+/// Plugin V3 is from 7de77d37880d7267a491cb32a1b2232017d1e545
+const QEMU_VERSION_V3: &str = "7de77d37880d7267a491cb32a1b2232017d1e545";
 
-fn qemu_src_url() -> String {
-    format!("{}qemu-{}.tar.xz", QEMU_SRC_URL_BASE, QEMU_VERSION)
+fn qemu_src_url_v1() -> String {
+    format!("{}qemu-{}.tar.xz", QEMU_SRC_URL_BASE, QEMU_VERSION_V1)
+}
+
+fn qemu_src_url_v2() -> String {
+    format!("{}qemu-{}.tar.xz", QEMU_SRC_URL_BASE, QEMU_VERSION_V2)
+}
+
+fn qemu_src_url_v3() -> String {
+    format!("{}/archive/{}.zip", QEMU_GITHUB_URL_BASE, QEMU_VERSION_V3)
 }
 
 /// Download a URL to a destination, using a blocking request
@@ -74,21 +91,39 @@ fn extract_txz(archive: &Path, destination: &Path) -> Result<()> {
     Ok(())
 }
 
-#[cfg(windows)]
-fn generate_windows_delaylink_library(qemu_plugin_symbols: &Path, out_dir: &Path) -> Result<()> {
-    let def_file = out_dir.join("qemu_plugin_api.def");
+/// Extract a zip file at a path to a destination
+fn extract_zip(archive: &Path, destination: &Path) -> Result<()> {
+    let archive = File::open(archive)?;
+    let mut archive = ZipArchive::new(archive)?;
+    archive.extract(destination)?;
+    Ok(())
+}
+
+fn generate_windows_delaylink_library(qemu_plugin_symbols: &Path, destination: &Path) -> Result<()> {
     let all_commands = read_to_string(qemu_plugin_symbols)?;
     let all_commands = all_commands.replace(|x| "{};".contains(x), "");
-    write(&def_file, format!("EXPORTS\n{all_commands}"))?;
+    write(destination, format!("EXPORTS\n{all_commands}"))?;
 
     Ok(())
 }
 
 fn generate_bindings(qemu_plugin_header: &Path, destination: &Path) -> Result<()> {
+    let header_contents = read_to_string(qemu_plugin_header)?;
+    let header_file_name = qemu_plugin_header.file_name().ok_or_else(|| anyhow!("Failed to get file name"))?.to_str().ok_or_else(|| anyhow!("Failed to convert file name to string"))?;
+    let header_contents = header_contents.replace("#include <glib.h>", "");
+    // Append `typedef GArray void;` and `typedef GByteArray void;` to the header. Otherwise, we
+    // need to use pkg_config to find the glib-2.0 include paths and our bindings will be
+    // massive.
+    let header_contents = format!(
+        "{}\n{}\n{}\n",
+        "typedef struct GArray { char *data; unsigned int len; } GArray;",
+        "typedef struct GByteArray { unsigned char *data; unsigned int len; } GByteArray;",
+        header_contents,
+    );
+
     let rust_bindings = builder()
         .clang_arg("-fretain-comments-from-system-headers")
         .clang_arg("-fparse-all-comments")
-        // We don't care at all what warnings QEMU generates
         .clang_arg("-Wno-everything")
         .default_visibility(FieldVisibilityKind::Public)
         .default_alias_style(AliasVariation::TypeAlias)
@@ -104,7 +139,8 @@ fn generate_bindings(qemu_plugin_header: &Path, destination: &Path) -> Result<()
         .derive_eq(true)
         .derive_partialeq(true)
         .generate_comments(true)
-        .header(qemu_plugin_header.to_str().unwrap())
+        .layout_tests(false)
+        .header_contents(header_file_name, &header_contents)
         // Blocklist because we will define these items
         .blocklist_function("qemu_plugin_install")
         .blocklist_item("qemu_plugin_version")
@@ -477,34 +513,76 @@ fn main() -> Result<()> {
         .join("src")
         .into_std_path_buf();
 
-    println!("out_dir: {:?}", out_dir);
-
     let tmp_dir = metadata.target_directory.join("tmp").into_std_path_buf();
 
     if !tmp_dir.exists() {
         create_dir_all(&tmp_dir)?;
     }
 
-    let src_archive = tmp_dir.join(format!("qemu-{}.tar.xz", QEMU_VERSION));
-    let src_dir = tmp_dir.join(format!("qemu-{}", QEMU_VERSION));
+    let src_archive_v1 = tmp_dir.join(format!("qemu-{}.tar.xz", QEMU_VERSION_V1));
+    let src_dir_v1 = tmp_dir.join(format!("qemu-{}", QEMU_VERSION_V1));
 
-    if !src_archive.exists() {
-        download(&qemu_src_url(), &src_archive)?;
+    if !src_archive_v1.exists() {
+        download(&qemu_src_url_v1(), &src_archive_v1)?;
     }
 
-    if !src_dir.exists() {
-        extract_txz(&src_archive, &src_dir)?;
+    if !src_dir_v1.exists() {
+        extract_txz(&src_archive_v1, &src_dir_v1)?;
     }
 
-    #[cfg(windows)]
+    let src_archive_v2 = tmp_dir.join(format!("qemu-{}.tar.xz", QEMU_VERSION_V2));
+    let src_dir_v2 = tmp_dir.join(format!("qemu-{}", QEMU_VERSION_V2));
+
+    if !src_archive_v2.exists() {
+        download(&qemu_src_url_v2(), &src_archive_v2)?;
+    }
+
+    if !src_dir_v2.exists() {
+        extract_txz(&src_archive_v2, &src_dir_v2)?;
+    }
+
+    let src_archive_v3 = tmp_dir.join(format!("qemu-{}.zip", QEMU_VERSION_V3));
+    let src_dir_v3 = tmp_dir.join(format!("qemu-{}", QEMU_VERSION_V3));
+
+    if !src_archive_v3.exists() {
+        download(&qemu_src_url_v3(), &src_archive_v3)?;
+    }
+
+    if !src_dir_v3.exists() {
+        // NOTE: ZipArchive::extract extracts into the directory given a directory named
+        // the same as the ZIP file.
+        extract_zip(&src_archive_v3, &tmp_dir)?;
+    }
+
     generate_windows_delaylink_library(
-        &src_dir.join("plugins").join("qemu-plugins.symbols"),
-        &out_dir,
+        &src_dir_v1.join("plugins").join("qemu-plugins.symbols"),
+        &out_dir.join("qemu_plugin_api_v1.def"),
+    )?;
+
+    generate_windows_delaylink_library(
+        &src_dir_v2.join("plugins").join("qemu-plugins.symbols"),
+        &out_dir.join("qemu_plugin_api_v2.def"),
+    )?;
+
+    generate_windows_delaylink_library(
+        &src_dir_v3.join("plugins").join("qemu-plugins.symbols"),
+        &out_dir.join("qemu_plugin_api_v3.def"),
+    )?;
+
+
+    generate_bindings(
+        &src_dir_v1.join("include").join("qemu").join("qemu-plugin.h"),
+        &out_dir.join("bindings_v1.rs"),
     )?;
 
     generate_bindings(
-        &src_dir.join("include").join("qemu").join("qemu-plugin.h"),
-        &out_dir.join("bindings.rs"),
+        &src_dir_v2.join("include").join("qemu").join("qemu-plugin.h"),
+        &out_dir.join("bindings_v2.rs"),
+    )?;
+
+    generate_bindings(
+        &src_dir_v3.join("include").join("qemu").join("qemu-plugin.h"),
+        &out_dir.join("bindings_v3.rs"),
     )?;
 
     Ok(())

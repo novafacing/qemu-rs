@@ -10,7 +10,9 @@ crate-type = ["cdylib", "lib"]
 [dependencies]
 anyhow = "1.0.75"
 ctor = "0.2.6"
-qemu-plugin = { workspace = true, features = ["unix-weak-link"] }
+qemu-plugin = { workspace = true, features = [
+    "unix-weak-link",
+], default-features = false }
 serde = { version = "1.0.193", features = ["derive"] }
 serde_cbor = "0.11.2"
 tokio = { version = "1.35.0", features = ["full"] }
@@ -22,13 +24,14 @@ yaxpeax-x86 = "1.2.2"
 clap = { version = "4.4.11", features = ["derive", "string"] }
 # Enable the `qemu` feature to build and install QEMU with the `qemu` crate instead
 # of trying to use the system QEMU.
-qemu = { workspace = true, features = [
-    "plugins",
-], optional = true }
+qemu = { workspace = true, features = ["plugins"], optional = true }
 memfd-exec = { version = "0.2.1", optional = true }
 rand = "0.8.5"
 serde_json = "1.0.108"
 
 [features]
 qemu = ["dep:memfd-exec", "dep:qemu"]
-default = []
+default = ["plugin-api-v2"]
+plugin-api-v1 = ["qemu-plugin/plugin-api-v1"]
+plugin-api-v2 = ["qemu-plugin/plugin-api-v2"]
+plugin-api-v3 = ["qemu-plugin/plugin-api-v3"]

@@ -64,7 +64,7 @@
 //! crate-type = ["cdylib"]
 //!
 //! [dependencies]
-//! qemu-plugin = "8.2.2-v0"
+//! qemu-plugin = "9.0.0-v0"
 //! anyhow = "1.0.75"
 //! ffi = "0.1.0"
 //! ctor = "0.2.6"
@@ -72,6 +72,7 @@
 
 #![deny(missing_docs)]
 #![cfg_attr(all(unix, feature = "unix-weak-link"), feature(linkage))]
+#![cfg_attr(feature = "num-traits", feature(generic_const_exprs))]
 
 #[cfg(all(unix, feature = "unix-weak-link"))]
 mod unix_weak_link;
@@ -80,11 +81,20 @@ mod unix_weak_link;
 mod win_link_hook;
 
 use crate::error::{Error, Result};
+#[cfg(feature = "num-traits")]
+use num_traits::{FromBytes, PrimInt};
+#[cfg(feature = "plugin-api-v3")]
+use qemu_plugin_sys::qemu_plugin_cond;
 use qemu_plugin_sys::{
     qemu_plugin_cb_flags, qemu_plugin_hwaddr, qemu_plugin_id_t, qemu_plugin_insn,
-    qemu_plugin_mem_rw, qemu_plugin_meminfo_t, qemu_plugin_simple_cb_t, qemu_plugin_tb,
-    qemu_plugin_vcpu_simple_cb_t, qemu_plugin_vcpu_syscall_cb_t, qemu_plugin_vcpu_syscall_ret_cb_t,
-    qemu_plugin_vcpu_tb_trans_cb_t,
+    qemu_plugin_mem_rw, qemu_plugin_meminfo_t, qemu_plugin_op, qemu_plugin_simple_cb_t,
+    qemu_plugin_tb, qemu_plugin_vcpu_simple_cb_t, qemu_plugin_vcpu_syscall_cb_t,
+    qemu_plugin_vcpu_syscall_ret_cb_t, qemu_plugin_vcpu_tb_trans_cb_t,
+};
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+use qemu_plugin_sys::{
+    qemu_plugin_read_register, qemu_plugin_reg_descriptor, qemu_plugin_register,
+    qemu_plugin_scoreboard, qemu_plugin_u64, GArray, GByteArray,
 };
 use std::{
     ffi::{c_uint, c_void, CStr, CString},
@@ -92,16 +102,35 @@ use std::{
     path::PathBuf,
     sync::{Mutex, OnceLock},
 };
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+use std::{
+    fmt::{Debug, Formatter},
+    mem::MaybeUninit,
+};
 
 pub mod error;
 pub mod install;
 pub mod plugin;
 pub mod sys;
+pub mod version;
 
 #[cfg(not(windows))]
 extern "C" {
     /// glib g_free is provided by the QEMU program we are being linked into
     fn g_free(mem: *mut c_void);
+}
+
+#[cfg(all(
+    not(windows),
+    any(feature = "plugin-api-v2", feature = "plugin-api-v3")
+))]
+extern "C" {
+    /// glib g_byte_array_new is provided by the QEMU program we are being linked into
+    fn g_byte_array_new() -> *mut GByteArray;
+    /// glib g_byte_array_free is provided by the QEMU program we are being linked into
+    fn g_byte_array_free(array: *mut GByteArray, free_segment: bool) -> *mut u8;
+    /// glib g_array_free is provided byt he QEMU program we are being linked into
+    fn g_array_free(array: *mut GArray, free_segment: bool) -> *mut u8;
 }
 
 #[cfg(windows)]
@@ -114,6 +143,45 @@ lazy_static::lazy_static! {
         // "Users of `Library::get` should specify the correct type of the function loaded".
         // We are specifying the correct type of g_free above (`void g_free(void*)`)
         unsafe{lib.get(b"g_free").expect("find g_free")}
+    };
+}
+
+#[cfg(all(windows, any(feature = "plugin-api-v2", feature = "plugin-api-v3")))]
+lazy_static::lazy_static! {
+    static ref G_BYTE_ARRAY_NEW: libloading::os::windows::Symbol<unsafe extern fn() -> *mut GByteArray> = {
+        let lib =
+            libloading::os::windows::Library::open_already_loaded("libglib-2.0-0.dll")
+                .expect("libglib-2.0-0.dll should already be loaded");
+        // SAFETY
+        // "Users of `Library::get` should specify the correct type of the function loaded".
+        // We are specifying the correct type of g_free above (`void g_free(void*)`)
+        unsafe{lib.get(b"g_byte_array_new").expect("find g_byte_array_new")}
+    };
+}
+
+#[cfg(all(windows, any(feature = "plugin-api-v2", feature = "plugin-api-v3")))]
+lazy_static::lazy_static! {
+    static ref G_BYTE_ARRAY_FREE: libloading::os::windows::Symbol<unsafe extern fn(*mut c_void, bool) -> *mut u8> = {
+        let lib =
+            libloading::os::windows::Library::open_already_loaded("libglib-2.0-0.dll")
+                .expect("libglib-2.0-0.dll should already be loaded");
+        // SAFETY
+        // "Users of `Library::get` should specify the correct type of the function loaded".
+        // We are specifying the correct type of g_free above (`void g_free(void*)`)
+        unsafe{lib.get(b"g_byte_array_free").expect("find g_byte_array_free")}
+    };
+}
+
+#[cfg(all(windows, any(feature = "plugin-api-v2", feature = "plugin-api-v3")))]
+lazy_static::lazy_static! {
+    static ref G_ARRAY_FREE: libloading::os::windows::Symbol<unsafe extern fn(*mut c_void, bool) -> *mut u8> = {
+        let lib =
+            libloading::os::windows::Library::open_already_loaded("libglib-2.0-0.dll")
+                .expect("libglib-2.0-0.dll should already be loaded");
+        // SAFETY
+        // "Users of `Library::get` should specify the correct type of the function loaded".
+        // We are specifying the correct type of g_free above (`void g_free(void*)`)
+        unsafe{lib.get(b"g_array_free").expect("find g_array_free")}
     };
 }
 
@@ -130,12 +198,59 @@ unsafe fn g_free(mem: *mut c_void) {
     unsafe { G_FREE(mem) }
 }
 
+#[cfg(all(windows, any(feature = "plugin-api-v2", feature = "plugin-api-v3")))]
+/// Define g_byte_array_new, because on Windows we cannot delay link it
+///
+/// # Safety
+///
+/// `g_byte_array_new` must be used to allocate a new `GByteArray` which can be used to store
+/// arbitrary data. The returned `GByteArray` must be freed with `g_byte_array_free` when it is
+/// no longer needed.
+unsafe fn g_byte_array_new() -> *mut GByteArray {
+    unsafe { G_BYTE_ARRAY_NEW() }
+}
+
+#[cfg(all(windows, any(feature = "plugin-api-v2", feature = "plugin-api-v3")))]
+/// Define g_byte_array_free, because on Windows we cannot delay link it
+///
+/// # Safety
+///
+/// `g_byte_array_free` must be used to free a `GByteArray` allocated with `g_byte_array_new`.
+/// The `free_segment` argument should be `true` if the data stored in the `GByteArray` should
+/// also be freed. If `false`, the data will not be freed, and the caller is responsible for
+/// freeing it with `g_free`.
+unsafe fn g_byte_array_free(array: *mut GByteArray, free_segment: bool) -> *mut u8 {
+    unsafe { G_BYTE_ARRAY_FREE(array as *mut c_void, free_segment) }
+}
+
+#[cfg(all(windows, any(feature = "plugin-api-v2", feature = "plugin-api-v3")))]
+/// Define g_array_free, because on Windows we cannot delay link it
+///
+/// # Safety
+///
+/// `g_array_free` must be used to free a `GArray` allocated with `g_array_new`. The `free_segment`
+/// argument should be `true` if the data stored in the `GArray` should also be freed. If `false`,
+/// the data will not be freed, and the caller is responsible for freeing it with `g_free`.
+unsafe fn g_array_free(array: *mut GArray, free_segment: bool) -> *mut u8 {
+    unsafe { G_ARRAY_FREE(array as *mut c_void, free_segment) }
+}
+
 /// The index of a vCPU
 pub type VCPUIndex = c_uint;
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+/// u64 member of an entry in a scoreboard, allows access to a specific u64 member in
+/// one given entry, located at a specified offset. Inline operations expect this as an
+/// entry.
+pub type PluginU64 = qemu_plugin_u64;
 /// Flags for callbacks
 pub type CallbackFlags = qemu_plugin_cb_flags;
 /// Memory read/write flags
 pub type MemRW = qemu_plugin_mem_rw;
+#[cfg(any(feature = "plugin-api-v3"))]
+/// A condition for a callback to be run
+pub type PluginCondition = qemu_plugin_cond;
+/// Plugin operations for inline operations
+pub type PluginOp = qemu_plugin_op;
 /// A plugin ID
 pub type PluginId = qemu_plugin_id_t;
 
@@ -279,6 +394,14 @@ impl<'a> TranslationBlock<'a> {
     where
         F: FnMut(VCPUIndex) + Send + Sync + 'static,
     {
+        self.register_execute_callback_flags(cb, CallbackFlags::QEMU_PLUGIN_CB_NO_REGS);
+    }
+
+    /// Register a callback to be run on execution of this translation block
+    pub fn register_execute_callback_flags<F>(&self, cb: F, flags: CallbackFlags)
+    where
+        F: FnMut(VCPUIndex) + Send + Sync + 'static,
+    {
         let callback = Box::new(cb);
         let callback_box = Box::new(callback);
         let userdata = Box::into_raw(callback_box) as *mut c_void;
@@ -287,8 +410,58 @@ impl<'a> TranslationBlock<'a> {
             crate::sys::qemu_plugin_register_vcpu_tb_exec_cb(
                 self.translation_block as *mut qemu_plugin_tb,
                 Some(handle_qemu_plugin_register_vcpu_tb_exec_cb::<F>),
-                // NOTE: Not checked, and is an error to specify any other value
-                CallbackFlags::QEMU_PLUGIN_CB_NO_REGS,
+                flags,
+                userdata,
+            )
+        };
+    }
+
+    #[cfg(feature = "plugin-api-v3")]
+    /// Register a callback to be conditionally run on execution of this translation
+    /// block
+    pub fn register_conditional_execute_callback<F>(
+        &self,
+        cb: F,
+        cond: PluginCondition,
+        entry: PluginU64,
+        immediate: u64,
+    ) where
+        F: FnMut(VCPUIndex) + Send + Sync + 'static,
+    {
+        self.register_conditional_execute_callback_flags(
+            cb,
+            CallbackFlags::QEMU_PLUGIN_CB_NO_REGS,
+            cond,
+            entry,
+            immediate,
+        )
+    }
+
+    #[cfg(feature = "plugin-api-v3")]
+    /// Register a callback to be conditionally run on execution of this translation
+    /// block
+    pub fn register_conditional_execute_callback_flags<F>(
+        &self,
+        cb: F,
+        flags: CallbackFlags,
+        cond: PluginCondition,
+        entry: PluginU64,
+        immediate: u64,
+    ) where
+        F: FnMut(VCPUIndex) + Send + Sync + 'static,
+    {
+        let callback = Box::new(cb);
+        let callback_box = Box::new(callback);
+        let userdata = Box::into_raw(callback_box) as *mut c_void;
+
+        unsafe {
+            crate::sys::qemu_plugin_register_vcpu_tb_exec_cond_cb(
+                self.translation_block as *mut qemu_plugin_tb,
+                Some(handle_qemu_plugin_register_vcpu_tb_exec_cb::<F>),
+                flags,
+                cond,
+                entry,
+                immediate,
                 userdata,
             )
         };
@@ -342,12 +515,14 @@ impl<'a> Instruction<'a> {
 }
 
 impl<'a> Instruction<'a> {
+    #[cfg(any(feature = "plugin-api-v1", feature = "plugin-api-v2"))]
     /// Returns the data for this instruction. This method may only be called inside the
     /// callback in which the instruction is obtained, but the resulting data is owned.
     pub fn data(&self) -> Vec<u8> {
         let size = self.size();
         let mut data = Vec::with_capacity(size);
 
+        // NOTE: The name of this API doesn't change, but its parameters and return value *do*
         let insn_data =
             unsafe { crate::sys::qemu_plugin_insn_data(self.instruction as *mut qemu_plugin_insn) }
                 as *mut u8;
@@ -356,6 +531,27 @@ impl<'a> Instruction<'a> {
             data.set_len(size);
             std::ptr::copy_nonoverlapping(insn_data, data.as_mut_ptr(), size);
         }
+
+        data
+    }
+
+    #[cfg(feature = "plugin-api-v3")]
+    /// Returns the data for this instruction. This method may only be called inside the
+    /// callback in which the instruction is obtained, but the resulting data is owned.
+    pub fn data(&self) -> Vec<u8> {
+        let size = self.size();
+        let mut data = vec![0; size];
+
+        // NOTE: The name of this API doesn't change, but its parameters and return value *do*
+        let size = unsafe {
+            crate::sys::qemu_plugin_insn_data(
+                self.instruction as *mut qemu_plugin_insn,
+                data.as_mut_ptr() as *mut _,
+                data.len(),
+            )
+        };
+
+        data.truncate(size);
 
         data
     }
@@ -413,6 +609,14 @@ impl<'a> Instruction<'a> {
     where
         F: FnMut(VCPUIndex) + Send + Sync + 'static,
     {
+        self.register_execute_callback_flags(cb, CallbackFlags::QEMU_PLUGIN_CB_NO_REGS)
+    }
+
+    /// Register a callback to be run on execution of this instruction
+    pub fn register_execute_callback_flags<F>(&self, cb: F, flags: CallbackFlags)
+    where
+        F: FnMut(VCPUIndex) + Send + Sync + 'static,
+    {
         let callback = Box::new(cb);
         let callback_box = Box::new(callback);
         let userdata = Box::into_raw(callback_box) as *mut c_void;
@@ -421,8 +625,56 @@ impl<'a> Instruction<'a> {
             crate::sys::qemu_plugin_register_vcpu_insn_exec_cb(
                 self.instruction as *mut qemu_plugin_insn,
                 Some(handle_qemu_plugin_register_vcpu_insn_exec_cb::<F>),
-                // NOTE: Not checked, and is an error to specify any other value
-                CallbackFlags::QEMU_PLUGIN_CB_NO_REGS,
+                flags,
+                userdata,
+            )
+        };
+    }
+
+    /// Register a callback to be conditionally run on execution of this instruction
+    #[cfg(feature = "plugin-api-v3")]
+    pub fn register_conditional_execute_callback<F>(
+        &self,
+        cb: F,
+        cond: PluginCondition,
+        entry: PluginU64,
+        immediate: u64,
+    ) where
+        F: FnMut(VCPUIndex) + Send + Sync + 'static,
+    {
+        self.register_conditional_execute_callback_flags(
+            cb,
+            CallbackFlags::QEMU_PLUGIN_CB_NO_REGS,
+            cond,
+            entry,
+            immediate,
+        )
+    }
+
+    /// Register a callback to be conditionally run on execution of this instruction
+    #[cfg(feature = "plugin-api-v3")]
+    pub fn register_conditional_execute_callback_flags<F>(
+        &self,
+        cb: F,
+        flags: CallbackFlags,
+        cond: PluginCondition,
+        entry: PluginU64,
+        immediate: u64,
+    ) where
+        F: FnMut(VCPUIndex) + Send + Sync + 'static,
+    {
+        let callback = Box::new(cb);
+        let callback_box = Box::new(callback);
+        let userdata = Box::into_raw(callback_box) as *mut c_void;
+
+        unsafe {
+            crate::sys::qemu_plugin_register_vcpu_insn_exec_cond_cb(
+                self.instruction as *mut qemu_plugin_insn,
+                Some(handle_qemu_plugin_register_vcpu_insn_exec_cb::<F>),
+                flags,
+                cond,
+                entry,
+                immediate,
                 userdata,
             )
         };
@@ -438,6 +690,19 @@ impl<'a> Instruction<'a> {
     where
         F: FnMut(VCPUIndex, MemoryInfo, u64) + Send + Sync + 'static,
     {
+        self.register_memory_access_callback_flags(cb, rw, CallbackFlags::QEMU_PLUGIN_CB_NO_REGS)
+    }
+
+    /// Register a callback to be run on memory access of this instruction
+    ///
+    /// # Arguments
+    ///
+    /// - `cb`: The callback to be run
+    /// - `rw`: The type of memory access to trigger the callback on
+    pub fn register_memory_access_callback_flags<F>(&self, cb: F, rw: MemRW, flags: CallbackFlags)
+    where
+        F: FnMut(VCPUIndex, MemoryInfo, u64) + Send + Sync + 'static,
+    {
         let callback = Box::new(cb);
         let callback_box = Box::new(callback);
         let userdata = Box::into_raw(callback_box) as *mut c_void;
@@ -446,7 +711,7 @@ impl<'a> Instruction<'a> {
             crate::sys::qemu_plugin_register_vcpu_mem_cb(
                 self.instruction as *mut qemu_plugin_insn,
                 Some(handle_qemu_plugin_register_vcpu_mem_cb::<F>),
-                CallbackFlags::QEMU_PLUGIN_CB_NO_REGS,
+                flags,
                 rw,
                 userdata,
             )
@@ -508,6 +773,132 @@ impl<'a> MemoryInfo<'a> {
     }
 }
 
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[derive(Clone)]
+/// Wrapper structure for a `qemu_plugin_register_descriptor`
+///
+/// # Safety
+///
+/// This structure is safe to use as long as the pointer is valid. The pointer is
+/// always opaque, and therefore may not be dereferenced.
+pub struct RegisterDescriptor<'a> {
+    /// Opaque handle to the register for retrieving the value with
+    /// qemu_plugin_read_register
+    handle: usize,
+    /// The register name
+    pub name: String,
+    /// Optional feature descriptor
+    pub feature: Option<String>,
+    marker: PhantomData<&'a ()>,
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+impl<'a> From<qemu_plugin_reg_descriptor> for RegisterDescriptor<'a> {
+    fn from(descriptor: qemu_plugin_reg_descriptor) -> Self {
+        let name = unsafe { CStr::from_ptr(descriptor.name) }
+            .to_str()
+            .expect("Register name is not valid UTF-8")
+            .to_string();
+
+        let feature = if descriptor.feature.is_null() {
+            None
+        } else {
+            Some(
+                unsafe { CStr::from_ptr(descriptor.feature) }
+                    .to_str()
+                    .expect("Register feature is not valid UTF-8")
+                    .to_string(),
+            )
+        };
+
+        Self {
+            handle: descriptor.handle as usize,
+            name,
+            feature,
+            marker: PhantomData,
+        }
+    }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+impl<'a> Debug for RegisterDescriptor<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RegisterDescriptor")
+            .field("name", &self.name)
+            .field("feature", &self.feature)
+            .finish()
+    }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+impl<'a> RegisterDescriptor<'a> {
+    /// Read a register value
+    ///
+    /// This must only be called in a callback which has been registered with
+    /// `CallbackFlags::QEMU_PLUGIN_CB_R_REGS` or
+    /// `CallbackFlags::QEMU_PLUGIN_CB_RW_REGS`.
+    pub fn read(&self) -> Result<Vec<u8>> {
+        let byte_array = unsafe { g_byte_array_new() };
+
+        let result = unsafe {
+            qemu_plugin_read_register(self.handle as *mut qemu_plugin_register, byte_array)
+        };
+
+        if result == -1 {
+            return Err(Error::RegisterReadError {
+                name: self.name.clone(),
+            });
+        }
+
+        let mut data = Vec::new();
+        data.extend_from_slice(unsafe {
+            std::slice::from_raw_parts((*byte_array).data, (*byte_array).len as usize)
+        });
+
+        assert_eq!(
+            unsafe { g_byte_array_free(byte_array, true) },
+            std::ptr::null_mut(),
+            "g_byte_array_free must return NULL"
+        );
+
+        Ok(data)
+    }
+
+    #[cfg(feature = "num-traits")]
+    /// Read a register value into a numeric type in big-endian byte order
+    ///
+    /// This must only be called in a callback which has been registered with
+    /// `CallbackFlags::QEMU_PLUGIN_CB_R_REGS` or
+    /// `CallbackFlags::QEMU_PLUGIN_CB_RW_REGS`.
+    pub fn read_be<T>(&self) -> Result<T>
+    where
+        T: PrimInt + FromBytes + Sized,
+        T: FromBytes<Bytes = [u8; std::mem::size_of::<T>()]>,
+    {
+        let data = self.read()?;
+        let mut bytes = [0; std::mem::size_of::<T>()];
+        bytes.copy_from_slice(&data);
+        Ok(T::from_be_bytes(&bytes))
+    }
+
+    #[cfg(feature = "num-traits")]
+    /// Read a register value into a numeric type in little-endian byte order
+    ///
+    /// This must only be called in a callback which has been registered with
+    /// `CallbackFlags::QEMU_PLUGIN_CB_R_REGS` or
+    /// `CallbackFlags::QEMU_PLUGIN_CB_RW_REGS`.
+    pub fn read_le<T>(&self) -> Result<T>
+    where
+        T: PrimInt + FromBytes + Sized,
+        T: FromBytes<Bytes = [u8; std::mem::size_of::<T>()]>,
+    {
+        let data = self.read()?;
+        let mut bytes = [0; std::mem::size_of::<T>()];
+        bytes.copy_from_slice(&data);
+        Ok(T::from_le_bytes(&bytes))
+    }
+}
+
 /// Wrapper structure for a `qemu_plugin_hwaddr *`
 ///
 /// # Safety
@@ -552,6 +943,62 @@ impl<'a> HwAddr<'a> {
             let device_name_string = unsafe { CStr::from_ptr(device_name) }.to_str()?.to_string();
             // NOTE: The string is static, so we do not free it
             Ok(Some(device_name_string))
+        }
+    }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+/// A wrapper structure for a `qemu_plugin_scoreboard *`. This is a way of having one
+/// entry per VCPU, the count of which is managed automatically by QEMU. Keep in mind
+/// that additional entries *and* existing entries will be allocated and reallocated by
+/// *qemu*, not by the plugin, so every use of a `T` should include a check for whether
+/// it is initialized.
+pub struct Scoreboard<'a, T>
+where
+    T: Sized,
+{
+    handle: usize,
+    marker: PhantomData<&'a T>,
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+impl<'a, T> Scoreboard<'a, T> {
+    /// Allocate a new scoreboard object. This must be freed by calling
+    /// `qemu_plugin_scoreboard_free` (or by being dropped).
+    pub fn new() -> Self {
+        let handle =
+            unsafe { crate::sys::qemu_plugin_scoreboard_new(std::mem::size_of::<T>()) as usize };
+
+        Self {
+            handle,
+            marker: PhantomData,
+        }
+    }
+
+    /// Returns a reference to entry of a scoreboard matching a given vcpu index. This address
+    /// is only valid until the next call to `get` or `set`.
+    pub fn find<'b>(&mut self, vcpu_index: VCPUIndex) -> &'b mut MaybeUninit<T> {
+        unsafe {
+            &mut *(crate::sys::qemu_plugin_scoreboard_find(
+                self.handle as *mut qemu_plugin_scoreboard,
+                vcpu_index,
+            ) as *mut MaybeUninit<T>)
+        }
+    }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+impl<'a, T> Default for Scoreboard<'a, T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+impl<'a, T> Drop for Scoreboard<'a, T> {
+    fn drop(&mut self) {
+        unsafe {
+            crate::sys::qemu_plugin_scoreboard_free(self.handle as *mut qemu_plugin_scoreboard)
         }
     }
 }
@@ -605,7 +1052,7 @@ extern "C" fn handle_qemu_plugin_reset_callback(id: qemu_plugin_id_t) {
 ///
 /// - `id`: The plugin ID
 /// - `cb`: A callback function that will be called when the plugin has been
-/// uninstalled.
+///   uninstalled.
 ///
 /// # Safety
 ///
@@ -749,11 +1196,91 @@ extern "C" fn handle_qemu_plugin_register_vcpu_tb_exec_cb<F>(
 ///
 /// This function is safe when the pointer `tb` is a valid pointer to a `qemu_plugin_tb`
 /// structure, which is always opaque.
-pub fn qemu_plugin_register_vcpu_tb_exec_cb<F>(tb: TranslationBlock, cb: F)
+pub fn qemu_plugin_register_vcpu_tb_exec_cb<F>(tb: TranslationBlock, cb: F, flags: CallbackFlags)
 where
     F: FnMut(VCPUIndex) + Send + Sync + 'static,
 {
-    tb.register_execute_callback(cb);
+    tb.register_execute_callback_flags(cb, flags);
+}
+
+#[cfg(feature = "plugin-api-v3")]
+/// Register a callback to be conditionally called when a translation block is executed.
+///
+/// # Arguments
+///
+/// - `tb`: The translated block to register the execution callback for
+/// - `cb`: The callback to be called when the block `tb` is executed
+/// - `cond`: The condition to be met for the callback to be called
+/// - `entry`: The entry to be passed to the callback
+/// - `immediate`: The immediate value to be passed to the callback
+///
+/// # Safety
+///
+/// This function is safe when the pointer `tb` is a valid pointer to a `qemu_plugin_tb`
+/// structure, which is always opaque.
+pub fn qemu_plugin_register_vcpu_tb_exec_cond_cb<F>(
+    tb: TranslationBlock,
+    cb: F,
+    flags: CallbackFlags,
+    cond: PluginCondition,
+    entry: PluginU64,
+    immediate: u64,
+) where
+    F: FnMut(VCPUIndex) + Send + Sync + 'static,
+{
+    tb.register_conditional_execute_callback_flags(cb, flags, cond, entry, immediate);
+}
+
+#[cfg(feature = "plugin-api-v1")]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
+/// Register an inline callback to be called when a translation block is executed.
+///
+/// # Arguments
+///
+/// - `tb`: The translated block to register the execution callback for
+/// - `op`: The operation to be performed
+/// - `ptr`: The pointer to the data to be passed to the operation
+/// - `imm`: The immediate value to be passed to the operation
+pub fn qemu_plugin_register_vcpu_tb_exec_inline(
+    tb: TranslationBlock,
+    op: PluginOp,
+    ptr: *mut c_void,
+    imm: u64,
+) {
+    unsafe {
+        crate::sys::qemu_plugin_register_vcpu_tb_exec_inline(
+            tb.translation_block as *mut qemu_plugin_tb,
+            op,
+            ptr,
+            imm,
+        );
+    }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
+/// Register an inline callback to be called when a translation block is executed.
+///
+/// # Arguments
+///
+/// - `tb`: The translated block to register the execution callback for
+/// - `op`: The operation to be performed
+/// - `entry`: The entry to be passed to the operation
+/// - `imm`: The immediate value to be passed to the operation
+pub fn qemu_plugin_register_vcpu_tb_exec_inline_per_vcpu(
+    tb: TranslationBlock,
+    op: PluginOp,
+    entry: PluginU64,
+    imm: u64,
+) {
+    unsafe {
+        crate::sys::qemu_plugin_register_vcpu_tb_exec_inline_per_vcpu(
+            tb.translation_block as *mut qemu_plugin_tb,
+            op,
+            entry,
+            imm,
+        );
+    }
 }
 
 extern "C" fn handle_qemu_plugin_register_vcpu_insn_exec_cb<F>(
@@ -775,11 +1302,87 @@ extern "C" fn handle_qemu_plugin_register_vcpu_insn_exec_cb<F>(
 ///
 /// - `insn`: The instruction handle to register the callback for
 /// - `cb`: The callback to be called
-pub fn qemu_plugin_register_vcpu_insn_exec_cb<F>(insn: Instruction, cb: F)
+pub fn qemu_plugin_register_vcpu_insn_exec_cb<F>(insn: Instruction, cb: F, flags: CallbackFlags)
 where
     F: FnMut(VCPUIndex) + Send + Sync + 'static,
 {
-    insn.register_execute_callback(cb);
+    insn.register_execute_callback_flags(cb, flags);
+}
+
+#[cfg(feature = "plugin-api-v3")]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
+/// Register a callback to be conditionally called when an instruction is executed.
+///
+/// # Arguments
+///
+/// - `insn`: The instruction handle to register the callback for
+/// - `cb`: The callback to be called
+/// - `cond`: The condition to be met for the callback to be called
+/// - `entry`: The entry to be passed to the callback
+/// - `immediate`: The immediate value to be passed to the callback
+pub fn qemu_plugin_register_vcpu_insn_exec_cond_cb<F>(
+    insn: Instruction,
+    cb: F,
+    flags: CallbackFlags,
+    cond: PluginCondition,
+    entry: PluginU64,
+    immediate: u64,
+) where
+    F: FnMut(VCPUIndex) + Send + Sync + 'static,
+{
+    insn.register_conditional_execute_callback_flags(cb, flags, cond, entry, immediate);
+}
+
+#[cfg(feature = "plugin-api-v1")]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
+/// Register an inline callback to be called when an instruction is executed.
+///
+/// # Arguments
+///
+/// - `insn`: The instruction handle to register the callback for
+/// - `op`: The operation to be performed
+/// - `ptr`: The pointer to the data to be passed to the operation
+/// - `imm`: The immediate value to be passed to the operation
+pub fn qemu_plugin_register_vcpu_insn_exec_inline(
+    insn: Instruction,
+    op: PluginOp,
+    ptr: *mut c_void,
+    imm: u64,
+) {
+    unsafe {
+        crate::sys::qemu_plugin_register_vcpu_insn_exec_inline(
+            insn.instruction as *mut qemu_plugin_insn,
+            op,
+            ptr,
+            imm,
+        );
+    }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
+/// Register an inline callback to be called when an instruction is executed.
+///
+/// # Arguments
+///
+/// - `insn`: The instruction handle to register the callback for
+/// - `op`: The operation to be performed
+/// - `entry`: The entry to be passed to the operation
+/// - `imm`: The immediate value to be passed to the operation
+pub fn qemu_plugin_register_vcpu_insn_exec_inline_per_vcpu(
+    insn: Instruction,
+    op: PluginOp,
+    entry: PluginU64,
+    imm: u64,
+) {
+    unsafe {
+        crate::sys::qemu_plugin_register_vcpu_insn_exec_inline_per_vcpu(
+            insn.instruction as *mut qemu_plugin_insn,
+            op,
+            entry,
+            imm,
+        );
+    }
 }
 
 extern "C" fn handle_qemu_plugin_register_vcpu_mem_cb<F>(
@@ -805,11 +1408,73 @@ extern "C" fn handle_qemu_plugin_register_vcpu_mem_cb<F>(
 /// - `insn`: The instruction handle to register the callback for
 /// - `cb`: The callback to be called
 /// - `rw`: Whether the callback should be called for reads, writes, or both
-pub fn qemu_plugin_register_vcpu_mem_cb<F>(insn: Instruction, cb: F, rw: MemRW)
-where
+pub fn qemu_plugin_register_vcpu_mem_cb<F>(
+    insn: Instruction,
+    cb: F,
+    flags: CallbackFlags,
+    rw: MemRW,
+) where
     F: FnMut(VCPUIndex, MemoryInfo, u64) + Send + Sync + 'static,
 {
-    insn.register_memory_access_callback(cb, rw);
+    insn.register_memory_access_callback_flags(cb, rw, flags);
+}
+
+#[cfg(feature = "plugin-api-v1")]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
+/// Register an inline callback for every memory transaction of a particular instruction.
+///
+/// # Arguments
+///
+/// - `insn`: The instruction handle to register the callback for
+/// - `rw`: Whether the callback should be called for reads, writes, or both
+/// - `op`: The operation to be performed
+/// - `ptr`: The pointer to the data to be passed to the operation
+/// - `imm`: The immediate value to be passed to the operation
+pub fn qemu_plugin_register_vcpu_mem_inline(
+    insn: Instruction,
+    rw: MemRW,
+    op: PluginOp,
+    ptr: *mut c_void,
+    imm: u64,
+) {
+    unsafe {
+        crate::sys::qemu_plugin_register_vcpu_mem_inline(
+            insn.instruction as *mut qemu_plugin_insn,
+            rw,
+            op,
+            ptr,
+            imm,
+        );
+    }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
+/// Register an inline callback for every memory transaction of a particular instruction.
+///
+/// # Arguments
+///
+/// - `insn`: The instruction handle to register the callback for
+/// - `rw`: Whether the callback should be called for reads, writes, or both
+/// - `op`: The operation to be performed
+/// - `entry`: The entry to be passed to the operation
+/// - `imm`: The immediate value to be passed to the operation
+pub fn qemu_plugin_register_vcpu_mem_inline_per_vcpu(
+    insn: Instruction,
+    rw: MemRW,
+    op: PluginOp,
+    entry: PluginU64,
+    imm: u64,
+) {
+    unsafe {
+        crate::sys::qemu_plugin_register_vcpu_mem_inline_per_vcpu(
+            insn.instruction as *mut qemu_plugin_insn,
+            rw,
+            op,
+            entry,
+            imm,
+        );
+    }
 }
 
 extern "C" fn handle_qemu_plugin_register_atexit_cb<F>(id: qemu_plugin_id_t, userdata: *mut c_void)
@@ -894,7 +1559,7 @@ where
 /// # Arguments
 ///
 /// - `name`: argument name, the part before the equals sign @val: argument value, what’s
-/// after the equals sign @ret: output return value
+///   after the equals sign @ret: output return value
 /// - `val`: Argument value, what’s after the equals sign
 ///
 pub fn qemu_plugin_bool_parse<S>(name: S, val: S) -> Result<bool>
@@ -974,17 +1639,7 @@ pub fn qemu_plugin_entry_code() -> Option<u64> {
     }
 }
 
-/// Return the maximum number of vCPUs, if running in system mode
-pub fn qemu_plugin_n_max_cpus() -> Option<i32> {
-    let max_cpus = unsafe { crate::sys::qemu_plugin_n_max_vcpus() };
-
-    if max_cpus == -1 {
-        None
-    } else {
-        Some(max_cpus)
-    }
-}
-
+#[cfg(feature = "plugin-api-v1")]
 /// Return the number of vCPUs, if running in system mode
 pub fn qemu_plugin_n_vcpus() -> Option<i32> {
     let vcpus = unsafe { crate::sys::qemu_plugin_n_vcpus() };
@@ -994,4 +1649,81 @@ pub fn qemu_plugin_n_vcpus() -> Option<i32> {
     } else {
         Some(vcpus)
     }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+/// Return the number of vCPUs, if running in system mode
+pub fn qemu_plugin_num_vcpus() -> Option<i32> {
+    let vcpus = unsafe { crate::sys::qemu_plugin_num_vcpus() };
+
+    if vcpus == -1 {
+        None
+    } else {
+        Some(vcpus)
+    }
+}
+
+#[cfg(feature = "plugin-api-v1")]
+/// Return the maximum number of vCPUs, if running in system mode
+pub fn qemu_plugin_n_max_vcpus() -> Option<i32> {
+    let max_cpus = unsafe { crate::sys::qemu_plugin_n_max_vcpus() };
+
+    if max_cpus == -1 {
+        None
+    } else {
+        Some(max_cpus)
+    }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+/// Returns a potentially empty list of registers. This should be used from a
+/// qemu_plugin_register_vcpu_init_cb callback after the vcpu has been initialized.
+pub fn qemu_plugin_get_registers<'a>() -> Result<Vec<RegisterDescriptor<'a>>> {
+    use std::slice::from_raw_parts;
+
+    let array = unsafe { crate::sys::qemu_plugin_get_registers() };
+
+    let registers = unsafe {
+        from_raw_parts(
+            (*array).data as *mut qemu_plugin_reg_descriptor,
+            (*array).len as usize,
+        )
+    }
+    .iter()
+    .map(|desc| RegisterDescriptor::from(*desc))
+    .collect::<Vec<_>>();
+
+    // Function notes say caller frees the array but not the strings in each entry
+    assert_eq!(
+        unsafe { g_array_free(array, true) },
+        std::ptr::null_mut(),
+        "g_array_free return value must be NULL"
+    );
+
+    Ok(registers)
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+/// Add a value to a `PluginU64` for a given VCPU
+pub fn qemu_plugin_u64_add(entry: PluginU64, vcpu_index: VCPUIndex, added: u64) -> Result<()> {
+    unsafe { crate::sys::qemu_plugin_u64_add(entry, vcpu_index, added) };
+    Ok(())
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+/// Get the value of a `PluginU64` for a given VCPU
+pub fn qemu_plugin_u64_get(entry: PluginU64, vcpu_index: VCPUIndex) -> u64 {
+    unsafe { crate::sys::qemu_plugin_u64_get(entry, vcpu_index) }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+/// Set the value of a `PluginU64` for a given VCPU
+pub fn qemu_plugin_u64_set(entry: PluginU64, vcpu_index: VCPUIndex, value: u64) {
+    unsafe { crate::sys::qemu_plugin_u64_set(entry, vcpu_index, value) }
+}
+
+#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+/// Get the sum of all VCPU entries in a scoreboard
+pub fn qemu_plugin_scoreboard_sum(entry: PluginU64) -> u64 {
+    unsafe { crate::sys::qemu_plugin_u64_sum(entry) }
 }
