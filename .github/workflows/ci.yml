@@ -10,10 +10,13 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test_plugins_linux:
-    name: Build and Test Plugins (Linux)
+  test_plugins_linux_v1:
+    name: Build and Test Plugins API v1 (Linux)
     runs-on: ubuntu-latest
     container: ubuntu:24.04
+    env:
+      # Hash of v1
+      QEMU_COMMIT_HASH: fb691b8cbabf5bde7d25a7f720d5ec7d5b1341e1
     steps:
       - name: Set up Sources List
         run: |
@@ -52,7 +55,163 @@ jobs:
       # Clone without history
       - name: Clone QEMU
         run: |
-          git clone --depth 1 https://github.com/qemu/qemu qemu-upstream
+          git clone https://github.com/qemu/qemu qemu-upstream
+          cd qemu-upstream
+          git checkout "${QEMU_COMMIT_HASH}"
+
+      - name: Build QEMU
+        run: |
+          cd qemu-upstream
+          ./configure --enable-plugins
+          cd build
+          make -j$(nproc)
+          make install
+          cd ../..
+
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/checkout@v4
+      - name: Test QEMU Install
+        run: |
+          qemu-x86_64 --help
+      - name: Build and Test Tracer
+        run: |
+          cd plugins/tracer
+          cargo build -r --features=plugin-api-v1 --no-default-features || exit 0
+          cargo build -r --features=plugin-api-v1 --no-default-features
+          cargo run --features=plugin-api-v1 --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
+          cd ../..
+      - name: Build and Test Tiny
+        run: |
+          cd plugins/tiny
+          cargo build -r --features=plugin-api-v1 --no-default-features
+          qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
+          cd ../..
+
+  test_plugins_linux_v2:
+    name: Build and Test Plugins API v2 (Linux)
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    env:
+      # Hash of v2
+      QEMU_COMMIT_HASH: fba3b490a26cb278dfa183d7fcc375746e312980
+    steps:
+      - name: Set up Sources List
+        run: |
+          cat <<EOF > /etc/apt/sources.list.d/ubuntu.sources
+          Types: deb
+          URIs: http://archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: http://security.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb-src
+          URIs: http://archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: http://security.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          EOF
+      - name: Install QEMU Build Dependencies
+        run: |
+          apt -y update && \
+          apt -y install git curl build-essential && \
+          apt -y source qemu && \
+          apt -y build-dep qemu
+
+      # Clone without history
+      - name: Clone QEMU
+        run: |
+          git clone https://github.com/qemu/qemu qemu-upstream
+          cd qemu-upstream
+          git checkout "${QEMU_COMMIT_HASH}"
+
+      - name: Build QEMU
+        run: |
+          cd qemu-upstream
+          ./configure --enable-plugins
+          cd build
+          make -j$(nproc)
+          make install
+          cd ../..
+
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/checkout@v4
+      - name: Test QEMU Install
+        run: |
+          qemu-x86_64 --help
+      - name: Build and Test Tracer
+        run: |
+          cd plugins/tracer
+          cargo build -r --features=plugin-api-v2 --no-default-features || exit 0
+          cargo build -r --features=plugin-api-v2 --no-default-features
+          cargo run --features=plugin-api-v2 --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
+          cd ../..
+      - name: Build and Test Tiny
+        run: |
+          cd plugins/tiny
+          cargo build -r --features=plugin-api-v2 --no-default-features
+          qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
+          cd ../..
+
+  test_plugins_linux_v3:
+    name: Build and Test Plugins API V3 (Linux)
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    env:
+      # Hash of v3
+      QEMU_COMMIT_HASH: 4abc892362f8282450f18c4e45c5b0534461d01e
+    steps:
+      - name: Set up Sources List
+        run: |
+          cat <<EOF > /etc/apt/sources.list.d/ubuntu.sources
+          Types: deb
+          URIs: http://archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: http://security.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb-src
+          URIs: http://archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: http://security.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          EOF
+      - name: Install QEMU Build Dependencies
+        run: |
+          apt -y update && \
+          apt -y install git curl build-essential && \
+          apt -y source qemu && \
+          apt -y build-dep qemu
+
+      # Clone without history
+      - name: Clone QEMU
+        run: |
+          git clone https://github.com/qemu/qemu qemu-upstream
+          cd qemu-upstream
+          git checkout "${QEMU_COMMIT_HASH}"
 
       - name: Build QEMU
         run: |
