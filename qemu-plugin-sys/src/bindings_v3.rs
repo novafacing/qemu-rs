@@ -185,6 +185,19 @@ pub enum qemu_plugin_mem_rw {
     QEMU_PLUGIN_MEM_W = 2,
     QEMU_PLUGIN_MEM_RW = 3,
 }
+#[repr(u32)]
+#[doc = " enum qemu_plugin_cond - condition to enable callback\n\n @QEMU_PLUGIN_COND_NEVER: false\n @QEMU_PLUGIN_COND_ALWAYS: true\n @QEMU_PLUGIN_COND_EQ: is equal?\n @QEMU_PLUGIN_COND_NE: is not equal?\n @QEMU_PLUGIN_COND_LT: is less than?\n @QEMU_PLUGIN_COND_LE: is less than or equal?\n @QEMU_PLUGIN_COND_GT: is greater than?\n @QEMU_PLUGIN_COND_GE: is greater than or equal?"]
+#[derive(Debug, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
+pub enum qemu_plugin_cond {
+    QEMU_PLUGIN_COND_NEVER = 0,
+    QEMU_PLUGIN_COND_ALWAYS = 1,
+    QEMU_PLUGIN_COND_EQ = 2,
+    QEMU_PLUGIN_COND_NE = 3,
+    QEMU_PLUGIN_COND_LT = 4,
+    QEMU_PLUGIN_COND_LE = 5,
+    QEMU_PLUGIN_COND_GT = 6,
+    QEMU_PLUGIN_COND_GE = 7,
+}
 #[doc = " typedef qemu_plugin_vcpu_tb_trans_cb_t - translation callback\n @id: unique plugin id\n @tb: opaque handle used for querying and instrumenting a block."]
 pub type qemu_plugin_vcpu_tb_trans_cb_t =
     ::std::option::Option<unsafe extern "C" fn(id: qemu_plugin_id_t, tb: *mut qemu_plugin_tb)>;
@@ -204,11 +217,24 @@ extern "C" {
         userdata: *mut ::std::os::raw::c_void,
     );
 }
+extern "C" {
+    #[doc = " qemu_plugin_register_vcpu_tb_exec_cond_cb() - register conditional callback\n @tb: the opaque qemu_plugin_tb handle for the translation\n @cb: callback function\n @cond: condition to enable callback\n @entry: first operand for condition\n @imm: second operand for condition\n @flags: does the plugin read or write the CPU's registers?\n @userdata: any plugin data to pass to the @cb?\n\n The @cb function is called when a translated unit executes if\n entry @cond imm is true.\n If condition is QEMU_PLUGIN_COND_ALWAYS, condition is never interpreted and\n this function is equivalent to qemu_plugin_register_vcpu_tb_exec_cb.\n If condition QEMU_PLUGIN_COND_NEVER, condition is never interpreted and\n callback is never installed."]
+    pub fn qemu_plugin_register_vcpu_tb_exec_cond_cb(
+        tb: *mut qemu_plugin_tb,
+        cb: qemu_plugin_vcpu_udata_cb_t,
+        flags: qemu_plugin_cb_flags,
+        cond: qemu_plugin_cond,
+        entry: qemu_plugin_u64,
+        imm: u64,
+        userdata: *mut ::std::os::raw::c_void,
+    );
+}
 #[repr(u32)]
-#[doc = " enum qemu_plugin_op - describes an inline op\n\n @QEMU_PLUGIN_INLINE_ADD_U64: add an immediate value uint64_t\n\n Note: currently only a single inline op is supported."]
+#[doc = " enum qemu_plugin_op - describes an inline op\n\n @QEMU_PLUGIN_INLINE_ADD_U64: add an immediate value uint64_t\n @QEMU_PLUGIN_INLINE_STORE_U64: store an immediate value uint64_t"]
 #[derive(Debug, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
 pub enum qemu_plugin_op {
     QEMU_PLUGIN_INLINE_ADD_U64 = 0,
+    QEMU_PLUGIN_INLINE_STORE_U64 = 1,
 }
 extern "C" {
     #[doc = " qemu_plugin_register_vcpu_tb_exec_inline_per_vcpu() - execution inline op\n @tb: the opaque qemu_plugin_tb handle for the translation\n @op: the type of qemu_plugin_op (e.g. ADD_U64)\n @entry: entry to run op\n @imm: the op data (e.g. 1)\n\n Insert an inline op on a given scoreboard entry."]
@@ -225,6 +251,18 @@ extern "C" {
         insn: *mut qemu_plugin_insn,
         cb: qemu_plugin_vcpu_udata_cb_t,
         flags: qemu_plugin_cb_flags,
+        userdata: *mut ::std::os::raw::c_void,
+    );
+}
+extern "C" {
+    #[doc = " qemu_plugin_register_vcpu_insn_exec_cond_cb() - conditional insn execution cb\n @insn: the opaque qemu_plugin_insn handle for an instruction\n @cb: callback function\n @flags: does the plugin read or write the CPU's registers?\n @cond: condition to enable callback\n @entry: first operand for condition\n @imm: second operand for condition\n @userdata: any plugin data to pass to the @cb?\n\n The @cb function is called when an instruction executes if\n entry @cond imm is true.\n If condition is QEMU_PLUGIN_COND_ALWAYS, condition is never interpreted and\n this function is equivalent to qemu_plugin_register_vcpu_insn_exec_cb.\n If condition QEMU_PLUGIN_COND_NEVER, condition is never interpreted and\n callback is never installed."]
+    pub fn qemu_plugin_register_vcpu_insn_exec_cond_cb(
+        insn: *mut qemu_plugin_insn,
+        cb: qemu_plugin_vcpu_udata_cb_t,
+        flags: qemu_plugin_cb_flags,
+        cond: qemu_plugin_cond,
+        entry: qemu_plugin_u64,
+        imm: u64,
         userdata: *mut ::std::os::raw::c_void,
     );
 }

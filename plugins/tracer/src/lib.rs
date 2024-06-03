@@ -149,19 +149,17 @@ impl Tracer {
 }
 
 impl HasCallbacks for Tracer {
+    #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
     fn on_vcpu_init(
         &mut self,
         _id: PluginId,
         _vcpu_id: VCPUIndex,
     ) -> std::prelude::v1::Result<(), anyhow::Error> {
-        #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
-        {
-            *self
-                .registers
-                .lock()
-                .map_err(|e| anyhow!("Failed to lock registers: {}", e))? =
-                qemu_plugin_get_registers()?;
-        }
+        *self
+            .registers
+            .lock()
+            .map_err(|e| anyhow!("Failed to lock registers: {}", e))? =
+            qemu_plugin_get_registers()?;
         Ok(())
     }
 
@@ -173,6 +171,27 @@ impl HasCallbacks for Tracer {
         tb.instructions().try_for_each(|insn| {
             let event = InstructionEvent::try_from(&insn)?;
 
+            #[cfg(feature = "plugin-api-v1")]
+            if self.log_insns {
+                let tx = self.tx.clone();
+
+                insn.register_execute_callback(move |_| {
+                    tx.lock()
+                        .map_err(|e| anyhow!("Failed to lock tx: {}", e))
+                        .and_then(|tx| {
+                            to_writer(
+                                tx.as_ref().ok_or_else(|| anyhow!("No tx"))?,
+                                &Event::Instruction {
+                                    event: event.clone(),
+                                },
+                            )
+                            .map_err(|e| anyhow!(e))
+                        })
+                        .expect("Failed to send instruction event");
+                });
+            }
+
+            #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
             if self.log_insns {
                 let tx = self.tx.clone();
                 let registers = self
@@ -189,10 +208,6 @@ impl HasCallbacks for Tracer {
                                 tx.as_ref().ok_or_else(|| anyhow!("No tx"))?,
                                 &Event::Instruction {
                                     event: event.clone(),
-                                    #[cfg(any(
-                                        feature = "plugin-api-v2",
-                                        feature = "plugin-api-v3"
-                                    ))]
                                     registers: Registers(
                                         registers
                                             .iter()

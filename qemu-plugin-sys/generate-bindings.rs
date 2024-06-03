@@ -36,8 +36,8 @@ const QEMU_SRC_URL_BASE: &str = "https://download.qemu.org/";
 const QEMU_VERSION_V1: &str = "8.2.4";
 // Plugin V2 is from 9.0.0
 const QEMU_VERSION_V2: &str = "9.0.0";
-/// Plugin V3 is from 4abc892362f8282450f18c4e45c5b0534461d01e
-const QEMU_VERSION_V3: &str = "4abc892362f8282450f18c4e45c5b0534461d01e";
+/// Plugin V3 is from 7de77d37880d7267a491cb32a1b2232017d1e545
+const QEMU_VERSION_V3: &str = "7de77d37880d7267a491cb32a1b2232017d1e545";
 
 fn qemu_src_url_v1() -> String {
     format!("{}qemu-{}.tar.xz", QEMU_SRC_URL_BASE, QEMU_VERSION_V1)
@@ -48,7 +48,7 @@ fn qemu_src_url_v2() -> String {
 }
 
 fn qemu_src_url_v3() -> String {
-    format!("{}/archive/4abc892362f8282450f18c4e45c5b0534461d01e.zip", QEMU_GITHUB_URL_BASE)
+    format!("{}/archive/{}.zip", QEMU_GITHUB_URL_BASE, QEMU_VERSION_V3)
 }
 
 /// Download a URL to a destination, using a blocking request
@@ -91,7 +91,7 @@ fn extract_txz(archive: &Path, destination: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Extract a zip frile at a path to a destination
+/// Extract a zip file at a path to a destination
 fn extract_zip(archive: &Path, destination: &Path) -> Result<()> {
     let archive = File::open(archive)?;
     let mut archive = ZipArchive::new(archive)?;
@@ -108,7 +108,6 @@ fn generate_windows_delaylink_library(qemu_plugin_symbols: &Path, destination: &
 }
 
 fn generate_bindings(qemu_plugin_header: &Path, destination: &Path) -> Result<()> {
-    // let glib_20 = probe_library("glib-2.0").map_err(|e| anyhow!(e))?;
     let header_contents = read_to_string(qemu_plugin_header)?;
     let header_file_name = qemu_plugin_header.file_name().ok_or_else(|| anyhow!("Failed to get file name"))?.to_str().ok_or_else(|| anyhow!("Failed to convert file name to string"))?;
     let header_contents = header_contents.replace("#include <glib.h>", "");

@@ -170,7 +170,7 @@ jobs:
     container: ubuntu:24.04
     env:
       # Hash of v3
-      QEMU_COMMIT_HASH: 4abc892362f8282450f18c4e45c5b0534461d01e
+      QEMU_COMMIT_HASH: 7de77d37880d7267a491cb32a1b2232017d1e545
     steps:
       - name: Set up Sources List
         run: |
