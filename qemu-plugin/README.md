@@ -84,5 +84,5 @@ qemu-plugin = { version = "9.1.2-v0", features = ["plugin-api-v2"], default-feat
 ```
 
 The `qemu-plugin` crate's default plugin version is set to the latest version that is
-officially released in QEMU. Currently, this is V4, released in 9.1.0. If you need a
+officially released in QEMU. Currently, this is V4, released in 9.2.0. If you need a
 different version, you *must* set `default-features = false`.

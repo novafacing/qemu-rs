@@ -36,7 +36,7 @@ const QEMU_VERSIONS: &[&str] = &[
     "c25df57ae8f9fe1c72eee2dab37d76d904ac382e",
     // Plugin V3 is from 9.1.0
     "7de77d37880d7267a491cb32a1b2232017d1e545",
-    // Plugin V4 is from
+    // Plugin V4 is from 9.2.0
     "595cd9ce2ec9330882c991a647d5bc2a5640f380",
 ];
 

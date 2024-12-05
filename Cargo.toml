@@ -8,7 +8,7 @@ license = "GPL-2.0-only"
 publish = true
 readme = "README.md"
 repository = "https://github.com/novafacing/qemu-rs"
-version = "9.1.0-v0"
+version = "9.2.0-v0"
 
 [workspace]
 resolver = "2"
@@ -22,5 +22,5 @@ members = [
 default-members = ["qemu-plugin", "qemu-plugin-sys"]
 
 [workspace.dependencies]
-qemu-plugin-sys = { version = "9.1.0-v0", path = "qemu-plugin-sys", default-features = false }
-qemu-plugin = { version = "9.1.0-v0", path = "qemu-plugin", default-features = false }
+qemu-plugin-sys = { version = "9.2.0-v0", path = "qemu-plugin-sys", default-features = false }
+qemu-plugin = { version = "9.2.0-v0", path = "qemu-plugin", default-features = false }

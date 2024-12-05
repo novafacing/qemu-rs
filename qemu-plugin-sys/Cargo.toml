@@ -25,5 +25,5 @@ plugin-api-v1 = []
 plugin-api-v2 = []
 # Use the V3 plugin API, which is defined for version 9.1.0
 plugin-api-v3 = []
-# Use the V4 plugin API, which is defined for versions above 9.1.0
+# Use the V4 plugin API, which is defined for versions above 9.2.0
 plugin-api-v4 = []
