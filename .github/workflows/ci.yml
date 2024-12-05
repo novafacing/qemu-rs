@@ -320,13 +320,11 @@ jobs:
 
   test_plugins_windows:
     name: Build and Test Plugins (Windows)
-    env:
-      QEMU_VERSION: 9.1.2-1
     runs-on: windows-latest
     env:
+      QEMU_VERSION: 9.1.2-1
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
       FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
-
     steps:
       - uses: msys2/setup-msys2@v2
         with:
