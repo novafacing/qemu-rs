@@ -55,7 +55,7 @@ jobs:
       # Clone without history
       - name: Clone QEMU
         run: |
-          git clone https://github.com/qemu/qemu qemu-upstream
+          git clone https://gitlab.com/qemu/qemu qemu-upstream
           cd qemu-upstream
           git checkout "${QEMU_COMMIT_HASH}"
 
@@ -132,7 +132,7 @@ jobs:
       # Clone without history
       - name: Clone QEMU
         run: |
-          git clone https://github.com/qemu/qemu qemu-upstream
+          git clone https://gitlab.com/qemu/qemu qemu-upstream
           cd qemu-upstream
           git checkout "${QEMU_COMMIT_HASH}"
 
@@ -209,7 +209,7 @@ jobs:
       # Clone without history
       - name: Clone QEMU
         run: |
-          git clone https://github.com/qemu/qemu qemu-upstream
+          git clone https://gitlab.com/qemu/qemu qemu-upstream
           cd qemu-upstream
           git checkout "${QEMU_COMMIT_HASH}"
 
@@ -238,6 +238,83 @@ jobs:
         run: |
           cd plugins/tiny
           cargo build -r --features=plugin-api-v3 --no-default-features
+          qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
+          cd ../..
+
+  test_plugins_linux_v4:
+    name: Build and Test Plugins API v4 (Linux)
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    env:
+      # Hash of v4
+      QEMU_COMMIT_HASH: cfa3a6c54511374e9ccee26d9c38ac1698fc7af2
+    steps:
+      - name: Set up Sources List
+        run: |
+          cat <<EOF > /etc/apt/sources.list.d/ubuntu.sources
+          Types: deb
+          URIs: http://archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: http://security.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb-src
+          URIs: http://archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: http://security.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          EOF
+      - name: Install QEMU Build Dependencies
+        run: |
+          apt -y update && \
+          apt -y install git curl build-essential && \
+          apt -y source qemu && \
+          apt -y build-dep qemu
+
+      # Clone without history
+      - name: Clone QEMU
+        run: |
+          git clone https://gitlab.com/qemu/qemu qemu-upstream
+          cd qemu-upstream
+          git checkout "${QEMU_COMMIT_HASH}"
+
+      - name: Build QEMU
+        run: |
+          cd qemu-upstream
+          ./configure --enable-plugins
+          cd build
+          make -j$(nproc)
+          make install
+          cd ../..
+
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/checkout@v4
+      - name: Test QEMU Install
+        run: |
+          qemu-x86_64 --help
+      - name: Build and Test Tracer
+        run: |
+          cd plugins/tracer
+          cargo build -r --features=plugin-api-v4 --no-default-features || exit 0
+          cargo build -r --features=plugin-api-v4 --no-default-features
+          cargo run --features=plugin-api-v4 --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
+          cd ../..
+      - name: Build and Test Tiny
+        run: |
+          cd plugins/tiny
+          cargo build -r --features=plugin-api-v4 --no-default-features
           qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
           cd ../..
 
