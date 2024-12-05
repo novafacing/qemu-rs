@@ -1,11 +1,13 @@
 use anyhow::{anyhow, Error, Result};
 use ctor::ctor;
+#[cfg(feature = "plugin-api-v4")]
+use qemu_plugin::qemu_plugin_read_memory_vaddr;
 use qemu_plugin::{
     install::{Args, Info, Value},
     plugin::{HasCallbacks, Plugin, Register, PLUGIN},
     Instruction, MemRW, MemoryInfo, PluginId, TranslationBlock, VCPUIndex,
 };
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(feature = "plugin-api-v1"))]
 use qemu_plugin::{qemu_plugin_get_registers, RegisterDescriptor};
 use serde::{Deserialize, Serialize};
 use serde_cbor::to_writer;
@@ -95,9 +97,12 @@ pub struct SyscallEvent {
     pub num: i64,
     pub return_value: i64,
     pub args: [u64; 8],
+    #[cfg(feature = "plugin-api-v4")]
+    #[builder(default)]
+    pub buffers: HashMap<usize, Vec<u8>>,
 }
 
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Registers(pub HashMap<String, Vec<u8>>);
 
@@ -105,7 +110,7 @@ pub struct Registers(pub HashMap<String, Vec<u8>>);
 pub enum Event {
     Instruction {
         event: InstructionEvent,
-        #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+        #[cfg(not(feature = "plugin-api-v1"))]
         registers: Registers,
     },
     Memory(MemoryEvent),
@@ -114,8 +119,10 @@ pub enum Event {
 
 #[derive(TypedBuilder, Clone, Debug)]
 struct Tracer {
+    #[builder(default)]
+    pub target_name: Option<String>,
     pub syscalls: Arc<Mutex<HashMap<SyscallSource, SyscallEvent>>>,
-    #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+    #[cfg(not(feature = "plugin-api-v1"))]
     pub registers: Arc<Mutex<Vec<RegisterDescriptor<'static>>>>,
     #[builder(default)]
     pub tx: Arc<Mutex<Option<UnixStream>>>,
@@ -125,7 +132,7 @@ struct Tracer {
     pub log_mem: bool,
     #[builder(default)]
     pub log_syscalls: bool,
-    #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+    #[cfg(not(feature = "plugin-api-v1"))]
     #[builder(default)]
     pub log_registers: bool,
 }
@@ -138,7 +145,7 @@ impl Tracer {
                 .syscalls(Arc::new(Mutex::new(HashMap::new())))
                 .build()
         }
-        #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+        #[cfg(not(feature = "plugin-api-v1"))]
         {
             Self::builder()
                 .syscalls(Arc::new(Mutex::new(HashMap::new())))
@@ -149,7 +156,7 @@ impl Tracer {
 }
 
 impl HasCallbacks for Tracer {
-    #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+    #[cfg(not(feature = "plugin-api-v1"))]
     fn on_vcpu_init(
         &mut self,
         _id: PluginId,
@@ -191,7 +198,7 @@ impl HasCallbacks for Tracer {
                 });
             }
 
-            #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+            #[cfg(not(feature = "plugin-api-v1"))]
             if self.log_insns {
                 let tx = self.tx.clone();
                 let registers = self
@@ -269,11 +276,45 @@ impl HasCallbacks for Tracer {
             return Ok(());
         }
 
+        #[cfg(any(
+            feature = "plugin-api-v1",
+            feature = "plugin-api-v2",
+            feature = "plugin-api-v3"
+        ))]
         let event = SyscallEvent::builder()
             .num(num)
             .return_value(-1)
             .args([a1, a2, a3, a4, a5, a6, a7, a8])
             .build();
+
+        #[cfg(feature = "plugin-api-v4")]
+        let event = {
+            let buffers = if let Some(write_sysno) = match self.target_name.as_deref() {
+                Some("i386") => Some(4),
+                Some("x86_64") => Some(1),
+                Some("arm") => Some(4),
+                Some("aarch64") => Some(64),
+                _ => None,
+            } {
+                if num == write_sysno {
+                    let addr = a2;
+                    let len = a3 as usize;
+                    let buffer = qemu_plugin_read_memory_vaddr(addr, len)?;
+                    [(1, buffer)].into_iter().collect::<HashMap<_, _>>()
+                } else {
+                    Default::default()
+                }
+            } else {
+                Default::default()
+            };
+
+            SyscallEvent::builder()
+                .num(num)
+                .return_value(-1)
+                .args([a1, a2, a3, a4, a5, a6, a7, a8])
+                .buffers(buffers)
+                .build()
+        };
 
         let mut syscalls = self
             .syscalls
@@ -295,7 +336,7 @@ impl HasCallbacks for Tracer {
         &mut self,
         id: PluginId,
         vcpu_index: VCPUIndex,
-        _: i64,
+        num: i64,
         ret: i64,
     ) -> Result<()> {
         if !self.log_syscalls {
@@ -316,6 +357,24 @@ impl HasCallbacks for Tracer {
                     .build(),
             )
             .ok_or_else(|| anyhow!("No syscall event found"))?;
+
+        #[cfg(feature = "plugin-api-v4")]
+        {
+            if let Some(read_sysno) = match self.target_name.as_deref() {
+                Some("i386") => Some(3),
+                Some("x86_64") => Some(0),
+                Some("arm") => Some(3),
+                Some("aarch64") => Some(63),
+                _ => None,
+            } {
+                if num == read_sysno {
+                    let addr = event.args[1];
+                    let len = event.args[2] as usize;
+                    let buffer = qemu_plugin_read_memory_vaddr(addr, len)?;
+                    event.buffers.insert(1, buffer);
+                }
+            }
+        }
 
         // Update the return value
         event.return_value = ret;
@@ -338,7 +397,7 @@ pub struct PluginArgs {
     pub log_insns: bool,
     pub log_mem: bool,
     pub log_syscalls: bool,
-    #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+    #[cfg(not(feature = "plugin-api-v1"))]
     pub log_registers: bool,
     pub socket_path: PathBuf,
 }
@@ -386,7 +445,7 @@ impl TryFrom<&Args> for PluginArgs {
                 )
                 .build())
         }
-        #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+        #[cfg(not(feature = "plugin-api-v1"))]
         {
             Ok(Self::builder()
                 .log_insns(
@@ -436,8 +495,10 @@ impl TryFrom<&Args> for PluginArgs {
 }
 
 impl Register for Tracer {
-    fn register(&mut self, _: PluginId, args: &Args, _: &Info) -> Result<()> {
+    fn register(&mut self, _: PluginId, args: &Args, info: &Info) -> Result<()> {
         let plugin_args = PluginArgs::try_from(args)?;
+
+        self.target_name = Some(info.target_name.clone());
 
         self.tx = Arc::new(Mutex::new(Some(UnixStream::connect(
             plugin_args.socket_path,
@@ -447,7 +508,7 @@ impl Register for Tracer {
         self.log_mem = plugin_args.log_mem;
         self.log_syscalls = plugin_args.log_syscalls;
 
-        #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+        #[cfg(not(feature = "plugin-api-v1"))]
         {
             self.log_registers = plugin_args.log_registers;
         }

@@ -4,13 +4,13 @@ use qemu_plugin::{
     plugin::{HasCallbacks, Plugin, Register, PLUGIN},
     PluginId, TranslationBlock,
 };
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(feature = "plugin-api-v1"))]
 use qemu_plugin::{qemu_plugin_get_registers, RegisterDescriptor, VCPUIndex};
 use std::sync::Mutex;
 
 #[derive(Default)]
 struct TinyTrace {
-    #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+    #[cfg(not(feature = "plugin-api-v1"))]
     registers: Vec<RegisterDescriptor<'static>>,
 }
 
@@ -18,7 +18,7 @@ impl Plugin for TinyTrace {}
 impl Register for TinyTrace {}
 
 impl HasCallbacks for TinyTrace {
-    #[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+    #[cfg(not(feature = "plugin-api-v1"))]
     fn on_vcpu_init(&mut self, _id: PluginId, _vcpu_id: VCPUIndex) -> Result<()> {
         self.registers = qemu_plugin_get_registers()?;
         Ok(())

@@ -57,6 +57,14 @@ pub enum Error {
         /// The register name
         name: String,
     },
+    #[error("Error while reading {len} bytes from virtual address {addr:#x}")]
+    /// Error when reading memory from a virtual address fails
+    VaddrReadError {
+        /// The address read from
+        addr: u64,
+        /// The number of bytes read
+        len: usize,
+    },
     #[error(transparent)]
     /// A transparently wrapped `std::str::Utf8Error`
     Utf8Error(#[from] std::str::Utf8Error),

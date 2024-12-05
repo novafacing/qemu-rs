@@ -73,7 +73,7 @@ pub extern "C" fn qemu_plugin_register_vcpu_tb_exec_inline(
 ) {
 }
 
-#[cfg(feature = "plugin-api-v2")]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_register_vcpu_tb_exec_inline_per_vcpu(
@@ -105,7 +105,7 @@ pub extern "C" fn qemu_plugin_register_vcpu_insn_exec_inline(
 ) {
 }
 
-#[cfg(feature = "plugin-api-v2")]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_register_vcpu_insn_exec_inline_per_vcpu(
@@ -241,7 +241,7 @@ pub extern "C" fn qemu_plugin_register_vcpu_mem_inline(
 ) {
 }
 
-#[cfg(feature = "plugin-api-v2")]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_register_vcpu_mem_inline_per_vcpu(
@@ -309,7 +309,7 @@ pub extern "C" fn qemu_plugin_n_vcpus() -> ::std::os::raw::c_int {
     0
 }
 
-#[cfg(feature = "plugin-api-v2")]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_num_vcpus() -> ::std::os::raw::c_int {
@@ -361,14 +361,25 @@ pub extern "C" fn qemu_plugin_entry_code() -> u64 {
     0
 }
 
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_get_registers() -> *mut GArray {
     null_mut()
 }
 
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(any(
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3"
+)))]
+#[no_mangle]
+#[linkage = "weak"]
+pub extern "C" fn qemu_plugin_read_memory_vaddr(_: u64, _: *mut GByteArray, _: usize) -> bool {
+    false
+}
+
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_read_register(
@@ -378,19 +389,19 @@ pub extern "C" fn qemu_plugin_read_register(
     0
 }
 
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_scoreboard_new(_: usize) -> *mut qemu_plugin_scoreboard {
     null_mut()
 }
 
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_scoreboard_free(_: *mut qemu_plugin_scoreboard) {}
 
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_scoreboard_find(
@@ -400,24 +411,24 @@ pub extern "C" fn qemu_plugin_scoreboard_find(
     null_mut()
 }
 
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_u64_add(_: qemu_plugin_u64, _: ::std::os::raw::c_uint, _: u64) {}
 
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_u64_get(_: qemu_plugin_u64, _: ::std::os::raw::c_uint) -> u64 {
     0
 }
 
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_u64_set(_: qemu_plugin_u64, _: ::std::os::raw::c_uint, _: u64) {}
 
-#[cfg(any(feature = "plugin-api-v2", feature = "plugin-api-v3"))]
+#[cfg(not(feature = "plugin-api-v1"))]
 #[no_mangle]
 #[linkage = "weak"]
 pub extern "C" fn qemu_plugin_u64_sum(_: qemu_plugin_u64) {}
