@@ -320,11 +320,10 @@ jobs:
 
   test_plugins_windows:
     name: Build and Test Plugins (Windows)
+    env:
+      QEMU_VERSION: 9.1.2-1
     runs-on: windows-latest
     env:
-      # QEMU 9.0.0
-      # NOTE: This installer does not work headless
-      # QEMU_URL: "https://qemu.weilnetz.de/w64/2023/qemu-w64-setup-20231224.exe"
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
       FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
 
@@ -342,11 +341,12 @@ jobs:
           Invoke-WebRequest -Uri ${{ env.RUSTUP_URL }} -OutFile rustup-init.exe
           ./rustup-init.exe --default-toolchain nightly --default-host x86_64-pc-windows-gnu -y
 
+        # https://packages.msys2.org/packages/mingw-w64-ucrt-x86_64-qemu
       - name: Install QEMU
         shell: msys2 {0}
         run: |
           pacman -Syu --noconfirm
-          pacman -Sy mingw-w64-ucrt-x86_64-qemu --noconfirm
+          pacman -Sy mingw-w64-ucrt-x86_64-qemu=${QEMU_VERSION} --noconfirm
 
       - name: Test QEMU
         run: |
