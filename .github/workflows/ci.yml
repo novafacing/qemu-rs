@@ -56,14 +56,6 @@ jobs:
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
           EOF
 
-      # Cache apt packages
-      - name: Cache APT packages
-        id: apt-cache
-        uses: actions/cache@v3
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list.d/ubuntu.sources') }}
-
       - name: Install QEMU Build Dependencies
         run: |
           apt -y update
@@ -71,17 +63,14 @@ jobs:
           apt -y source qemu
           apt -y build-dep qemu
 
-      # Cache QEMU source and build
       - name: Cache QEMU
         id: qemu-cache
         uses: actions/cache@v3
         with:
           path: |
             qemu-upstream
-            qemu-upstream/build
           key: ${{ runner.os }}-qemu-v${{ matrix.version }}-${{ matrix.commit }}
 
-      # Clone only if cache miss
       - name: Clone QEMU
         if: steps.qemu-cache.outputs.cache-hit != 'true'
         run: |
@@ -89,7 +78,6 @@ jobs:
           cd qemu-upstream
           git checkout "${QEMU_COMMIT_HASH}"
 
-      # Build only if cache miss
       - name: Build QEMU
         if: steps.qemu-cache.outputs.cache-hit != 'true'
         run: |
@@ -102,18 +90,6 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@nightly
       - uses: actions/checkout@v4
-
-      # Cache Rust dependencies
-      - name: Cache Rust dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-rust-v${{ matrix.version }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-v${{ matrix.version }}-
 
       - name: Test QEMU Install
         run: |
@@ -142,19 +118,22 @@ jobs:
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
       FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
     steps:
-      - uses: msys2/setup-msys2@v2
+      # Cache MSYS2 
+      - name: Cache MSYS2 packages
+        id: msys2-cache
+        uses: actions/cache@v3
+        with:
+          path: C:\msys-custom
+          key: ${{ runner.os }}-msys2-${{ env.QEMU_VERSION }}
+
+      - name: Install MSYS2 and QEMU
+        uses: msys2/setup-msys2@v2
+        if: steps.msys2-cache.outputs.cache-hit != 'true'
         with:
           msystem: UCRT64
           update: true
-          install: git mingw-w64-ucrt-x86_64-gcc
+          install: git mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-qemu=${QEMU_VERSION}
           location: C:\msys-custom
-
-      # Cache MSYS2 packages
-      - name: Cache MSYS2 packages
-        uses: actions/cache@v3
-        with:
-          path: C:\msys-custom\msys64\var\cache\pacman\pkg
-          key: ${{ runner.os }}-msys2-${{ env.QEMU_VERSION }}
 
       - name: Download and Install Rust
         run: |
@@ -162,19 +141,12 @@ jobs:
           Invoke-WebRequest -Uri ${{ env.RUSTUP_URL }} -OutFile rustup-init.exe
           ./rustup-init.exe --default-toolchain nightly --default-host x86_64-pc-windows-gnu -y
 
-      - name: Install QEMU
-        shell: msys2 {0}
-        run: |
-          pacman -Syu --noconfirm
-          pacman -Sy mingw-w64-ucrt-x86_64-qemu=${QEMU_VERSION} --noconfirm
-
       - name: Test QEMU
         run: |
           C:\msys-custom\msys64\ucrt64\bin\qemu-system-x86_64.exe --version
 
       - uses: actions/checkout@v4
 
-      # Cache downloaded Fedora image
       - name: Cache Fedora Cloud Image
         id: fedora-cache
         uses: actions/cache@v3
@@ -188,18 +160,6 @@ jobs:
           $ProgressPreference = 'SilentlyContinue'
           Invoke-WebRequest -Uri ${{ env.FEDORA_CLOUDIMG_URL }} -OutFile Fedora-Cloud-Base-39-1.5.x86_64.qcow2
           ls
-
-      # Cache Rust dependencies for Windows
-      - name: Cache Rust dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-
 
       - name: Build and Test Tiny
         run: |
