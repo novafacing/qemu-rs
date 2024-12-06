@@ -128,6 +128,8 @@ fn generate_bindings(qemu_plugin_header: &Path, bindings_path: &Path, def_path: 
         // ALlowlist all other qemu_plugin.* items
         .allowlist_item("qemu_plugin.*")
         .allowlist_item("QEMU_PLUGIN.*")
+        .allowlist_item("G.*")
+        .allowlist_item("g_.*")
         .generate()?;
 
     rust_bindings.write_to_file(bindings_path)?;
