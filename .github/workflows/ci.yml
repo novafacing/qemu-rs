@@ -132,7 +132,7 @@ jobs:
         with:
           msystem: UCRT64
           update: true
-          install: git mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-qemu=${QEMU_VERSION}
+          install: git mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-qemu=${{ env.QEMU_VERSION }}
           location: C:\msys-custom
 
       - name: Download and Install Rust
