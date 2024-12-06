@@ -7,6 +7,7 @@ anyhow = "*"
 bindgen = "*"
 cargo_metadata = "*"
 reqwest = { version = "*", features = ["blocking"] }
+syn = "*"
 zip = "*"
 [lints.rust]
 non_snake_case = "allow"
@@ -19,6 +20,7 @@ use bindgen::{
 };
 use cargo_metadata::MetadataCommand;
 use reqwest::blocking::get;
+use syn::{File as RustFile, Item, ItemForeignMod, ForeignItem, ForeignItemFn, parse_str};
 use std::{
     io::copy,
     fs::{create_dir_all, read_to_string, write, File, OpenOptions},
@@ -86,16 +88,7 @@ fn extract_zip(archive: &Path, destination: &Path) -> Result<()> {
     Ok(())
 }
 
-fn generate_windows_delaylink_library(qemu_plugin_symbols: &Path, destination: &Path) -> Result<()> {
-    println!("Generating Windows delaylink library from {:?} to {:?}", qemu_plugin_symbols, destination);
-    let all_commands = read_to_string(qemu_plugin_symbols)?;
-    let all_commands = all_commands.replace(|x| "{};".contains(x), "");
-    write(destination, format!("EXPORTS\n{all_commands}"))?;
-
-    Ok(())
-}
-
-fn generate_bindings(qemu_plugin_header: &Path, destination: &Path) -> Result<()> {
+fn generate_bindings(qemu_plugin_header: &Path, bindings_path: &Path, def_path: &Path) -> Result<()> {
     let header_contents = read_to_string(qemu_plugin_header)?;
     let header_file_name = qemu_plugin_header.file_name().ok_or_else(|| anyhow!("Failed to get file name"))?.to_str().ok_or_else(|| anyhow!("Failed to convert file name to string"))?;
     let header_contents = header_contents.replace("#include <glib.h>", "");
@@ -137,7 +130,37 @@ fn generate_bindings(qemu_plugin_header: &Path, destination: &Path) -> Result<()
         .allowlist_item("QEMU_PLUGIN.*")
         .generate()?;
 
-    rust_bindings.write_to_file(destination)?;
+    rust_bindings.write_to_file(bindings_path)?;
+
+    let parsed: RustFile = parse_str(&rust_bindings.to_string())?;
+
+    let mut export_names: Vec<String> = parsed.items.iter()
+        .filter_map(|item| {
+            if let Item::ForeignMod(ItemForeignMod { items, .. }) = item {
+                Some(items)
+            } else {
+                None
+            }
+        })
+        .flat_map(|items| {
+            items.iter().filter_map(|item| {
+                if let ForeignItem::Fn(ForeignItemFn { sig, .. }) = item {
+                    Some(sig.ident.to_string())
+                } else {
+                    None
+                }
+            })
+        })
+        .collect();
+
+    export_names.sort();
+
+    // Write to file using a single buffer
+    let mut output = String::from("EXPORTS\n");
+    output.extend(export_names.into_iter().map(|name| format!("  {}\n", name)));
+
+    write(&def_path, output)?;
+
     Ok(())
 }
 
@@ -157,14 +180,10 @@ fn generate(tmp_dir: &Path, out_dir: &Path, version: usize) -> Result<()> {
         extract_zip(&src_archive, &src_dir)?;
     }
 
-    generate_windows_delaylink_library(
-        &src_dir.join("plugins").join("qemu-plugins.symbols"),
-        &out_dir.join(&format!("qemu_plugin_api_v{}.def", version)),
-    )?;
-
     generate_bindings(
         &src_dir.join("include").join("qemu").join("qemu-plugin.h"),
         &out_dir.join(&format!("bindings_v{}.rs", version)),
+        &out_dir.join(&format!("qemu_plugin_api_v{}.def", version))
     )?;
 
     Ok(())
