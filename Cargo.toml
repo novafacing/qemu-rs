@@ -4,16 +4,15 @@ categories = ["virtualization", "emulator", "qemu"]
 description = "Rust bindings and binary installers for QEMU"
 edition = "2021"
 homepage = "https://github.com/novafacing/qemu-rs"
-license = "GPL-2.0-only"
+license = "GPL-2.0-or-later"
 publish = true
 readme = "README.md"
 repository = "https://github.com/novafacing/qemu-rs"
-version = "9.0.0-v0"
+version = "9.2.0-v0"
 
 [workspace]
 resolver = "2"
 members = [
-    "qemu",
     "qemu-plugin",
     "qemu-plugin-sys",
     "plugins/tiny",
@@ -23,6 +22,5 @@ members = [
 default-members = ["qemu-plugin", "qemu-plugin-sys"]
 
 [workspace.dependencies]
-qemu-plugin-sys = { version = "9.0.0-v0", path = "qemu-plugin-sys", default-features = false }
-qemu-plugin = { version = "9.0.0-v0", path = "qemu-plugin", default-features = false }
-qemu = { version = "9.0.0-v0", path = "qemu" }
+qemu-plugin-sys = { version = "9.2.0-v0", path = "qemu-plugin-sys", default-features = false }
+qemu-plugin = { version = "9.2.0-v0", path = "qemu-plugin", default-features = false }

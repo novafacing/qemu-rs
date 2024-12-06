@@ -10,13 +10,23 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test_plugins_linux_v1:
-    name: Build and Test Plugins API v1 (Linux)
+  test_plugins_linux:
+    name: Build and Test Plugins API v${{ matrix.version }} (Linux)
     runs-on: ubuntu-latest
     container: ubuntu:24.04
+    strategy:
+      matrix:
+        include:
+          - version: 1
+            commit: fb691b8cbabf5bde7d25a7f720d5ec7d5b1341e1
+          - version: 2
+            commit: fba3b490a26cb278dfa183d7fcc375746e312980
+          - version: 3
+            commit: 7de77d37880d7267a491cb32a1b2232017d1e545
+          - version: 4
+            commit: cfa3a6c54511374e9ccee26d9c38ac1698fc7af2
     env:
-      # Hash of v1
-      QEMU_COMMIT_HASH: fb691b8cbabf5bde7d25a7f720d5ec7d5b1341e1
+      QEMU_COMMIT_HASH: ${{ matrix.commit }}
     steps:
       - name: Set up Sources List
         run: |
@@ -45,21 +55,43 @@ jobs:
           Components: main universe restricted multiverse
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
           EOF
+
+      # Cache apt packages
+      - name: Cache APT packages
+        id: apt-cache
+        uses: actions/cache@v3
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list.d/ubuntu.sources') }}
+
       - name: Install QEMU Build Dependencies
         run: |
-          apt -y update && \
-          apt -y install git curl build-essential && \
-          apt -y source qemu && \
+          apt -y update
+          apt -y install git curl build-essential
+          apt -y source qemu
           apt -y build-dep qemu
 
-      # Clone without history
+      # Cache QEMU source and build
+      - name: Cache QEMU
+        id: qemu-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            qemu-upstream
+            qemu-upstream/build
+          key: ${{ runner.os }}-qemu-v${{ matrix.version }}-${{ matrix.commit }}
+
+      # Clone only if cache miss
       - name: Clone QEMU
+        if: steps.qemu-cache.outputs.cache-hit != 'true'
         run: |
-          git clone https://github.com/qemu/qemu qemu-upstream
+          git clone https://gitlab.com/qemu/qemu qemu-upstream
           cd qemu-upstream
           git checkout "${QEMU_COMMIT_HASH}"
 
+      # Build only if cache miss
       - name: Build QEMU
+        if: steps.qemu-cache.outputs.cache-hit != 'true'
         run: |
           cd qemu-upstream
           ./configure --enable-plugins
@@ -70,174 +102,35 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@nightly
       - uses: actions/checkout@v4
+
+      # Cache Rust dependencies
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-rust-v${{ matrix.version }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-v${{ matrix.version }}-
+
       - name: Test QEMU Install
         run: |
           qemu-x86_64 --help
+
       - name: Build and Test Tracer
         run: |
           cd plugins/tracer
-          cargo build -r --features=plugin-api-v1 --no-default-features || exit 0
-          cargo build -r --features=plugin-api-v1 --no-default-features
-          cargo run --features=plugin-api-v1 --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
+          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features || exit 0
+          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
+          cargo run --features=plugin-api-v${{ matrix.version }} --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
           cd ../..
+
       - name: Build and Test Tiny
         run: |
           cd plugins/tiny
-          cargo build -r --features=plugin-api-v1 --no-default-features
-          qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
-          cd ../..
-
-  test_plugins_linux_v2:
-    name: Build and Test Plugins API v2 (Linux)
-    runs-on: ubuntu-latest
-    container: ubuntu:24.04
-    env:
-      # Hash of v2
-      QEMU_COMMIT_HASH: fba3b490a26cb278dfa183d7fcc375746e312980
-    steps:
-      - name: Set up Sources List
-        run: |
-          cat <<EOF > /etc/apt/sources.list.d/ubuntu.sources
-          Types: deb
-          URIs: http://archive.ubuntu.com/ubuntu/
-          Suites: noble noble-updates noble-backports
-          Components: main universe restricted multiverse
-          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-
-          Types: deb
-          URIs: http://security.ubuntu.com/ubuntu/
-          Suites: noble-security
-          Components: main universe restricted multiverse
-          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-
-          Types: deb-src
-          URIs: http://archive.ubuntu.com/ubuntu/
-          Suites: noble noble-updates noble-backports
-          Components: main universe restricted multiverse
-          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-
-          Types: deb
-          URIs: http://security.ubuntu.com/ubuntu/
-          Suites: noble-security
-          Components: main universe restricted multiverse
-          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-          EOF
-      - name: Install QEMU Build Dependencies
-        run: |
-          apt -y update && \
-          apt -y install git curl build-essential && \
-          apt -y source qemu && \
-          apt -y build-dep qemu
-
-      # Clone without history
-      - name: Clone QEMU
-        run: |
-          git clone https://github.com/qemu/qemu qemu-upstream
-          cd qemu-upstream
-          git checkout "${QEMU_COMMIT_HASH}"
-
-      - name: Build QEMU
-        run: |
-          cd qemu-upstream
-          ./configure --enable-plugins
-          cd build
-          make -j$(nproc)
-          make install
-          cd ../..
-
-      - uses: dtolnay/rust-toolchain@nightly
-      - uses: actions/checkout@v4
-      - name: Test QEMU Install
-        run: |
-          qemu-x86_64 --help
-      - name: Build and Test Tracer
-        run: |
-          cd plugins/tracer
-          cargo build -r --features=plugin-api-v2 --no-default-features || exit 0
-          cargo build -r --features=plugin-api-v2 --no-default-features
-          cargo run --features=plugin-api-v2 --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
-          cd ../..
-      - name: Build and Test Tiny
-        run: |
-          cd plugins/tiny
-          cargo build -r --features=plugin-api-v2 --no-default-features
-          qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
-          cd ../..
-
-  test_plugins_linux_v3:
-    name: Build and Test Plugins API V3 (Linux)
-    runs-on: ubuntu-latest
-    container: ubuntu:24.04
-    env:
-      # Hash of v3
-      QEMU_COMMIT_HASH: 7de77d37880d7267a491cb32a1b2232017d1e545
-    steps:
-      - name: Set up Sources List
-        run: |
-          cat <<EOF > /etc/apt/sources.list.d/ubuntu.sources
-          Types: deb
-          URIs: http://archive.ubuntu.com/ubuntu/
-          Suites: noble noble-updates noble-backports
-          Components: main universe restricted multiverse
-          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-
-          Types: deb
-          URIs: http://security.ubuntu.com/ubuntu/
-          Suites: noble-security
-          Components: main universe restricted multiverse
-          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-
-          Types: deb-src
-          URIs: http://archive.ubuntu.com/ubuntu/
-          Suites: noble noble-updates noble-backports
-          Components: main universe restricted multiverse
-          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-
-          Types: deb
-          URIs: http://security.ubuntu.com/ubuntu/
-          Suites: noble-security
-          Components: main universe restricted multiverse
-          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-          EOF
-      - name: Install QEMU Build Dependencies
-        run: |
-          apt -y update && \
-          apt -y install git curl build-essential && \
-          apt -y source qemu && \
-          apt -y build-dep qemu
-
-      # Clone without history
-      - name: Clone QEMU
-        run: |
-          git clone https://github.com/qemu/qemu qemu-upstream
-          cd qemu-upstream
-          git checkout "${QEMU_COMMIT_HASH}"
-
-      - name: Build QEMU
-        run: |
-          cd qemu-upstream
-          ./configure --enable-plugins
-          cd build
-          make -j$(nproc)
-          make install
-          cd ../..
-
-      - uses: dtolnay/rust-toolchain@nightly
-      - uses: actions/checkout@v4
-      - name: Test QEMU Install
-        run: |
-          qemu-x86_64 --help
-      - name: Build and Test Tracer
-        run: |
-          cd plugins/tracer
-          cargo build -r --features=plugin-api-v3 --no-default-features || exit 0
-          cargo build -r --features=plugin-api-v3 --no-default-features
-          cargo run --features=plugin-api-v3 --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
-          cd ../..
-      - name: Build and Test Tiny
-        run: |
-          cd plugins/tiny
-          cargo build -r --features=plugin-api-v3 --no-default-features
+          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
           qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
           cd ../..
 
@@ -245,12 +138,9 @@ jobs:
     name: Build and Test Plugins (Windows)
     runs-on: windows-latest
     env:
-      # QEMU 9.0.0
-      # NOTE: This installer does not work headless
-      # QEMU_URL: "https://qemu.weilnetz.de/w64/2023/qemu-w64-setup-20231224.exe"
+      QEMU_VERSION: 9.1.2-1
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
       FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
-
     steps:
       - uses: msys2/setup-msys2@v2
         with:
@@ -258,6 +148,13 @@ jobs:
           update: true
           install: git mingw-w64-ucrt-x86_64-gcc
           location: C:\msys-custom
+
+      # Cache MSYS2 packages
+      - name: Cache MSYS2 packages
+        uses: actions/cache@v3
+        with:
+          path: C:\msys-custom\msys64\var\cache\pacman\pkg
+          key: ${{ runner.os }}-msys2-${{ env.QEMU_VERSION }}
 
       - name: Download and Install Rust
         run: |
@@ -269,7 +166,7 @@ jobs:
         shell: msys2 {0}
         run: |
           pacman -Syu --noconfirm
-          pacman -Sy mingw-w64-ucrt-x86_64-qemu --noconfirm
+          pacman -Sy mingw-w64-ucrt-x86_64-qemu=${QEMU_VERSION} --noconfirm
 
       - name: Test QEMU
         run: |
@@ -277,11 +174,32 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      # Cache downloaded Fedora image
+      - name: Cache Fedora Cloud Image
+        id: fedora-cache
+        uses: actions/cache@v3
+        with:
+          path: Fedora-Cloud-Base-39-1.5.x86_64.qcow2
+          key: fedora-cloud-39-1.5
+
       - name: Download Cloud Image
+        if: steps.fedora-cache.outputs.cache-hit != 'true'
         run: |
           $ProgressPreference = 'SilentlyContinue'
           Invoke-WebRequest -Uri ${{ env.FEDORA_CLOUDIMG_URL }} -OutFile Fedora-Cloud-Base-39-1.5.x86_64.qcow2
           ls
+
+      # Cache Rust dependencies for Windows
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-
 
       - name: Build and Test Tiny
         run: |

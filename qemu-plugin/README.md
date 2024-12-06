@@ -65,7 +65,7 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-qemu-plugin = "9.0.0-v0"
+qemu-plugin = "9.1.2-v0"
 anyhow = "1.0.75"
 ffi = "0.1.0"
 ctor = "0.2.6"
@@ -80,9 +80,9 @@ library can only be compatible with one version at a time. To choose a version, 
 listing like:
 
 ```toml
-qemu-plugin = { version = "9.0.0-v0", features = ["plugin-api-v2"], default-features = false }
+qemu-plugin = { version = "9.1.2-v0", features = ["plugin-api-v2"], default-features = false }
 ```
 
 The `qemu-plugin` crate's default plugin version is set to the latest version that is
-officially released in QEMU. Currently, this is V2, released in 8.2.4 and 9.0.0. If you
-need a different version, you *must* set `default-features = false`.
+officially released in QEMU. Currently, this is V4, released in 9.2.0. If you need a
+different version, you *must* set `default-features = false`.

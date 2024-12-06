@@ -4,7 +4,7 @@ pub const __SYSCALL_WORDSIZE: u32 = 64;
 pub const __USE_TIME_BITS64: u32 = 1;
 pub const __KERNEL_OLD_TIMEVAL_MATCHES_TIMEVAL64: u32 = 1;
 pub const _BITS_STDINT_LEAST_H: u32 = 1;
-pub const QEMU_PLUGIN_VERSION: u32 = 1;
+pub const QEMU_PLUGIN_VERSION: u32 = 4;
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
 pub struct GArray {
@@ -150,8 +150,30 @@ pub struct qemu_plugin_tb {
 pub struct qemu_plugin_insn {
     _unused: [u8; 0],
 }
+#[doc = " struct qemu_plugin_scoreboard - Opaque handle for a scoreboard"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct qemu_plugin_scoreboard {
+    _unused: [u8; 0],
+}
+#[doc = " typedef qemu_plugin_u64 - uint64_t member of an entry in a scoreboard\n\n This field allows to access a specific uint64_t member in one given entry,\n located at a specified offset. Inline operations expect this as entry."]
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
+pub struct qemu_plugin_u64 {
+    pub score: *mut qemu_plugin_scoreboard,
+    pub offset: usize,
+}
+impl Default for qemu_plugin_u64 {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 #[repr(u32)]
-#[doc = " enum qemu_plugin_cb_flags - type of callback\n\n @QEMU_PLUGIN_CB_NO_REGS: callback does not access the CPU's regs\n @QEMU_PLUGIN_CB_R_REGS: callback reads the CPU's regs\n @QEMU_PLUGIN_CB_RW_REGS: callback reads and writes the CPU's regs\n\n Note: currently unused, plugins cannot read or change system\n register state."]
+#[doc = " enum qemu_plugin_cb_flags - type of callback\n\n @QEMU_PLUGIN_CB_NO_REGS: callback does not access the CPU's regs\n @QEMU_PLUGIN_CB_R_REGS: callback reads the CPU's regs\n @QEMU_PLUGIN_CB_RW_REGS: callback reads and writes the CPU's regs\n\n Note: currently QEMU_PLUGIN_CB_RW_REGS is unused, plugins cannot change\n system register state."]
 #[derive(Debug, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
 pub enum qemu_plugin_cb_flags {
     QEMU_PLUGIN_CB_NO_REGS = 0,
@@ -164,6 +186,68 @@ pub enum qemu_plugin_mem_rw {
     QEMU_PLUGIN_MEM_R = 1,
     QEMU_PLUGIN_MEM_W = 2,
     QEMU_PLUGIN_MEM_RW = 3,
+}
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
+pub enum qemu_plugin_mem_value_type {
+    QEMU_PLUGIN_MEM_VALUE_U8 = 0,
+    QEMU_PLUGIN_MEM_VALUE_U16 = 1,
+    QEMU_PLUGIN_MEM_VALUE_U32 = 2,
+    QEMU_PLUGIN_MEM_VALUE_U64 = 3,
+    QEMU_PLUGIN_MEM_VALUE_U128 = 4,
+}
+#[doc = " typedef qemu_plugin_mem_value - value accessed during a load/store"]
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct qemu_plugin_mem_value {
+    pub type_: qemu_plugin_mem_value_type,
+    pub data: qemu_plugin_mem_value__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union qemu_plugin_mem_value__bindgen_ty_1 {
+    pub u8_: u8,
+    pub u16_: u16,
+    pub u32_: u32,
+    pub u64_: u64,
+    pub u128_: qemu_plugin_mem_value__bindgen_ty_1__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
+pub struct qemu_plugin_mem_value__bindgen_ty_1__bindgen_ty_1 {
+    pub low: u64,
+    pub high: u64,
+}
+impl Default for qemu_plugin_mem_value__bindgen_ty_1 {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+impl Default for qemu_plugin_mem_value {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+#[repr(u32)]
+#[doc = " enum qemu_plugin_cond - condition to enable callback\n\n @QEMU_PLUGIN_COND_NEVER: false\n @QEMU_PLUGIN_COND_ALWAYS: true\n @QEMU_PLUGIN_COND_EQ: is equal?\n @QEMU_PLUGIN_COND_NE: is not equal?\n @QEMU_PLUGIN_COND_LT: is less than?\n @QEMU_PLUGIN_COND_LE: is less than or equal?\n @QEMU_PLUGIN_COND_GT: is greater than?\n @QEMU_PLUGIN_COND_GE: is greater than or equal?"]
+#[derive(Debug, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
+pub enum qemu_plugin_cond {
+    QEMU_PLUGIN_COND_NEVER = 0,
+    QEMU_PLUGIN_COND_ALWAYS = 1,
+    QEMU_PLUGIN_COND_EQ = 2,
+    QEMU_PLUGIN_COND_NE = 3,
+    QEMU_PLUGIN_COND_LT = 4,
+    QEMU_PLUGIN_COND_LE = 5,
+    QEMU_PLUGIN_COND_GT = 6,
+    QEMU_PLUGIN_COND_GE = 7,
 }
 #[doc = " typedef qemu_plugin_vcpu_tb_trans_cb_t - translation callback\n @id: unique plugin id\n @tb: opaque handle used for querying and instrumenting a block."]
 pub type qemu_plugin_vcpu_tb_trans_cb_t =
@@ -184,18 +268,31 @@ extern "C" {
         userdata: *mut ::std::os::raw::c_void,
     );
 }
+extern "C" {
+    #[doc = " qemu_plugin_register_vcpu_tb_exec_cond_cb() - register conditional callback\n @tb: the opaque qemu_plugin_tb handle for the translation\n @cb: callback function\n @cond: condition to enable callback\n @entry: first operand for condition\n @imm: second operand for condition\n @flags: does the plugin read or write the CPU's registers?\n @userdata: any plugin data to pass to the @cb?\n\n The @cb function is called when a translated unit executes if\n entry @cond imm is true.\n If condition is QEMU_PLUGIN_COND_ALWAYS, condition is never interpreted and\n this function is equivalent to qemu_plugin_register_vcpu_tb_exec_cb.\n If condition QEMU_PLUGIN_COND_NEVER, condition is never interpreted and\n callback is never installed."]
+    pub fn qemu_plugin_register_vcpu_tb_exec_cond_cb(
+        tb: *mut qemu_plugin_tb,
+        cb: qemu_plugin_vcpu_udata_cb_t,
+        flags: qemu_plugin_cb_flags,
+        cond: qemu_plugin_cond,
+        entry: qemu_plugin_u64,
+        imm: u64,
+        userdata: *mut ::std::os::raw::c_void,
+    );
+}
 #[repr(u32)]
-#[doc = " enum qemu_plugin_op - describes an inline op\n\n @QEMU_PLUGIN_INLINE_ADD_U64: add an immediate value uint64_t\n\n Note: currently only a single inline op is supported."]
+#[doc = " enum qemu_plugin_op - describes an inline op\n\n @QEMU_PLUGIN_INLINE_ADD_U64: add an immediate value uint64_t\n @QEMU_PLUGIN_INLINE_STORE_U64: store an immediate value uint64_t"]
 #[derive(Debug, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
 pub enum qemu_plugin_op {
     QEMU_PLUGIN_INLINE_ADD_U64 = 0,
+    QEMU_PLUGIN_INLINE_STORE_U64 = 1,
 }
 extern "C" {
-    #[doc = " qemu_plugin_register_vcpu_tb_exec_inline() - execution inline op\n @tb: the opaque qemu_plugin_tb handle for the translation\n @op: the type of qemu_plugin_op (e.g. ADD_U64)\n @ptr: the target memory location for the op\n @imm: the op data (e.g. 1)\n\n Insert an inline op to every time a translated unit executes.\n Useful if you just want to increment a single counter somewhere in\n memory.\n\n Note: ops are not atomic so in multi-threaded/multi-smp situations\n you will get inexact results."]
-    pub fn qemu_plugin_register_vcpu_tb_exec_inline(
+    #[doc = " qemu_plugin_register_vcpu_tb_exec_inline_per_vcpu() - execution inline op\n @tb: the opaque qemu_plugin_tb handle for the translation\n @op: the type of qemu_plugin_op (e.g. ADD_U64)\n @entry: entry to run op\n @imm: the op data (e.g. 1)\n\n Insert an inline op on a given scoreboard entry."]
+    pub fn qemu_plugin_register_vcpu_tb_exec_inline_per_vcpu(
         tb: *mut qemu_plugin_tb,
         op: qemu_plugin_op,
-        ptr: *mut ::std::os::raw::c_void,
+        entry: qemu_plugin_u64,
         imm: u64,
     );
 }
@@ -209,11 +306,23 @@ extern "C" {
     );
 }
 extern "C" {
-    #[doc = " qemu_plugin_register_vcpu_insn_exec_inline() - insn execution inline op\n @insn: the opaque qemu_plugin_insn handle for an instruction\n @op: the type of qemu_plugin_op (e.g. ADD_U64)\n @ptr: the target memory location for the op\n @imm: the op data (e.g. 1)\n\n Insert an inline op to every time an instruction executes. Useful\n if you just want to increment a single counter somewhere in memory."]
-    pub fn qemu_plugin_register_vcpu_insn_exec_inline(
+    #[doc = " qemu_plugin_register_vcpu_insn_exec_cond_cb() - conditional insn execution cb\n @insn: the opaque qemu_plugin_insn handle for an instruction\n @cb: callback function\n @flags: does the plugin read or write the CPU's registers?\n @cond: condition to enable callback\n @entry: first operand for condition\n @imm: second operand for condition\n @userdata: any plugin data to pass to the @cb?\n\n The @cb function is called when an instruction executes if\n entry @cond imm is true.\n If condition is QEMU_PLUGIN_COND_ALWAYS, condition is never interpreted and\n this function is equivalent to qemu_plugin_register_vcpu_insn_exec_cb.\n If condition QEMU_PLUGIN_COND_NEVER, condition is never interpreted and\n callback is never installed."]
+    pub fn qemu_plugin_register_vcpu_insn_exec_cond_cb(
+        insn: *mut qemu_plugin_insn,
+        cb: qemu_plugin_vcpu_udata_cb_t,
+        flags: qemu_plugin_cb_flags,
+        cond: qemu_plugin_cond,
+        entry: qemu_plugin_u64,
+        imm: u64,
+        userdata: *mut ::std::os::raw::c_void,
+    );
+}
+extern "C" {
+    #[doc = " qemu_plugin_register_vcpu_insn_exec_inline_per_vcpu() - insn exec inline op\n @insn: the opaque qemu_plugin_insn handle for an instruction\n @op: the type of qemu_plugin_op (e.g. ADD_U64)\n @entry: entry to run op\n @imm: the op data (e.g. 1)\n\n Insert an inline op to every time an instruction executes."]
+    pub fn qemu_plugin_register_vcpu_insn_exec_inline_per_vcpu(
         insn: *mut qemu_plugin_insn,
         op: qemu_plugin_op,
-        ptr: *mut ::std::os::raw::c_void,
+        entry: qemu_plugin_u64,
         imm: u64,
     );
 }
@@ -230,8 +339,12 @@ extern "C" {
     pub fn qemu_plugin_tb_get_insn(tb: *const qemu_plugin_tb, idx: usize) -> *mut qemu_plugin_insn;
 }
 extern "C" {
-    #[doc = " qemu_plugin_insn_data() - return ptr to instruction data\n @insn: opaque instruction handle from qemu_plugin_tb_get_insn()\n\n Note: data is only valid for duration of callback. See\n qemu_plugin_insn_size() to calculate size of stream.\n\n Returns: pointer to a stream of bytes containing the value of this\n instructions opcode."]
-    pub fn qemu_plugin_insn_data(insn: *const qemu_plugin_insn) -> *const ::std::os::raw::c_void;
+    #[doc = " qemu_plugin_insn_data() - copy instruction data\n @insn: opaque instruction handle from qemu_plugin_tb_get_insn()\n @dest: destination into which data is copied\n @len: length of dest\n\n Returns the number of bytes copied, minimum of @len and insn size."]
+    pub fn qemu_plugin_insn_data(
+        insn: *const qemu_plugin_insn,
+        dest: *mut ::std::os::raw::c_void,
+        len: usize,
+    ) -> usize;
 }
 extern "C" {
     #[doc = " qemu_plugin_insn_size() - return size of instruction\n @insn: opaque instruction handle from qemu_plugin_tb_get_insn()\n\n Returns: size of instruction in bytes"]
@@ -268,6 +381,10 @@ extern "C" {
 extern "C" {
     #[doc = " qemu_plugin_mem_is_store() - was the access a store\n @info: opaque memory transaction handle\n\n Returns: true if it was, otherwise false"]
     pub fn qemu_plugin_mem_is_store(info: qemu_plugin_meminfo_t) -> bool;
+}
+extern "C" {
+    #[doc = " qemu_plugin_mem_get_mem_value() - return last value loaded/stored\n @info: opaque memory transaction handle\n\n Returns: memory value"]
+    pub fn qemu_plugin_mem_get_value(info: qemu_plugin_meminfo_t) -> qemu_plugin_mem_value;
 }
 extern "C" {
     #[doc = " qemu_plugin_get_hwaddr() - return handle for memory operation\n @info: opaque memory info structure\n @vaddr: the virtual address of the memory operation\n\n For system emulation returns a qemu_plugin_hwaddr handle to query\n details about the actual physical address backing the virtual\n address. For linux-user guests it just returns NULL.\n\n This handle is *only* valid for the duration of the callback. Any\n information about the handle should be recovered before the\n callback returns."]
@@ -310,14 +427,22 @@ extern "C" {
     );
 }
 extern "C" {
-    #[doc = " qemu_plugin_register_vcpu_mem_inline() - register an inline op to any memory access\n @insn: handle for instruction to instrument\n @rw: apply to reads, writes or both\n @op: the op, of type qemu_plugin_op\n @ptr: pointer memory for the op\n @imm: immediate data for @op\n\n This registers a inline op every memory access generated by the\n instruction. This provides for a lightweight but not thread-safe\n way of counting the number of operations done."]
-    pub fn qemu_plugin_register_vcpu_mem_inline(
+    #[doc = " qemu_plugin_register_vcpu_mem_inline_per_vcpu() - inline op for mem access\n @insn: handle for instruction to instrument\n @rw: apply to reads, writes or both\n @op: the op, of type qemu_plugin_op\n @entry: entry to run op\n @imm: immediate data for @op\n\n This registers a inline op every memory access generated by the\n instruction."]
+    pub fn qemu_plugin_register_vcpu_mem_inline_per_vcpu(
         insn: *mut qemu_plugin_insn,
         rw: qemu_plugin_mem_rw,
         op: qemu_plugin_op,
-        ptr: *mut ::std::os::raw::c_void,
+        entry: qemu_plugin_u64,
         imm: u64,
     );
+}
+extern "C" {
+    #[doc = " qemu_plugin_request_time_control() - request the ability to control time\n\n This grants the plugin the ability to control system time. Only one\n plugin can control time so if multiple plugins request the ability\n all but the first will fail.\n\n Returns an opaque handle or NULL if fails"]
+    pub fn qemu_plugin_request_time_control() -> *const ::std::os::raw::c_void;
+}
+extern "C" {
+    #[doc = " qemu_plugin_update_ns() - update system emulation time\n @handle: opaque handle returned by qemu_plugin_request_time_control()\n @time: time in nanoseconds\n\n This allows an appropriately authorised plugin (i.e. holding the\n time control handle) to move system time forward to @time. For\n user-mode emulation the time is not changed by this as all reported\n time comes from the host kernel.\n\n Start time is 0."]
+    pub fn qemu_plugin_update_ns(handle: *const ::std::os::raw::c_void, time: i64);
 }
 pub type qemu_plugin_vcpu_syscall_cb_t = ::std::option::Option<
     unsafe extern "C" fn(
@@ -378,12 +503,8 @@ extern "C" {
     );
 }
 extern "C" {
-    #[doc = " returns -1 in user-mode"]
-    pub fn qemu_plugin_n_vcpus() -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[doc = " returns -1 in user-mode"]
-    pub fn qemu_plugin_n_max_vcpus() -> ::std::os::raw::c_int;
+    #[doc = " returns how many vcpus were started at this point"]
+    pub fn qemu_plugin_num_vcpus() -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[doc = " qemu_plugin_outs() - output string via QEMU's logging system\n @string: a string"]
@@ -412,4 +533,81 @@ extern "C" {
 extern "C" {
     #[doc = " qemu_plugin_entry_code() - returns start address for module\n\n Returns the nominal entry address of the main text segment in\n user-mode. Currently returns 0 for system emulation."]
     pub fn qemu_plugin_entry_code() -> u64;
+}
+#[doc = " struct qemu_plugin_register - Opaque handle for register access"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct qemu_plugin_register {
+    _unused: [u8; 0],
+}
+#[doc = " typedef qemu_plugin_reg_descriptor - register descriptions\n\n @handle: opaque handle for retrieving value with qemu_plugin_read_register\n @name: register name\n @feature: optional feature descriptor, can be NULL"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
+pub struct qemu_plugin_reg_descriptor {
+    pub handle: *mut qemu_plugin_register,
+    pub name: *const ::std::os::raw::c_char,
+    pub feature: *const ::std::os::raw::c_char,
+}
+impl Default for qemu_plugin_reg_descriptor {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+extern "C" {
+    #[doc = " qemu_plugin_get_registers() - return register list for current vCPU\n\n Returns a potentially empty GArray of qemu_plugin_reg_descriptor.\n Caller frees the array (but not the const strings).\n\n Should be used from a qemu_plugin_register_vcpu_init_cb() callback\n after the vCPU is initialised, i.e. in the vCPU context."]
+    pub fn qemu_plugin_get_registers() -> *mut GArray;
+}
+extern "C" {
+    #[doc = " qemu_plugin_read_memory_vaddr() - read from memory using a virtual address\n\n @addr: A virtual address to read from\n @data: A byte array to store data into\n @len: The number of bytes to read, starting from @addr\n\n @len bytes of data is read starting at @addr and stored into @data. If @data\n is not large enough to hold @len bytes, it will be expanded to the necessary\n size, reallocating if necessary. @len must be greater than 0.\n\n This function does not ensure writes are flushed prior to reading, so\n callers should take care when calling this function in plugin callbacks to\n avoid attempting to read data which may not yet be written and should use\n the memory callback API instead.\n\n Returns true on success and false on failure."]
+    pub fn qemu_plugin_read_memory_vaddr(addr: u64, data: *mut GByteArray, len: usize) -> bool;
+}
+extern "C" {
+    #[doc = " qemu_plugin_read_register() - read register for current vCPU\n\n @handle: a @qemu_plugin_reg_handle handle\n @buf: A GByteArray for the data owned by the plugin\n\n This function is only available in a context that register read access is\n explicitly requested via the QEMU_PLUGIN_CB_R_REGS flag.\n\n Returns the size of the read register. The content of @buf is in target byte\n order. On failure returns -1."]
+    pub fn qemu_plugin_read_register(
+        handle: *mut qemu_plugin_register,
+        buf: *mut GByteArray,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[doc = " qemu_plugin_scoreboard_new() - alloc a new scoreboard\n\n @element_size: size (in bytes) for one entry\n\n Returns a pointer to a new scoreboard. It must be freed using\n qemu_plugin_scoreboard_free."]
+    pub fn qemu_plugin_scoreboard_new(element_size: usize) -> *mut qemu_plugin_scoreboard;
+}
+extern "C" {
+    #[doc = " qemu_plugin_scoreboard_free() - free a scoreboard\n @score: scoreboard to free"]
+    pub fn qemu_plugin_scoreboard_free(score: *mut qemu_plugin_scoreboard);
+}
+extern "C" {
+    #[doc = " qemu_plugin_scoreboard_find() - get pointer to an entry of a scoreboard\n @score: scoreboard to query\n @vcpu_index: entry index\n\n Returns address of entry of a scoreboard matching a given vcpu_index. This\n address can be modified later if scoreboard is resized."]
+    pub fn qemu_plugin_scoreboard_find(
+        score: *mut qemu_plugin_scoreboard,
+        vcpu_index: ::std::os::raw::c_uint,
+    ) -> *mut ::std::os::raw::c_void;
+}
+extern "C" {
+    #[doc = " qemu_plugin_u64_add() - add a value to a qemu_plugin_u64 for a given vcpu\n @entry: entry to query\n @vcpu_index: entry index\n @added: value to add"]
+    pub fn qemu_plugin_u64_add(
+        entry: qemu_plugin_u64,
+        vcpu_index: ::std::os::raw::c_uint,
+        added: u64,
+    );
+}
+extern "C" {
+    #[doc = " qemu_plugin_u64_get() - get value of a qemu_plugin_u64 for a given vcpu\n @entry: entry to query\n @vcpu_index: entry index"]
+    pub fn qemu_plugin_u64_get(entry: qemu_plugin_u64, vcpu_index: ::std::os::raw::c_uint) -> u64;
+}
+extern "C" {
+    #[doc = " qemu_plugin_u64_set() - set value of a qemu_plugin_u64 for a given vcpu\n @entry: entry to query\n @vcpu_index: entry index\n @val: new value"]
+    pub fn qemu_plugin_u64_set(
+        entry: qemu_plugin_u64,
+        vcpu_index: ::std::os::raw::c_uint,
+        val: u64,
+    );
+}
+extern "C" {
+    #[doc = " qemu_plugin_u64_sum() - return sum of all vcpu entries in a scoreboard\n @entry: entry to sum"]
+    pub fn qemu_plugin_u64_sum(entry: qemu_plugin_u64) -> u64;
 }

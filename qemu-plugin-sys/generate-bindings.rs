@@ -8,8 +8,6 @@ bindgen = "*"
 cargo_metadata = "*"
 # pkg-config = "*"
 reqwest = { version = "*", features = ["blocking"] }
-tar = "*"
-xz2 = "*"
 zip = "*"
 [lints.rust]
 non_snake_case = "allow"
@@ -23,32 +21,27 @@ use bindgen::{
 use cargo_metadata::MetadataCommand;
 use reqwest::blocking::get;
 use std::{
+    io::copy,
     fs::{create_dir_all, read_to_string, write, File, OpenOptions},
-    path::Path,
+    path::{Path, PathBuf},
 };
-use tar::Archive;
-use xz2::read::XzDecoder;
 use zip::ZipArchive;
 
 const QEMU_GITHUB_URL_BASE: &str = "https://github.com/qemu/qemu/";
-const QEMU_SRC_URL_BASE: &str = "https://download.qemu.org/";
-// Plugin V1 is from introduction to 8.2.4
-const QEMU_VERSION_V1: &str = "8.2.4";
-// Plugin V2 is from 9.0.0
-const QEMU_VERSION_V2: &str = "9.0.0";
-/// Plugin V3 is from 7de77d37880d7267a491cb32a1b2232017d1e545
-const QEMU_VERSION_V3: &str = "7de77d37880d7267a491cb32a1b2232017d1e545";
 
-fn qemu_src_url_v1() -> String {
-    format!("{}qemu-{}.tar.xz", QEMU_SRC_URL_BASE, QEMU_VERSION_V1)
-}
+const QEMU_VERSIONS: &[&str] = &[
+    // Plugin V1 is up until 8.2.4
+    "1332b8dd434674480f0feb2cdf3bbaebb85b4240",
+    // Plugin V2 is from 9.0.0
+    "c25df57ae8f9fe1c72eee2dab37d76d904ac382e",
+    // Plugin V3 is from 9.1.0
+    "7de77d37880d7267a491cb32a1b2232017d1e545",
+    // Plugin V4 is from 9.2.0
+    "595cd9ce2ec9330882c991a647d5bc2a5640f380",
+];
 
-fn qemu_src_url_v2() -> String {
-    format!("{}qemu-{}.tar.xz", QEMU_SRC_URL_BASE, QEMU_VERSION_V2)
-}
-
-fn qemu_src_url_v3() -> String {
-    format!("{}/archive/{}.zip", QEMU_GITHUB_URL_BASE, QEMU_VERSION_V3)
+fn qemu_git_url(hash: &str) -> String {
+    format!("{}/archive/{}.zip", QEMU_GITHUB_URL_BASE, hash)
 }
 
 /// Download a URL to a destination, using a blocking request
@@ -63,43 +56,39 @@ fn download(url: &str, destination: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Extract a tar.xz archive at a path to a destination
-fn extract_txz(archive: &Path, destination: &Path) -> Result<()> {
-    let mut archive = File::open(archive)?;
-    let mut archive = XzDecoder::new(&mut archive);
-    let mut archive = Archive::new(&mut archive);
-    // Unpack archive, removing 1 leading path component
-    archive
-        .entries()?
-        .filter_map(|e| e.ok())
-        .try_for_each(|mut e| {
-            let Ok(path) = e.path() else {
-                return Err(anyhow!("Failed to get path from archive entry"));
-            };
-            let Some(prefix) = path.components().next() else {
-                return Err(anyhow!("Failed to get prefix from archive entry {path:?}"));
-            };
-            let Ok(suffix) = path.strip_prefix(prefix) else {
-                return Err(anyhow!(
-                    "Failed to strip prefix {prefix:?} from archive entry {path:?}"
-                ));
-            };
-            e.unpack(destination.join(suffix))
-                .map(|_| ())
-                .map_err(|e| anyhow!(e))
-        })?;
-    Ok(())
-}
-
-/// Extract a zip file at a path to a destination
+/// Extract a zip file at a path to a destination (stripping the root)
 fn extract_zip(archive: &Path, destination: &Path) -> Result<()> {
     let archive = File::open(archive)?;
     let mut archive = ZipArchive::new(archive)?;
-    archive.extract(destination)?;
+
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i)?;
+        let file_path = file.mangled_name();
+        
+        let components: Vec<_> = file_path.components().collect();
+        
+        if components.len() <= 1 {
+            continue;
+        }
+        
+        let new_path = components[1..].iter().collect::<PathBuf>();
+        let out_path = destination.join(new_path);
+        
+        if file.is_dir() {
+            create_dir_all(&out_path)?;
+        } else {
+            if let Some(parent) = out_path.parent() {
+                create_dir_all(parent)?;
+            }
+            let mut out_file = File::create(&out_path)?;
+            copy(&mut file, &mut out_file)?;
+        }
+    }
     Ok(())
 }
 
 fn generate_windows_delaylink_library(qemu_plugin_symbols: &Path, destination: &Path) -> Result<()> {
+    println!("Generating Windows delaylink library from {:?} to {:?}", qemu_plugin_symbols, destination);
     let all_commands = read_to_string(qemu_plugin_symbols)?;
     let all_commands = all_commands.replace(|x| "{};".contains(x), "");
     write(destination, format!("EXPORTS\n{all_commands}"))?;
@@ -497,6 +486,35 @@ fn generate_bindings(qemu_plugin_header: &Path, destination: &Path) -> Result<()
     Ok(())
 }
 
+fn generate(tmp_dir: &Path, out_dir: &Path, version: usize) -> Result<()> {
+    println!("Generating bindings with tmp={:?} out={:?} version={}", tmp_dir, out_dir, version);
+    let src_archive = tmp_dir.join(format!("qemu-{}.zip", QEMU_VERSIONS[version - 1]));
+    let src_dir = tmp_dir.join(format!("qemu-{}", QEMU_VERSIONS[version - 1]));
+
+    if !src_archive.exists() {
+        let qemu_url = qemu_git_url(QEMU_VERSIONS[version - 1]);
+        println!("Downloading {} to {:?}", qemu_url, src_archive);
+        download(&qemu_url, &src_archive)?;
+    }
+
+    if !src_dir.exists() {
+        println!("Extracting {:?} to {:?}", src_archive, src_dir);
+        extract_zip(&src_archive, &src_dir)?;
+    }
+
+    generate_windows_delaylink_library(
+        &src_dir.join("plugins").join("qemu-plugins.symbols"),
+        &out_dir.join(&format!("qemu_plugin_api_v{}.def", version)),
+    )?;
+
+    generate_bindings(
+        &src_dir.join("include").join("qemu").join("qemu-plugin.h"),
+        &out_dir.join(&format!("bindings_v{}.rs", version)),
+    )?;
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let metadata = MetadataCommand::new().no_deps().exec()?;
 
@@ -519,71 +537,10 @@ fn main() -> Result<()> {
         create_dir_all(&tmp_dir)?;
     }
 
-    let src_archive_v1 = tmp_dir.join(format!("qemu-{}.tar.xz", QEMU_VERSION_V1));
-    let src_dir_v1 = tmp_dir.join(format!("qemu-{}", QEMU_VERSION_V1));
-
-    if !src_archive_v1.exists() {
-        download(&qemu_src_url_v1(), &src_archive_v1)?;
-    }
-
-    if !src_dir_v1.exists() {
-        extract_txz(&src_archive_v1, &src_dir_v1)?;
-    }
-
-    let src_archive_v2 = tmp_dir.join(format!("qemu-{}.tar.xz", QEMU_VERSION_V2));
-    let src_dir_v2 = tmp_dir.join(format!("qemu-{}", QEMU_VERSION_V2));
-
-    if !src_archive_v2.exists() {
-        download(&qemu_src_url_v2(), &src_archive_v2)?;
-    }
-
-    if !src_dir_v2.exists() {
-        extract_txz(&src_archive_v2, &src_dir_v2)?;
-    }
-
-    let src_archive_v3 = tmp_dir.join(format!("qemu-{}.zip", QEMU_VERSION_V3));
-    let src_dir_v3 = tmp_dir.join(format!("qemu-{}", QEMU_VERSION_V3));
-
-    if !src_archive_v3.exists() {
-        download(&qemu_src_url_v3(), &src_archive_v3)?;
-    }
-
-    if !src_dir_v3.exists() {
-        // NOTE: ZipArchive::extract extracts into the directory given a directory named
-        // the same as the ZIP file.
-        extract_zip(&src_archive_v3, &tmp_dir)?;
-    }
-
-    generate_windows_delaylink_library(
-        &src_dir_v1.join("plugins").join("qemu-plugins.symbols"),
-        &out_dir.join("qemu_plugin_api_v1.def"),
-    )?;
-
-    generate_windows_delaylink_library(
-        &src_dir_v2.join("plugins").join("qemu-plugins.symbols"),
-        &out_dir.join("qemu_plugin_api_v2.def"),
-    )?;
-
-    generate_windows_delaylink_library(
-        &src_dir_v3.join("plugins").join("qemu-plugins.symbols"),
-        &out_dir.join("qemu_plugin_api_v3.def"),
-    )?;
-
-
-    generate_bindings(
-        &src_dir_v1.join("include").join("qemu").join("qemu-plugin.h"),
-        &out_dir.join("bindings_v1.rs"),
-    )?;
-
-    generate_bindings(
-        &src_dir_v2.join("include").join("qemu").join("qemu-plugin.h"),
-        &out_dir.join("bindings_v2.rs"),
-    )?;
-
-    generate_bindings(
-        &src_dir_v3.join("include").join("qemu").join("qemu-plugin.h"),
-        &out_dir.join("bindings_v3.rs"),
-    )?;
+    generate(&tmp_dir, &out_dir, 1)?;
+    generate(&tmp_dir, &out_dir, 2)?;
+    generate(&tmp_dir, &out_dir, 3)?;
+    generate(&tmp_dir, &out_dir, 4)?;
 
     Ok(())
 }

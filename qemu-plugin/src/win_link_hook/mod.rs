@@ -56,7 +56,7 @@ extern "C" fn delaylink_hook(dli_notify: DliNotify, pdli: DELAYLOAD_INFO) -> HMO
             return HMODULE(
                 libloading::os::windows::Library::this()
                     .expect("Get QEMU module")
-                    .into_raw(),
+                    .into_raw() as *mut _,
             );
         }
     }
