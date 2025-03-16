@@ -91,6 +91,8 @@ use qemu_plugin_sys::{
     qemu_plugin_tb, qemu_plugin_vcpu_simple_cb_t, qemu_plugin_vcpu_syscall_cb_t,
     qemu_plugin_vcpu_syscall_ret_cb_t, qemu_plugin_vcpu_tb_trans_cb_t,
 };
+#[cfg(feature = "plugin-api-v4")]
+use qemu_plugin_sys::{qemu_plugin_mem_value, qemu_plugin_mem_value_type};
 #[cfg(not(feature = "plugin-api-v1"))]
 use qemu_plugin_sys::{
     qemu_plugin_read_register, qemu_plugin_reg_descriptor, qemu_plugin_register,
@@ -766,6 +768,50 @@ impl<'a> MemoryInfo<'a> {
             None
         } else {
             Some(HwAddr::from(hwaddr))
+        }
+    }
+
+    /// Return last value loaded/stored
+    #[cfg(feature = "plugin-api-v4")]
+    pub fn value(&self) -> MemValue {
+        let qemu_mem_value = unsafe { crate::sys::qemu_plugin_mem_get_value(self.memory_info) };
+        MemValue::from(qemu_mem_value)
+    }
+}
+
+#[cfg(feature = "plugin-api-v4")]
+#[derive(Clone)]
+/// Memory value loaded/stored (in memory callback)
+///
+/// Wrapper structure for a `qemu_plugin_mem_value`
+pub enum MemValue {
+    /// 8-bit value
+    U8(u8),
+    /// 16-bit value
+    U16(u16),
+    /// 32-bit value
+    U32(u32),
+    /// 64-bit value
+    U64(u64),
+    /// 128-bit value
+    U128(u128),
+}
+
+#[cfg(feature = "plugin-api-v4")]
+impl From<qemu_plugin_mem_value> for MemValue {
+    fn from(value: qemu_plugin_mem_value) -> Self {
+        unsafe {
+            match value.type_ {
+                qemu_plugin_mem_value_type::QEMU_PLUGIN_MEM_VALUE_U8 => Self::U8(value.data.u8_),
+                qemu_plugin_mem_value_type::QEMU_PLUGIN_MEM_VALUE_U16 => Self::U16(value.data.u16_),
+                qemu_plugin_mem_value_type::QEMU_PLUGIN_MEM_VALUE_U32 => Self::U32(value.data.u32_),
+                qemu_plugin_mem_value_type::QEMU_PLUGIN_MEM_VALUE_U64 => Self::U64(value.data.u64_),
+                qemu_plugin_mem_value_type::QEMU_PLUGIN_MEM_VALUE_U128 => {
+                    let high = value.data.u128_.high as u128;
+                    let low = value.data.u128_.low as u128;
+                    Self::U128(high << 64 | low)
+                }
+            }
         }
     }
 }
