@@ -1,4 +1,4 @@
-//! Weak linkage for unix hosts allowing this library to be built as an rlib, leaving QEMU
+//! Weak linkage for unix hosts allowing this library to be built as an cdylib, leaving QEMU
 //! symbols unresolved
 
 use std::ptr::{null, null_mut};
