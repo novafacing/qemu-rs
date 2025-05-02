@@ -44,5 +44,16 @@ fn main() -> Result<()> {
         println!("cargo:rustc-link-lib=qemu_plugin_api");
     }
 
+    #[cfg(target_os = "macos")]
+    {
+        println!("cargo::rustc-cdylib-link-arg=-undefined");
+        println!("cargo::rustc-cdylib-link-arg=dynamic_lookup");
+    }
+
+    #[cfg(all(target_family = "unix", not(target_os = "macos")))]
+    {
+        println!("cargo::rustc-cdylib-link-arg=-Wl,-z,undefs");
+    }
+
     Ok(())
 }
