@@ -535,20 +535,27 @@ impl<'a> Instruction<'a> {
     }
 
     #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
+    /// Reads the data for this instruction returning number of bytes read. This method may only be
+    /// called inside the callback in which the instruction is obtained.
+    pub fn read_data(&self, data: &mut [u8]) -> usize {
+        // NOTE: The name of this API doesn't change, but its parameters and return value *do*
+        unsafe {
+            crate::sys::qemu_plugin_insn_data(
+                self.instruction as *mut qemu_plugin_insn,
+                data.as_mut_ptr() as *mut _,
+                data.len(),
+            )
+        }
+    }
+
+    #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
     /// Returns the data for this instruction. This method may only be called inside the
     /// callback in which the instruction is obtained, but the resulting data is owned.
     pub fn data(&self) -> Vec<u8> {
         let size = self.size();
         let mut data = vec![0; size];
 
-        // NOTE: The name of this API doesn't change, but its parameters and return value *do*
-        let size = unsafe {
-            crate::sys::qemu_plugin_insn_data(
-                self.instruction as *mut qemu_plugin_insn,
-                data.as_mut_ptr() as *mut _,
-                data.len(),
-            )
-        };
+        let size = self.read_data(&mut data);
 
         data.truncate(size);
 
