@@ -98,15 +98,15 @@ jobs:
       - name: Build and Test Tracer
         run: |
           cd plugins/tracer
-          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features || exit 0
-          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
-          cargo run --features=plugin-api-v${{ matrix.version }} --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
+          cargo build -r --features=plugin-api-v${{ matrix.version }},unix-weak-link --no-default-features || exit 0
+          cargo build -r --features=plugin-api-v${{ matrix.version }},unix-weak-link --no-default-features
+          cargo run --features=plugin-api-v${{ matrix.version }},unix-weak-link --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
           cd ../..
 
       - name: Build and Test Tiny
         run: |
           cd plugins/tiny
-          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
+          cargo build -r --features=plugin-api-v${{ matrix.version }},unix-weak-link --no-default-features
           qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
           cd ../..
 
