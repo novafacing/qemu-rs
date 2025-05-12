@@ -10,9 +10,7 @@ crate-type = ["cdylib", "lib"]
 [dependencies]
 anyhow = "1.0.94"
 ctor = "0.2.9"
-qemu-plugin = { workspace = true, features = [
-    "unix-weak-link",
-], default-features = false }
+qemu-plugin = { workspace = true, default-features = false }
 serde = { version = "1.0.215", features = ["derive"] }
 serde_cbor = "0.11.2"
 tokio = { version = "1.42.0", features = ["full"] }
@@ -32,3 +30,4 @@ plugin-api-v1 = ["qemu-plugin/plugin-api-v1"]
 plugin-api-v2 = ["qemu-plugin/plugin-api-v2"]
 plugin-api-v3 = ["qemu-plugin/plugin-api-v3"]
 plugin-api-v4 = ["qemu-plugin/plugin-api-v4"]
+unix-weak-link = ["qemu-plugin/unix-weak-link"]
