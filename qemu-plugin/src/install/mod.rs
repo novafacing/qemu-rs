@@ -1,16 +1,17 @@
 //! Installation for the QEMU plugin
 
 use qemu_plugin_sys::{
-    qemu_info_t, qemu_info_t__bindgen_ty_1, qemu_info_t__bindgen_ty_2__bindgen_ty_1,
-    qemu_plugin_bool_parse, qemu_plugin_id_t, QEMU_PLUGIN_VERSION,
+    QEMU_PLUGIN_VERSION, qemu_info_t, qemu_info_t__bindgen_ty_1,
+    qemu_info_t__bindgen_ty_2__bindgen_ty_1, qemu_plugin_bool_parse, qemu_plugin_id_t,
 };
 use std::{
     collections::HashMap,
-    ffi::{c_char, c_int, CStr, CString},
+    ffi::{CStr, CString, c_char, c_int},
 };
 
 use crate::{error::Error, plugin::PLUGIN};
 
+#[allow(non_upper_case_globals)]
 #[no_mangle]
 /// The version of the plugin API that this plugin is compatible with
 pub static qemu_plugin_version: c_int = QEMU_PLUGIN_VERSION as c_int;

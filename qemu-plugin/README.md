@@ -13,12 +13,11 @@ program running in QEMU. Notice that all we do is register a struct which implem
 use anyhow::Result;
 use ctor::ctor;
 use qemu_plugin::{
-    plugin::{HasCallbacks, Plugin, Register, PLUGIN},
+    plugin::{HasCallbacks, Plugin, Register, init_plugin},
     PluginId, TranslationBlock,
 };
-use std::sync::Mutex;
 
-struct TinyTrace {}
+struct TinyTrace;
 
 impl Register for TinyTrace {}
 
@@ -41,14 +40,9 @@ impl HasCallbacks for TinyTrace {
     }
 }
 
-impl Plugin for TinyTrace {}
-
 #[ctor]
 fn init() {
-    PLUGIN
-        .set(Mutex::new(Box::new(TinyTrace {})))
-        .map_err(|_| anyhow::anyhow!("Failed to set plugin"))
-        .expect("Failed to set plugin");
+    init_plugin(TinyTrace).expect("Failed to initialize plugin");
 }
 ```
 

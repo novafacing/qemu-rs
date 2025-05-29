@@ -1,12 +1,11 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use ctor::ctor;
 use qemu_plugin::{
-    plugin::{HasCallbacks, Plugin, Register, PLUGIN},
+    plugin::{init_plugin, HasCallbacks, Register},
     PluginId, TranslationBlock,
 };
 #[cfg(not(feature = "plugin-api-v1"))]
 use qemu_plugin::{qemu_plugin_get_registers, RegisterDescriptor, VCPUIndex};
-use std::sync::Mutex;
 
 #[derive(Default)]
 struct TinyTrace {
@@ -14,7 +13,6 @@ struct TinyTrace {
     registers: Vec<RegisterDescriptor<'static>>,
 }
 
-impl Plugin for TinyTrace {}
 impl Register for TinyTrace {}
 
 impl HasCallbacks for TinyTrace {
@@ -49,8 +47,5 @@ impl HasCallbacks for TinyTrace {
 
 #[ctor]
 fn init() {
-    PLUGIN
-        .set(Mutex::new(Box::new(TinyTrace::default())))
-        .map_err(|_| anyhow!("Failed to set plugin"))
-        .expect("Failed to set plugin");
+    init_plugin(TinyTrace::default()).expect("Failed to initialize plugin");
 }

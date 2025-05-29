@@ -1,14 +1,11 @@
-use anyhow::anyhow;
 use ctor::ctor;
 use qemu_plugin::{
-    plugin::{HasCallbacks, Plugin, Register, PLUGIN},
+    plugin::{init_plugin, HasCallbacks, Register},
     PluginId,
 };
-use std::sync::Mutex;
 
-struct TinyTrace {}
+struct TinyTrace;
 
-impl Plugin for TinyTrace {}
 impl Register for TinyTrace {}
 
 impl HasCallbacks for TinyTrace {
@@ -51,8 +48,5 @@ impl HasCallbacks for TinyTrace {
 
 #[ctor]
 fn init() {
-    PLUGIN
-        .set(Mutex::new(Box::new(TinyTrace {})))
-        .map_err(|_| anyhow!("Failed to set plugin"))
-        .expect("Failed to set plugin");
+    init_plugin(TinyTrace).expect("Failed to initialize plugin");
 }
