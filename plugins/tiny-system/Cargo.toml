@@ -10,9 +10,9 @@ crate-type = ["cdylib"]
 qemu-plugin = { workspace = true, features = [
     "unix-weak-link",
 ], default-features = false }
-anyhow = "1.0.94"
+anyhow = "1.0.98"
 ffi = "0.1.1"
-ctor = "0.2.9"
+ctor = "0.4.2"
 
 [features]
 default = ["plugin-api-v4"]

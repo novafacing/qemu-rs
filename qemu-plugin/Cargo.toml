@@ -12,22 +12,22 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-anyhow = "1.0.94"
-once_cell = "1.20.2"
-qemu-plugin-sys = { version = "9.2.0-v0", workspace = true, default-features = false }
-thiserror = "2.0.4"
+anyhow = "1.0.98"
+once_cell = "1.21.3"
+qemu-plugin-sys = { version = "9.0.0-v0", workspace = true, default-features = false }
+thiserror = "2.0.12"
 num-traits = { version = "0.2.19", optional = true }
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.58.0", features = [
+windows = { version = "0.61.1", features = [
     "Win32_System_WindowsProgramming",
     "Win32_System_LibraryLoader",
     "Win32_Foundation",
 ] }
 
-libloading = "0.8.6"
+libloading = "0.8.8"
 lazy_static = "1.5.0"
-libc = "0.2.167"
+libc = "0.2.172"
 
 [features]
 default = ["plugin-api-v4"]
