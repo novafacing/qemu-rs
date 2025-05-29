@@ -4,7 +4,7 @@ use ctor::ctor;
 use qemu_plugin::qemu_plugin_read_memory_vaddr;
 use qemu_plugin::{
     install::{Args, Info, Value},
-    plugin::{HasCallbacks, Plugin, Register, PLUGIN},
+    plugin::{init_plugin, HasCallbacks, Register},
     Instruction, MemRW, MemoryInfo, PluginId, TranslationBlock, VCPUIndex,
 };
 #[cfg(not(feature = "plugin-api-v1"))]
@@ -517,12 +517,7 @@ impl Register for Tracer {
     }
 }
 
-impl Plugin for Tracer {}
-
 #[ctor]
 fn init() {
-    PLUGIN
-        .set(Mutex::new(Box::new(Tracer::new())))
-        .map_err(|_| anyhow::anyhow!("Failed to set plugin"))
-        .expect("Failed to set plugin");
+    init_plugin(Tracer::new()).expect("Failed to initialize plugin");
 }

@@ -12,12 +12,12 @@
 //! use anyhow::Result;
 //! use ctor::ctor;
 //! use qemu_plugin::{
-//!     plugin::{HasCallbacks, Plugin, Register, PLUGIN},
+//!     plugin::{HasCallbacks, Plugin, Register, init_plugin},
 //!     PluginId, TranslationBlock,
 //! };
 //! use std::sync::Mutex;
 //!
-//! struct TinyTrace {}
+//! struct TinyTrace;
 //!
 //! impl Register for TinyTrace {}
 //!
@@ -40,14 +40,9 @@
 //!     }
 //! }
 //!
-//! impl Plugin for TinyTrace {}
-//!
 //! #[ctor]
 //! fn init() {
-//!     PLUGIN
-//!         .set(Mutex::new(Box::new(TinyTrace {})))
-//!         .map_err(|_| anyhow::anyhow!("Failed to set plugin"))
-//!         .expect("Failed to set plugin");
+//!     init_plugin(TinyTrace).expect("Failed to initialize plugin");
 //! }
 //! ```
 //!
@@ -337,6 +332,27 @@ pub type SyscallReturnCallback = qemu_plugin_vcpu_syscall_ret_cb_t;
 ///
 /// This structure is safe to use as long as the pointer is valid. The pointer is
 /// always opaque, and therefore may not be dereferenced.
+///
+/// # Example
+///
+/// ```
+/// struct MyPlugin;
+///
+/// impl qemu_plugin::plugin::Register for MyPlugin {}
+///
+/// impl qemu_plugin::plugin::HasCallbacks for MyPlugin {
+///     fn on_translation_block_translate(
+///         &mut self,
+///         id: qemu_plugin::PluginId,
+///         tb: qemu_plugin::TranslationBlock,
+///     ) -> anyhow::Result<()> {
+///         for insn in tb.instructions() {
+///             println!("{:08x}: {}", insn.vaddr(), insn.disas()?);
+///         }   
+///         Ok(())
+///     }
+/// }
+/// ```
 pub struct TranslationBlock<'a> {
     translation_block: usize,
     marker: PhantomData<&'a ()>,
@@ -389,6 +405,10 @@ impl<'a> TranslationBlock<'a> {
     }
 
     /// Register a callback to be run on execution of this translation block
+    ///
+    /// # Arguments
+    ///
+    /// - `cb`: The callback to be run
     pub fn register_execute_callback<F>(&self, cb: F)
     where
         F: FnMut(VCPUIndex) + Send + Sync + 'static,
@@ -397,6 +417,10 @@ impl<'a> TranslationBlock<'a> {
     }
 
     /// Register a callback to be run on execution of this translation block
+    ///
+    /// # Arguments
+    ///
+    /// - `cb`: The callback to be run
     pub fn register_execute_callback_flags<F>(&self, cb: F, flags: CallbackFlags)
     where
         F: FnMut(VCPUIndex) + Send + Sync + 'static,
@@ -418,6 +442,13 @@ impl<'a> TranslationBlock<'a> {
     #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
     /// Register a callback to be conditionally run on execution of this translation
     /// block
+    ///
+    /// # Arguments
+    ///
+    /// - `cb`: The callback to be run
+    /// - `cond`: The condition for the callback to be run
+    /// - `entry` The entry to increment the scoreboard for
+    /// - `immediate`: The immediate value to use for the callback
     pub fn register_conditional_execute_callback<F>(
         &self,
         cb: F,
@@ -439,6 +470,14 @@ impl<'a> TranslationBlock<'a> {
     #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
     /// Register a callback to be conditionally run on execution of this translation
     /// block
+    ///
+    /// # Arguments
+    ///
+    /// - `cb`: The callback to be run
+    /// - `flags`: The flags for the callback
+    /// - `cond`: The condition for the callback to be run
+    /// - `entry`: The entry to increment the scoreboard for
+    /// - `immediate`: The immediate value to use for the callback
     pub fn register_conditional_execute_callback_flags<F>(
         &self,
         cb: F,
@@ -495,6 +534,32 @@ impl<'a> Iterator for TranslationBlockIterator<'a> {
 ///
 /// This structure is safe to use as long as the pointer is valid. The pointer is
 /// always opaque, and therefore may not be dereferenced.
+///
+/// # Example
+///
+/// ```
+/// struct MyPlugin;
+///
+/// impl qemu_plugin::plugin::Register for MyPlugin {}
+///
+/// impl qemu_plugin::plugin::HasCallbacks for MyPlugin {
+///     fn on_translation_block_translate(
+///         &mut self,
+///         id: qemu_plugin::PluginId,
+///         tb: qemu_plugin::TranslationBlock,
+///     ) -> anyhow::Result<()> {
+///         for insn in tb.instructions() {
+///             let vaddr = insn.vaddr();
+///             let disas = insn.disas()?;
+///             // Register a callback to be run on execution of this instruction
+///             insn.register_execute_callback(move |vcpu_index| {
+///                 println!("{vcpu_index}@{vaddr:#x}: {disas}");
+///             });
+///         }
+///         Ok(())
+///     }
+/// }
+/// ```
 pub struct Instruction<'a> {
     #[allow(unused)]
     // NOTE: This field may be useful in the future
@@ -610,7 +675,12 @@ impl<'a> Instruction<'a> {
         }
     }
 
-    /// Register a callback to be run on execution of this instruction
+    /// Register a callback to be run on execution of this instruction with no
+    /// capability to inspect registers
+    ///
+    /// # Arguments
+    ///
+    /// - `cb`: The callback to be run
     pub fn register_execute_callback<F>(&self, cb: F)
     where
         F: FnMut(VCPUIndex) + Send + Sync + 'static,
@@ -618,7 +688,14 @@ impl<'a> Instruction<'a> {
         self.register_execute_callback_flags(cb, CallbackFlags::QEMU_PLUGIN_CB_NO_REGS)
     }
 
-    /// Register a callback to be run on execution of this instruction
+    /// Register a callback to be run on execution of this instruction with a choice of
+    /// capability whether to inspect or modify registers or not
+    ///
+    /// # Arguments
+    ///
+    /// - `cb`: The callback to be run
+    /// - `flags`: The flags for the callback specifying whether the callback needs
+    ///   permission to read or write registers
     pub fn register_execute_callback_flags<F>(&self, cb: F, flags: CallbackFlags)
     where
         F: FnMut(VCPUIndex) + Send + Sync + 'static,
@@ -638,6 +715,14 @@ impl<'a> Instruction<'a> {
     }
 
     /// Register a callback to be conditionally run on execution of this instruction
+    /// with no capability to inspect registers
+    ///
+    /// # Arguments
+    ///
+    /// - `cb`: The callback to be run
+    /// - `cond`: The condition for the callback to be run
+    /// - `entry`: The entry to increment the scoreboard for
+    /// - `immediate`: The immediate value to use for the callback
     #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
     pub fn register_conditional_execute_callback<F>(
         &self,
@@ -658,6 +743,16 @@ impl<'a> Instruction<'a> {
     }
 
     /// Register a callback to be conditionally run on execution of this instruction
+    /// with a choice of capability whether to inspect or modify registers or not
+    ///
+    /// # Arguments
+    ///
+    /// - `cb`: The callback to be run
+    /// - `flags`: The flags for the callback specifying whether the callback needs
+    ///   permission to read or write registers
+    /// - `cond`: The condition for the callback to be run
+    /// - `entry`: The entry to increment the scoreboard for
+    /// - `immediate`: The immediate value to use for the callback
     #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
     pub fn register_conditional_execute_callback_flags<F>(
         &self,
@@ -694,7 +789,7 @@ impl<'a> Instruction<'a> {
     /// - `rw`: The type of memory access to trigger the callback on
     pub fn register_memory_access_callback<F>(&self, cb: F, rw: MemRW)
     where
-        F: FnMut(VCPUIndex, MemoryInfo, u64) + Send + Sync + 'static,
+        for<'b> F: FnMut(VCPUIndex, MemoryInfo<'b>, u64) + Send + Sync + 'static,
     {
         self.register_memory_access_callback_flags(cb, rw, CallbackFlags::QEMU_PLUGIN_CB_NO_REGS)
     }
@@ -707,7 +802,7 @@ impl<'a> Instruction<'a> {
     /// - `rw`: The type of memory access to trigger the callback on
     pub fn register_memory_access_callback_flags<F>(&self, cb: F, rw: MemRW, flags: CallbackFlags)
     where
-        F: FnMut(VCPUIndex, MemoryInfo, u64) + Send + Sync + 'static,
+        for<'b> F: FnMut(VCPUIndex, MemoryInfo<'b>, u64) + Send + Sync + 'static,
     {
         let callback = Box::new(cb);
         let callback_box = Box::new(callback);
@@ -886,7 +981,7 @@ impl<'a> RegisterDescriptor<'a> {
     ///
     /// This must only be called in a callback which has been registered with
     /// `CallbackFlags::QEMU_PLUGIN_CB_R_REGS` or
-    /// `CallbackFlags::QEMU_PLUGIN_CB_RW_REGS`.
+    /// `CallbackFlags::QEMU_PLUGIN_CB_RW_REGS`, otherwise it will fail.
     pub fn read(&self) -> Result<Vec<u8>> {
         let byte_array = unsafe { g_byte_array_new() };
 
@@ -1441,7 +1536,7 @@ extern "C" fn handle_qemu_plugin_register_vcpu_mem_cb<F>(
     vaddr: u64,
     userdata: *mut c_void,
 ) where
-    F: FnMut(VCPUIndex, MemoryInfo, u64) + Send + Sync + 'static,
+    for<'a> F: FnMut(VCPUIndex, MemoryInfo<'a>, u64) + Send + Sync + 'static,
 {
     let mut cb: Box<Box<F>> = unsafe { Box::from_raw(userdata as *mut _) };
     let meminfo = MemoryInfo::from(meminfo);
@@ -1464,7 +1559,7 @@ pub fn qemu_plugin_register_vcpu_mem_cb<F>(
     flags: CallbackFlags,
     rw: MemRW,
 ) where
-    F: FnMut(VCPUIndex, MemoryInfo, u64) + Send + Sync + 'static,
+    for<'a> F: FnMut(VCPUIndex, MemoryInfo<'a>, u64) + Send + Sync + 'static,
 {
     insn.register_memory_access_callback_flags(cb, rw, flags);
 }
@@ -1560,7 +1655,8 @@ where
     Ok(())
 }
 
-/// Register a callback to run on flush.
+/// Register a callback to run after QEMU flushes all translation blocks. This is
+/// roughly equivalent to a TLB flush, where all instruction caches are invalidated.
 ///
 /// # Arguments
 ///

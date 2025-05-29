@@ -11,6 +11,7 @@ use std::{
 
 use crate::{error::Error, plugin::PLUGIN};
 
+#[allow(non_upper_case_globals)]
 #[no_mangle]
 /// The version of the plugin API that this plugin is compatible with
 pub static qemu_plugin_version: c_int = QEMU_PLUGIN_VERSION as c_int;
@@ -18,7 +19,9 @@ pub static qemu_plugin_version: c_int = QEMU_PLUGIN_VERSION as c_int;
 /// Code returned from `qemu_plugin_install` to indicate successful installation
 pub const PLUGIN_INSTALL_SUCCESS: c_int = 0;
 
-/// A value passed to a QEMU plugin via the command line
+/// A value passed to a QEMU plugin via the command line, either as a boolean, integer,
+/// or string. Booleans are parsed using the `qemu_plugin_bool_parse` function, integers
+/// are parsed from strings, and strings are taken as-is.
 pub enum Value {
     /// A boolean argument to a QEMU plugin, for example `val=true` or `val=on`
     /// see https://www.qemu.org/docs/master/devel/tcg-plugins.html#c.qemu_plugin_bool_parse
@@ -48,12 +51,15 @@ impl Value {
     }
 }
 
-/// Arguments to QEMU as passed to `qemu_plugin_install`
+/// Arguments to QEMU as passed to `qemu_plugin_install`. `qemu_plugin_install` takes a
+/// comma-separated list of key=value pairs, such as `val1=foo,val2=bar`.
 pub struct Args {
-    /// Arguments to the QEMU plugin as passed in by QEMU
+    /// Arguments to the QEMU plugin as passed in by QEMU. Each entry is a key=value pair
+    /// where the key is the name of the argument and the value is the value of the argument.
     pub raw: Vec<String>,
     /// Arguments to the QEMU plugin, parsed into valid argument types and value
-    /// types
+    /// types. Each key is the name of the argument and the value is a `Value` enum
+    /// which can be a boolean, integer, or string.
     pub parsed: HashMap<String, Value>,
 }
 
@@ -103,7 +109,7 @@ impl From<&qemu_info_t__bindgen_ty_1> for Version {
     }
 }
 
-/// Information about the system, present if the emulator is running in full
+/// Information about the virtualized system, present if the emulator is running in full
 /// system emulation mode
 pub struct System {
     /// The maximum number of virtual CPUs supported by the system
@@ -121,7 +127,8 @@ impl From<&qemu_info_t__bindgen_ty_2__bindgen_ty_1> for System {
     }
 }
 
-/// Information about the simulation
+/// Information about the simulation, including the target name, version, and virtual
+/// system information
 pub struct Info {
     /// The target name of the simulation (e.g. `x86_64-softmmu`)
     pub target_name: String,
