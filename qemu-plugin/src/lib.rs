@@ -789,7 +789,7 @@ impl<'a> Instruction<'a> {
     /// - `rw`: The type of memory access to trigger the callback on
     pub fn register_memory_access_callback<F>(&self, cb: F, rw: MemRW)
     where
-        for<'b> F: FnMut(VCPUIndex, MemoryInfo<'b>, u64) + Send + Sync + 'static,
+        F: for<'b> FnMut(VCPUIndex, MemoryInfo<'b>, u64) + Send + Sync + 'static,
     {
         self.register_memory_access_callback_flags(cb, rw, CallbackFlags::QEMU_PLUGIN_CB_NO_REGS)
     }
@@ -802,7 +802,7 @@ impl<'a> Instruction<'a> {
     /// - `rw`: The type of memory access to trigger the callback on
     pub fn register_memory_access_callback_flags<F>(&self, cb: F, rw: MemRW, flags: CallbackFlags)
     where
-        for<'b> F: FnMut(VCPUIndex, MemoryInfo<'b>, u64) + Send + Sync + 'static,
+        F: for<'b> FnMut(VCPUIndex, MemoryInfo<'b>, u64) + Send + Sync + 'static,
     {
         let callback = Box::new(cb);
         let callback_box = Box::new(callback);
@@ -1536,7 +1536,7 @@ extern "C" fn handle_qemu_plugin_register_vcpu_mem_cb<F>(
     vaddr: u64,
     userdata: *mut c_void,
 ) where
-    for<'a> F: FnMut(VCPUIndex, MemoryInfo<'a>, u64) + Send + Sync + 'static,
+    F: for<'a> FnMut(VCPUIndex, MemoryInfo<'a>, u64) + Send + Sync + 'static,
 {
     let mut cb: Box<Box<F>> = unsafe { Box::from_raw(userdata as *mut _) };
     let meminfo = MemoryInfo::from(meminfo);
@@ -1559,7 +1559,7 @@ pub fn qemu_plugin_register_vcpu_mem_cb<F>(
     flags: CallbackFlags,
     rw: MemRW,
 ) where
-    for<'a> F: FnMut(VCPUIndex, MemoryInfo<'a>, u64) + Send + Sync + 'static,
+    F: for<'a> FnMut(VCPUIndex, MemoryInfo<'a>, u64) + Send + Sync + 'static,
 {
     insn.register_memory_access_callback_flags(cb, rw, flags);
 }
