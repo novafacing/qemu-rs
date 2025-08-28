@@ -859,7 +859,7 @@ impl<'a> MemoryInfo<'a> {
 
     /// Return a handle to query details about the physical address backing the virtual address
     /// in system emulation. In user-mode, this method always returns `None`.
-    pub fn hwaddr(&self, vaddr: u64) -> Option<HwAddr> {
+    pub fn hwaddr(&'a self, vaddr: u64) -> Option<HwAddr<'a>> {
         let hwaddr = unsafe { crate::sys::qemu_plugin_get_hwaddr(self.memory_info, vaddr) };
         if hwaddr.is_null() {
             None
