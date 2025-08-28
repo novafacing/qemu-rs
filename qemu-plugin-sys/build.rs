@@ -10,6 +10,10 @@ pub const PLUGIN_API_DEF_FILE_NAME: &str = "qemu_plugin_api_v1.def";
 pub const PLUGIN_API_DEF_FILE_NAME: &str = "qemu_plugin_api_v2.def";
 #[cfg(feature = "plugin-api-v3")]
 pub const PLUGIN_API_DEF_FILE_NAME: &str = "qemu_plugin_api_v3.def";
+#[cfg(feature = "plugin-api-v4")]
+pub const PLUGIN_API_DEF_FILE_NAME: &str = "qemu_plugin_api_v4.def";
+#[cfg(feature = "plugin-api-v5")]
+pub const PLUGIN_API_DEF_FILE_NAME: &str = "qemu_plugin_api_v5.def";
 
 #[cfg(windows)]
 fn out_dir() -> Result<PathBuf> {
@@ -42,6 +46,17 @@ fn main() -> Result<()> {
         }
         println!("cargo:rustc-link-search={}", out_dir.display());
         println!("cargo:rustc-link-lib=qemu_plugin_api");
+    }
+
+    #[cfg(all(target_family = "unix", not(target_os = "macos")))]
+    {
+        println!("cargo:rustc-link-arg-cdylib=-Wl,-z,undefs")
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        println!("cargo::rustc-cdylib-link-arg=-undefined");
+        println!("cargo::rustc-cdylib-link-arg=dynamic_lookup");
     }
 
     Ok(())
