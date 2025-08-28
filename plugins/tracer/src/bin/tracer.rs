@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Error, Result};
 use clap::Parser;
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use rand::{distr::Alphanumeric, rng, Rng};
 use serde_cbor::Deserializer;
 use serde_json::to_string;
 use std::process::{Command, Stdio};
@@ -33,7 +33,7 @@ fn tmp(prefix: &str, suffix: &str) -> PathBuf {
     PathBuf::from(format!(
         "{}{}{}",
         prefix,
-        thread_rng()
+        rng()
             .sample_iter(&Alphanumeric)
             .take(8)
             .map(char::from)

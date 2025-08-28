@@ -12,7 +12,7 @@ repository.workspace = true
 version.workspace = true
 
 [build-dependencies]
-anyhow = "1.0.86"
+anyhow = "1.0.99"
 
 [lints.rust]
 non_snake_case = "allow"

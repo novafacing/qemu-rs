@@ -15,12 +15,14 @@ resolver = "2"
 members = [
     "qemu-plugin",
     "qemu-plugin-sys",
+    "qemu-plugin-macro",
     "plugins/tiny",
     "plugins/tiny-system",
     "plugins/tracer",
 ]
-default-members = ["qemu-plugin", "qemu-plugin-sys"]
+default-members = ["qemu-plugin", "qemu-plugin-sys", "qemu-plugin-macro"]
 
 [workspace.dependencies]
 qemu-plugin-sys = { version = "9.2.0-v0", path = "qemu-plugin-sys", default-features = false }
 qemu-plugin = { version = "9.2.0-v0", path = "qemu-plugin", default-features = false }
+qemu-plugin-macro = { version = "9.2.0-v0", path = "qemu-plugin-macro" }

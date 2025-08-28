@@ -20,17 +20,19 @@ use bindgen::{
 };
 use cargo_metadata::MetadataCommand;
 use reqwest::blocking::get;
-use syn::{File as RustFile, Item, ItemForeignMod, ForeignItem, ForeignItemFn, parse_str};
 use std::{
-    io::copy,
     fs::{create_dir_all, read_to_string, write, File, OpenOptions},
+    io::copy,
     path::{Path, PathBuf},
 };
+use syn::{parse_str, File as RustFile, ForeignItem, ForeignItemFn, Item, ItemForeignMod};
 use zip::ZipArchive;
 
 const QEMU_GITHUB_URL_BASE: &str = "https://github.com/qemu/qemu/";
 
 const QEMU_VERSIONS: &[&str] = &[
+    // Plugin V0 is from 4.2.0
+    "b0ca999a43a22b38158a222233d3f5881648bb4f",
     // Plugin V1 is up until 8.2.4
     "1332b8dd434674480f0feb2cdf3bbaebb85b4240",
     // Plugin V2 is from 9.0.0
@@ -67,16 +69,16 @@ fn extract_zip(archive: &Path, destination: &Path) -> Result<()> {
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)?;
         let file_path = file.mangled_name();
-        
+
         let components: Vec<_> = file_path.components().collect();
-        
+
         if components.len() <= 1 {
             continue;
         }
-        
+
         let new_path = components[1..].iter().collect::<PathBuf>();
         let out_path = destination.join(new_path);
-        
+
         if file.is_dir() {
             create_dir_all(&out_path)?;
         } else {
@@ -90,15 +92,23 @@ fn extract_zip(archive: &Path, destination: &Path) -> Result<()> {
     Ok(())
 }
 
-fn generate_bindings(qemu_plugin_header: &Path, bindings_path: &Path, def_path: &Path) -> Result<()> {
+fn generate_bindings(
+    qemu_plugin_header: &Path,
+    bindings_path: &Path,
+    def_path: &Path,
+) -> Result<()> {
     let header_contents = read_to_string(qemu_plugin_header)?;
-    let header_file_name = qemu_plugin_header.file_name().ok_or_else(|| anyhow!("Failed to get file name"))?.to_str().ok_or_else(|| anyhow!("Failed to convert file name to string"))?;
+    let header_file_name = qemu_plugin_header
+        .file_name()
+        .ok_or_else(|| anyhow!("Failed to get file name"))?
+        .to_str()
+        .ok_or_else(|| anyhow!("Failed to convert file name to string"))?;
     let header_contents = header_contents.replace("#include <glib.h>", "");
     // Append `typedef GArray void;` and `typedef GByteArray void;` to the header. Otherwise, we
     // need to use pkg_config to find the glib-2.0 include paths and our bindings will be
     // massive.
     let header_contents = format!(
-        "{}\n{}\n{}\n",
+        "#include <stddef.h>\n{}\n{}\n{}\n",
         "typedef struct GArray { char *data; unsigned int len; } GArray;",
         "typedef struct GByteArray { unsigned char *data; unsigned int len; } GByteArray;",
         header_contents,
@@ -138,7 +148,9 @@ fn generate_bindings(qemu_plugin_header: &Path, bindings_path: &Path, def_path: 
 
     let parsed: RustFile = parse_str(&rust_bindings.to_string())?;
 
-    let mut export_names: Vec<String> = parsed.items.iter()
+    let mut export_names: Vec<String> = parsed
+        .items
+        .iter()
         .filter_map(|item| {
             if let Item::ForeignMod(ItemForeignMod { items, .. }) = item {
                 Some(items)
@@ -169,12 +181,15 @@ fn generate_bindings(qemu_plugin_header: &Path, bindings_path: &Path, def_path: 
 }
 
 fn generate(tmp_dir: &Path, out_dir: &Path, version: usize) -> Result<()> {
-    println!("Generating bindings with tmp={:?} out={:?} version={}", tmp_dir, out_dir, version);
-    let src_archive = tmp_dir.join(format!("qemu-{}.zip", QEMU_VERSIONS[version - 1]));
-    let src_dir = tmp_dir.join(format!("qemu-{}", QEMU_VERSIONS[version - 1]));
+    println!(
+        "Generating bindings with tmp={:?} out={:?} version={}",
+        tmp_dir, out_dir, version
+    );
+    let src_archive = tmp_dir.join(format!("qemu-{}.zip", QEMU_VERSIONS[version]));
+    let src_dir = tmp_dir.join(format!("qemu-{}", QEMU_VERSIONS[version]));
 
     if !src_archive.exists() {
-        let qemu_url = qemu_git_url(QEMU_VERSIONS[version - 1]);
+        let qemu_url = qemu_git_url(QEMU_VERSIONS[version]);
         println!("Downloading {} to {:?}", qemu_url, src_archive);
         download(&qemu_url, &src_archive)?;
     }
@@ -187,7 +202,7 @@ fn generate(tmp_dir: &Path, out_dir: &Path, version: usize) -> Result<()> {
     generate_bindings(
         &src_dir.join("include").join("qemu").join("qemu-plugin.h"),
         &out_dir.join(&format!("bindings_v{}.rs", version)),
-        &out_dir.join(&format!("qemu_plugin_api_v{}.def", version))
+        &out_dir.join(&format!("qemu_plugin_api_v{}.def", version)),
     )?;
 
     Ok(())
@@ -216,6 +231,7 @@ fn main() -> Result<()> {
         create_dir_all(&tmp_dir)?;
     }
 
+    generate(&tmp_dir, &out_dir, 0)?;
     generate(&tmp_dir, &out_dir, 1)?;
     generate(&tmp_dir, &out_dir, 2)?;
     generate(&tmp_dir, &out_dir, 3)?;

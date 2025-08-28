@@ -1,6 +1,10 @@
 use anyhow::{anyhow, Error, Result};
 use ctor::ctor;
-#[cfg(feature = "plugin-api-v4")]
+#[cfg(not(any(
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3"
+)))]
 use qemu_plugin::qemu_plugin_read_memory_vaddr;
 use qemu_plugin::{
     install::{Args, Info, Value},
@@ -97,7 +101,11 @@ pub struct SyscallEvent {
     pub num: i64,
     pub return_value: i64,
     pub args: [u64; 8],
-    #[cfg(feature = "plugin-api-v4")]
+    #[cfg(not(any(
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2",
+        feature = "plugin-api-v3"
+    )))]
     #[builder(default)]
     pub buffers: HashMap<usize, Vec<u8>>,
 }
@@ -287,7 +295,11 @@ impl HasCallbacks for Tracer {
             .args([a1, a2, a3, a4, a5, a6, a7, a8])
             .build();
 
-        #[cfg(feature = "plugin-api-v4")]
+        #[cfg(not(any(
+            feature = "plugin-api-v1",
+            feature = "plugin-api-v2",
+            feature = "plugin-api-v3"
+        )))]
         let event = {
             let buffers = if let Some(write_sysno) = match self.target_name.as_deref() {
                 Some("i386") => Some(4),
@@ -358,7 +370,11 @@ impl HasCallbacks for Tracer {
             )
             .ok_or_else(|| anyhow!("No syscall event found"))?;
 
-        #[cfg(feature = "plugin-api-v4")]
+        #[cfg(not(any(
+            feature = "plugin-api-v1",
+            feature = "plugin-api-v2",
+            feature = "plugin-api-v3"
+        )))]
         {
             if let Some(read_sysno) = match self.target_name.as_deref() {
                 Some("i386") => Some(3),
