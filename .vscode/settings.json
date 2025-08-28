@@ -1,3 +1,6 @@
 {
     "rust-analyzer.cargo.buildScripts.enable": false,
+    "rust-analyzer.diagnostics.disabled": [
+        "unlinked-file"
+    ]
 }

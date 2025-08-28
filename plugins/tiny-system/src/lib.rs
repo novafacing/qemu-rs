@@ -17,7 +17,7 @@ impl HasCallbacks for TinyTrace {
         id: PluginId,
         vcpu_id: qemu_plugin::VCPUIndex,
     ) -> std::prelude::v1::Result<(), anyhow::Error> {
-        println!("on_vcpu_init: id: {:?}, vcpu_id: {:?}", id, vcpu_id);
+        println!("on_vcpu_init: id: {id:?}, vcpu_id: {vcpu_id:?}");
         Ok(())
     }
 
@@ -26,7 +26,7 @@ impl HasCallbacks for TinyTrace {
         id: PluginId,
         vcpu_id: qemu_plugin::VCPUIndex,
     ) -> std::prelude::v1::Result<(), anyhow::Error> {
-        println!("on_vcpu_idle: id: {:?}, vcpu_id: {:?}", id, vcpu_id);
+        println!("on_vcpu_idle: id: {id:?}, vcpu_id: {vcpu_id:?}");
         Ok(())
     }
 
@@ -35,7 +35,7 @@ impl HasCallbacks for TinyTrace {
         id: PluginId,
         vcpu_id: qemu_plugin::VCPUIndex,
     ) -> std::prelude::v1::Result<(), anyhow::Error> {
-        println!("on_vcpu_exit: id: {:?}, vcpu_id: {:?}", id, vcpu_id);
+        println!("on_vcpu_exit: id: {id:?}, vcpu_id: {vcpu_id:?}");
         Ok(())
     }
 
@@ -44,7 +44,7 @@ impl HasCallbacks for TinyTrace {
         id: PluginId,
         vcpu_id: qemu_plugin::VCPUIndex,
     ) -> std::prelude::v1::Result<(), anyhow::Error> {
-        println!("on_vcpu_resume: id: {:?}, vcpu_id: {:?}", id, vcpu_id);
+        println!("on_vcpu_resume: id: {id:?}, vcpu_id: {vcpu_id:?}");
         Ok(())
     }
 }
