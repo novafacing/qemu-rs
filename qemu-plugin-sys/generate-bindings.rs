@@ -1,7 +1,7 @@
 #!/usr/bin/env -S cargo +nightly-gnu -Z script
 ---
 [package]
-edition = "2021"
+edition = "2024"
 [dependencies]
 anyhow = "*"
 bindgen = "*"
@@ -39,6 +39,8 @@ const QEMU_VERSIONS: &[&str] = &[
     "7de77d37880d7267a491cb32a1b2232017d1e545",
     // Plugin V4 is from 9.2.0
     "595cd9ce2ec9330882c991a647d5bc2a5640f380",
+    // Plugin V5 is from 10.1.0
+    "f8b2f64e2336a28bf0d50b6ef8a7d8c013e9bcf3",
 ];
 
 fn qemu_git_url(hash: &str) -> String {
@@ -194,10 +196,11 @@ fn generate(tmp_dir: &Path, out_dir: &Path, version: usize) -> Result<()> {
 fn main() -> Result<()> {
     let metadata = MetadataCommand::new().no_deps().exec()?;
 
+    let search_package = "qemu-plugin-sys".parse()?;
     let package = metadata
         .packages
         .iter()
-        .find(|p| p.name == "qemu-plugin-sys")
+        .find(|p| p.name == search_package)
         .ok_or_else(|| anyhow!("Failed to find package"))?;
 
     let out_dir = package
@@ -217,6 +220,7 @@ fn main() -> Result<()> {
     generate(&tmp_dir, &out_dir, 2)?;
     generate(&tmp_dir, &out_dir, 3)?;
     generate(&tmp_dir, &out_dir, 4)?;
+    generate(&tmp_dir, &out_dir, 5)?;
 
     Ok(())
 }
