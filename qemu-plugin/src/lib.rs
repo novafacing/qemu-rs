@@ -71,11 +71,7 @@
 //! ```
 
 #![deny(missing_docs)]
-#![cfg_attr(all(unix, feature = "unix-weak-link"), feature(linkage))]
 #![cfg_attr(feature = "num-traits", feature(generic_const_exprs))]
-
-#[cfg(all(unix, feature = "unix-weak-link"))]
-mod unix_weak_link;
 
 #[cfg(windows)]
 mod win_link_hook;
@@ -114,7 +110,6 @@ pub mod error;
 pub mod install;
 pub mod plugin;
 pub mod sys;
-pub mod version;
 
 #[cfg(not(windows))]
 extern "C" {
