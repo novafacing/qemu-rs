@@ -1,7 +1,7 @@
-use ctor::ctor;
 use qemu_plugin::{
-    plugin::{init_plugin, HasCallbacks, Register},
     PluginId,
+    plugin::{HasCallbacks, Register},
+    register,
 };
 
 struct TinyTrace;
@@ -46,7 +46,4 @@ impl HasCallbacks for TinyTrace {
     }
 }
 
-#[ctor]
-fn init() {
-    init_plugin(TinyTrace).expect("Failed to initialize plugin");
-}
+register!(TinyTrace);

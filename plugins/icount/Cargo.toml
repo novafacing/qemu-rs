@@ -1,22 +1,20 @@
 [package]
 name = "icount"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-qemu-plugin = { workspace = true, features = [
-    "unix-weak-link",
-], default-features = false }
-anyhow = "1.0.94"
-ffi = "0.1.1"
-ctor = "0.2.9"
+qemu-plugin = { workspace = true, default-features = false }
+anyhow = "1.0.99"
 
 [features]
-default = ["plugin-api-v4"]
+default = ["plugin-api-v5"]
+plugin-api-v0 = ["qemu-plugin/plugin-api-v0"]
 plugin-api-v1 = ["qemu-plugin/plugin-api-v1"]
 plugin-api-v2 = ["qemu-plugin/plugin-api-v2"]
 plugin-api-v3 = ["qemu-plugin/plugin-api-v3"]
 plugin-api-v4 = ["qemu-plugin/plugin-api-v4"]
+plugin-api-v5 = ["qemu-plugin/plugin-api-v5"]

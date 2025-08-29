@@ -6,6 +6,9 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 
+#[cfg(feature = "plugin-api-v0")]
+include!("bindings_v0.rs");
+
 #[cfg(feature = "plugin-api-v1")]
 include!("bindings_v1.rs");
 

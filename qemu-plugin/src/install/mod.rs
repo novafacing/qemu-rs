@@ -12,7 +12,7 @@ use std::{
 use crate::{error::Error, plugin::PLUGIN};
 
 #[allow(non_upper_case_globals)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 /// The version of the plugin API that this plugin is compatible with
 pub static qemu_plugin_version: c_int = QEMU_PLUGIN_VERSION as c_int;
 
@@ -171,7 +171,7 @@ impl Info {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 /// Called by QEMU when the plugin is loaded
 ///
 /// # Safety

@@ -3,8 +3,8 @@
 use std::sync::{Mutex, OnceLock};
 
 use crate::{
-    install::{Args, Info},
     PluginId, TranslationBlock, VCPUIndex,
+    install::{Args, Info},
 };
 use crate::{
     qemu_plugin_register_flush_cb, qemu_plugin_register_vcpu_exit_cb,
@@ -439,15 +439,40 @@ pub trait Plugin: Register + HasCallbacks {}
 
 impl<T> Plugin for T where T: Register + HasCallbacks {}
 
+#[doc(hidden)]
 /// The global plugin item
 pub static PLUGIN: OnceLock<Mutex<Box<dyn Plugin>>> = OnceLock::new();
 
-/// Initialize the global plugin instance
-pub fn init_plugin<P>(plugin: P) -> Result<(), anyhow::Error>
-where
-    P: Plugin,
-{
+#[doc(hidden)]
+#[inline(never)]
+pub fn register_plugin(plugin: impl Plugin) {
     PLUGIN
         .set(Mutex::new(Box::new(plugin)))
         .map_err(|_| anyhow::anyhow!("Failed to set plugin"))
+        .expect("Failed to set plugin");
+}
+
+#[macro_export]
+/// Register a plugin
+macro_rules! register {
+    ($plugin:expr) => {
+        #[cfg_attr(target_os = "linux", unsafe(link_section = ".text.startup"))]
+        extern "C" fn __plugin_ctor() {
+            $crate::plugin::register_plugin($plugin);
+        }
+
+        #[used]
+        // .init_array.XXXXX sections are processed in lexicographical order
+        #[cfg_attr(target_os = "linux", unsafe(link_section = ".init_array"))]
+        // But there is no way to specify such an ordering on MacOS, even with
+        // __TEXT,__init_offsets
+        #[cfg_attr(
+            target_os = "macos",
+            unsafe(link_section = "__DATA,__mod_init_func,mod_init_funcs")
+        )]
+        // On Windows, it's from .CRT$XCA to .CRT$XCZ, where usually XCU =
+        // early, XCT = middle, XCL = late
+        #[cfg_attr(windows, link_section = ".CRT$XCU")]
+        static __PLUGIN_CTOR: unsafe extern "C" fn() = __plugin_ctor;
+    };
 }

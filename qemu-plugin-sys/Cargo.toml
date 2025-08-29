@@ -19,13 +19,15 @@ non_snake_case = "allow"
 
 [features]
 default = ["plugin-api-v5"]
-# Use the V1 plugin API, which is defined for versions below 9.0.0
+# Use the V0 plugin API, which is defined starting in version 4.2.0
+plugin-api-v0 = []
+# Use the V1 plugin API, which is defined starting in version 6.0.0
 plugin-api-v1 = []
-# Use the V2 plugin API, which is defined for version 9.0.0
+# Use the V2 plugin API, which is defined starting in version 9.0.0
 plugin-api-v2 = []
-# Use the V3 plugin API, which is defined for version 9.1.0
+# Use the V3 plugin API, which is defined starting in version 9.1.0
 plugin-api-v3 = []
-# Use the V4 plugin API, which is defined for versions above 9.2.0
+# Use the V4 plugin API, which is defined starting in version 9.2.0
 plugin-api-v4 = []
-# Use the V5 plugin API, which is defined for versions above 10.1.0
+# Use the V5 plugin API, which is defined starting in version 10.1.0
 plugin-api-v5 = []

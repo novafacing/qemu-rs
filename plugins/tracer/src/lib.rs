@@ -1,5 +1,4 @@
-use anyhow::{anyhow, Error, Result};
-use ctor::ctor;
+use anyhow::{Error, Result, anyhow};
 #[cfg(not(any(
     feature = "plugin-api-v1",
     feature = "plugin-api-v2",
@@ -7,12 +6,13 @@ use ctor::ctor;
 )))]
 use qemu_plugin::qemu_plugin_read_memory_vaddr;
 use qemu_plugin::{
-    install::{Args, Info, Value},
-    plugin::{init_plugin, HasCallbacks, Register},
     Instruction, MemRW, MemoryInfo, PluginId, TranslationBlock, VCPUIndex,
+    install::{Args, Info, Value},
+    plugin::{HasCallbacks, Register},
+    register,
 };
 #[cfg(not(feature = "plugin-api-v1"))]
-use qemu_plugin::{qemu_plugin_get_registers, RegisterDescriptor};
+use qemu_plugin::{RegisterDescriptor, qemu_plugin_get_registers};
 use serde::{Deserialize, Serialize};
 use serde_cbor::to_writer;
 use std::{
@@ -533,7 +533,4 @@ impl Register for Tracer {
     }
 }
 
-#[ctor]
-fn init() {
-    init_plugin(Tracer::new()).expect("Failed to initialize plugin");
-}
+register!(Tracer::new());

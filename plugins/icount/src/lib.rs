@@ -1,11 +1,11 @@
 use anyhow::Result;
-use ctor::ctor;
 use qemu_plugin::{
-    plugin::{init_plugin, HasCallbacks, Register},
     PluginId, TranslationBlock,
+    plugin::{HasCallbacks, Register},
+    register,
 };
 #[cfg(not(feature = "plugin-api-v1"))]
-use qemu_plugin::{qemu_plugin_get_registers, RegisterDescriptor, VCPUIndex};
+use qemu_plugin::{RegisterDescriptor, VCPUIndex, qemu_plugin_get_registers};
 
 #[derive(Default)]
 struct ICount;
@@ -27,7 +27,7 @@ impl HasCallbacks for ICount {
             let disas = insn.disas()?;
 
             insn.register_execute_callback(move |_idx| {
-                println!("{:08x}: {}", vaddr, disas);
+                println!("{vaddr:08x}: {disas}");
             });
 
             Ok(())
@@ -35,7 +35,4 @@ impl HasCallbacks for ICount {
     }
 }
 
-#[ctor]
-fn init() {
-    init_plugin(ICount::default()).expect("Failed to initialize plugin");
-}
+register!(ICount);

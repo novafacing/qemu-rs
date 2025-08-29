@@ -17,14 +17,18 @@ jobs:
     strategy:
       matrix:
         include:
+          - version: 0
+            commit: b0ca999a43a22b38158a222233d3f5881648bb4f
           - version: 1
-            commit: fb691b8cbabf5bde7d25a7f720d5ec7d5b1341e1
+            commit: 1332b8dd434674480f0feb2cdf3bbaebb85b4240
           - version: 2
-            commit: fba3b490a26cb278dfa183d7fcc375746e312980
+            commit: c25df57ae8f9fe1c72eee2dab37d76d904ac382e
           - version: 3
             commit: 7de77d37880d7267a491cb32a1b2232017d1e545
           - version: 4
-            commit: cfa3a6c54511374e9ccee26d9c38ac1698fc7af2
+            commit: 595cd9ce2ec9330882c991a647d5bc2a5640f380
+          - version: 5
+            commit: f8b2f64e2336a28bf0d50b6ef8a7d8c013e9bcf3
     env:
       QEMU_COMMIT_HASH: ${{ matrix.commit }}
     steps:
@@ -95,12 +99,22 @@ jobs:
         run: |
           qemu-x86_64 --help
 
-      - name: Build and Test Tracer
+      - name: Build Tracer
         run: |
           cd plugins/tracer
-          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features || exit 0
           cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
-          cargo run --features=plugin-api-v${{ matrix.version }} --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
+
+      # Only run with the log_registers=true argument if matrix.version > 1
+      - name: Run Tracer
+        run: |
+          cd plugins/tracer
+          if [ ${{ matrix.version }} -gt 1 ]; then
+            qemu-x86_64 -plugin ../../target/release/libtracer.so,log_insns=true,log_mem=true,log_syscalls=true,log_registers=true /bin/ls -lah
+          else
+            qemu-x86_64 -plugin ../../target/release/libtracer.so,log_insns=true,log_mem=true,log_syscalls=true /bin/ls -lah
+          fi
+          cd ../..
+      -
           cd ../..
 
       - name: Build and Test Tiny
