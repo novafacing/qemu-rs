@@ -1,11 +1,11 @@
 use anyhow::Result;
+#[cfg(not(feature = "plugin-api-v1"))]
+use qemu_plugin::VCPUIndex;
 use qemu_plugin::{
     PluginId, TranslationBlock,
     plugin::{HasCallbacks, Register},
     register,
 };
-#[cfg(not(feature = "plugin-api-v1"))]
-use qemu_plugin::{RegisterDescriptor, VCPUIndex, qemu_plugin_get_registers};
 
 #[derive(Default)]
 struct ICount;
