@@ -53,7 +53,7 @@
 //! [package]
 //! name = "tiny"
 //! version = "0.1.0"
-//! edition = "2021"
+//! edition = "2024"
 //!
 //! [lib]
 //! crate-type = ["cdylib"]
@@ -71,11 +71,21 @@
 #[cfg(windows)]
 mod win_link_hook;
 
+/// Used by the init_plugin! macro, should not be used directly
+pub mod __ctor_export {
+    pub use ctor::*;
+}
+
 use crate::error::{Error, Result};
 #[cfg(feature = "num-traits")]
 use num_traits::{FromBytes, PrimInt};
 #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
 use qemu_plugin_sys::qemu_plugin_cond;
+#[cfg(not(feature = "plugin-api-v1"))]
+use qemu_plugin_sys::{
+    GArray, GByteArray, qemu_plugin_read_register, qemu_plugin_reg_descriptor,
+    qemu_plugin_register, qemu_plugin_scoreboard, qemu_plugin_u64,
+};
 use qemu_plugin_sys::{
     qemu_plugin_cb_flags, qemu_plugin_hwaddr, qemu_plugin_id_t, qemu_plugin_insn,
     qemu_plugin_mem_rw, qemu_plugin_meminfo_t, qemu_plugin_op, qemu_plugin_simple_cb_t,
@@ -84,13 +94,8 @@ use qemu_plugin_sys::{
 };
 #[cfg(feature = "plugin-api-v4")]
 use qemu_plugin_sys::{qemu_plugin_mem_value, qemu_plugin_mem_value_type};
-#[cfg(not(feature = "plugin-api-v1"))]
-use qemu_plugin_sys::{
-    qemu_plugin_read_register, qemu_plugin_reg_descriptor, qemu_plugin_register,
-    qemu_plugin_scoreboard, qemu_plugin_u64, GArray, GByteArray,
-};
 use std::{
-    ffi::{c_uint, c_void, CStr, CString},
+    ffi::{CStr, CString, c_uint, c_void},
     marker::PhantomData,
     path::PathBuf,
     sync::{Mutex, OnceLock},
@@ -107,13 +112,13 @@ pub mod plugin;
 pub mod sys;
 
 #[cfg(not(windows))]
-extern "C" {
+unsafe extern "C" {
     /// glib g_free is provided by the QEMU program we are being linked into
     fn g_free(mem: *mut c_void);
 }
 
 #[cfg(all(not(windows), not(feature = "plugin-api-v1")))]
-extern "C" {
+unsafe extern "C" {
     /// glib g_byte_array_new is provided by the QEMU program we are being linked into
     fn g_byte_array_new() -> *mut GByteArray;
     /// glib g_byte_array_free is provided by the QEMU program we are being linked into
@@ -1745,11 +1750,7 @@ pub fn qemu_plugin_path_to_binary() -> Result<Option<PathBuf>> {
 pub fn qemu_plugin_start_code() -> Option<u64> {
     let start = unsafe { crate::sys::qemu_plugin_start_code() };
 
-    if start == 0 {
-        None
-    } else {
-        Some(start)
-    }
+    if start == 0 { None } else { Some(start) }
 }
 
 /// Return the end of the text segment of the binary file being executed if
@@ -1759,11 +1760,7 @@ pub fn qemu_plugin_start_code() -> Option<u64> {
 pub fn qemu_plugin_end_code() -> Option<u64> {
     let end = unsafe { crate::sys::qemu_plugin_end_code() };
 
-    if end == 0 {
-        None
-    } else {
-        Some(end)
-    }
+    if end == 0 { None } else { Some(end) }
 }
 
 /// Return the start address for the module of the binary file being executed if
@@ -1773,11 +1770,7 @@ pub fn qemu_plugin_end_code() -> Option<u64> {
 pub fn qemu_plugin_entry_code() -> Option<u64> {
     let entry = unsafe { crate::sys::qemu_plugin_entry_code() };
 
-    if entry == 0 {
-        None
-    } else {
-        Some(entry)
-    }
+    if entry == 0 { None } else { Some(entry) }
 }
 
 #[cfg(feature = "plugin-api-v1")]
@@ -1785,11 +1778,7 @@ pub fn qemu_plugin_entry_code() -> Option<u64> {
 pub fn qemu_plugin_n_vcpus() -> Option<i32> {
     let vcpus = unsafe { crate::sys::qemu_plugin_n_vcpus() };
 
-    if vcpus == -1 {
-        None
-    } else {
-        Some(vcpus)
-    }
+    if vcpus == -1 { None } else { Some(vcpus) }
 }
 
 #[cfg(not(feature = "plugin-api-v1"))]
@@ -1797,11 +1786,7 @@ pub fn qemu_plugin_n_vcpus() -> Option<i32> {
 pub fn qemu_plugin_num_vcpus() -> Option<i32> {
     let vcpus = unsafe { crate::sys::qemu_plugin_num_vcpus() };
 
-    if vcpus == -1 {
-        None
-    } else {
-        Some(vcpus)
-    }
+    if vcpus == -1 { None } else { Some(vcpus) }
 }
 
 #[cfg(feature = "plugin-api-v1")]
@@ -1809,11 +1794,7 @@ pub fn qemu_plugin_num_vcpus() -> Option<i32> {
 pub fn qemu_plugin_n_max_vcpus() -> Option<i32> {
     let max_cpus = unsafe { crate::sys::qemu_plugin_n_max_vcpus() };
 
-    if max_cpus == -1 {
-        None
-    } else {
-        Some(max_cpus)
-    }
+    if max_cpus == -1 { None } else { Some(max_cpus) }
 }
 
 #[cfg(not(feature = "plugin-api-v1"))]

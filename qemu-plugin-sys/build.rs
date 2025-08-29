@@ -4,6 +4,8 @@ use anyhow::Result;
 #[cfg(windows)]
 use std::{env::var, path::PathBuf, process::Command, str::FromStr};
 
+#[cfg(feature = "plugin-api-v0")]
+pub const PLUGIN_API_DEF_FILE_NAME: &str = "qemu_plugin_api_v0.def";
 #[cfg(feature = "plugin-api-v1")]
 pub const PLUGIN_API_DEF_FILE_NAME: &str = "qemu_plugin_api_v1.def";
 #[cfg(feature = "plugin-api-v2")]

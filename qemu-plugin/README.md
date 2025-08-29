@@ -53,7 +53,7 @@ The above `src/lib.rs` in a Cargo project with the following `Cargo.toml` will c
 [package]
 name = "tiny"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [lib]
 crate-type = ["cdylib"]

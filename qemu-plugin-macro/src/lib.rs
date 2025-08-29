@@ -11,7 +11,7 @@ struct QemuVersionOpts {
 
 impl QemuVersionOpts {
     fn generate(&self, input: &ItemImpl) -> Result<TokenStream> {
-        let VERSIONS = [
+        let all_versions = [
             Version::new(4, 2, 0),
             Version::new(6, 0, 0),
             Version::new(9, 0, 0),
@@ -22,7 +22,7 @@ impl QemuVersionOpts {
 
         let requirement = VersionReq::parse(&self.requirement)
             .map_err(|e| Error::custom(format!("Failed to parse version requirement: {e}")))?;
-        let versions = VERSIONS
+        let versions = all_versions
             .iter()
             .enumerate()
             .filter(|(_, v)| requirement.matches(v))

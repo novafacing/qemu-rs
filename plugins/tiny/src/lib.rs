@@ -1,11 +1,11 @@
 use anyhow::Result;
-use ctor::ctor;
 use qemu_plugin::{
-    plugin::{init_plugin, HasCallbacks, Register},
     PluginId, TranslationBlock,
+    plugin::{HasCallbacks, Register},
+    register,
 };
 #[cfg(not(feature = "plugin-api-v1"))]
-use qemu_plugin::{qemu_plugin_get_registers, RegisterDescriptor, VCPUIndex};
+use qemu_plugin::{RegisterDescriptor, VCPUIndex, qemu_plugin_get_registers};
 
 #[derive(Default)]
 struct TinyTrace {
@@ -45,7 +45,4 @@ impl HasCallbacks for TinyTrace {
     }
 }
 
-#[ctor]
-fn init() {
-    init_plugin(TinyTrace::default()).expect("Failed to initialize plugin");
-}
+register!(TinyTrace::default());
