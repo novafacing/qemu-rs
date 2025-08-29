@@ -104,7 +104,6 @@ jobs:
           cd plugins/tracer
           cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
 
-      # Only run with the log_registers=true argument if matrix.version > 1
       - name: Run Tracer
         run: |
           cd plugins/tracer
@@ -113,8 +112,6 @@ jobs:
           else
             qemu-x86_64 -plugin ../../target/release/libtracer.so,log_insns=true,log_mem=true,log_syscalls=true /bin/ls -lah
           fi
-          cd ../..
-      -
           cd ../..
 
       - name: Build and Test Tiny
