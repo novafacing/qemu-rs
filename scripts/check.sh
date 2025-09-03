@@ -30,6 +30,6 @@ popd > /dev/null
 for CHECK_PATH in "${CHECK_PATHS[@]}"; do
     MANIFEST_PATH="$CHECK_PATH/Cargo.toml"
 
-    cargo +nightly hack --manifest-path "$MANIFEST_PATH" "${COMMON_ARGS[@]}" check
-    cargo +nightly hack --manifest-path "$MANIFEST_PATH" "${COMMON_ARGS[@]}" clippy
+    cargo +nightly hack --manifest-path "$MANIFEST_PATH" "${COMMON_ARGS[@]}" check --lib
+    cargo +nightly hack --manifest-path "$MANIFEST_PATH" "${COMMON_ARGS[@]}" clippy --lib
 done

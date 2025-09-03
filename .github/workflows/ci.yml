@@ -205,7 +205,7 @@ jobs:
           brew update
           brew install pkg-config glib pixman gettext meson ninja
           brew install python
-          pip3 install distlib
+          brew install distlib
 
       - name: Cache QEMU
         id: qemu-cache-macos
