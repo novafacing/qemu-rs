@@ -201,12 +201,6 @@ jobs:
           brew update
           brew install pkg-config glib pixman gettext meson ninja
           brew install python
-          python3 -m venv qemu
-
-      - name: Activate virtualenv
-        run: |
-          . qemu/bin/activate
-          echo PATH=$PATH >> $GITHUB_ENV
 
       - name: Cache QEMU
         id: qemu-cache-macos
@@ -222,8 +216,6 @@ jobs:
           git clone https://gitlab.com/qemu/qemu qemu-upstream
           cd qemu-upstream
           git checkout "${QEMU_COMMIT_HASH}"
-          curl -o pip-compat.patch -L https://gitlab.com/-/project/11167699/uploads/0bc3ef428137940e7cdc31beae0d7594/qemu-10.0.3-pip-25.2-compat.patch
-          git apply pip-compat.patch
           cd ..
 
       - name: Build QEMU from source (softmmu)
