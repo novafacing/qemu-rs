@@ -229,7 +229,7 @@ jobs:
 
       - name: Test QEMU Install
         run: |
-          qemu-system-x86_64 --version
+          qemu-x86_64 --version
 
       - name: Run Tracer
         run: |
