@@ -203,7 +203,11 @@ jobs:
           brew install python
           brew install venv
           python3 -m venv qemu
-          source qemu/bin/activate
+
+      - name: Activate virtualenv
+        run: |
+          . .qemu/bin/activate
+          echo PATH=$PATH >> $GITHUB_ENV
 
       - name: Cache QEMU
         id: qemu-cache-macos
