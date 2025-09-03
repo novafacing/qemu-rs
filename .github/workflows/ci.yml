@@ -13,10 +13,13 @@ jobs:
   check_linux:
     name: Check Build (Linux)
     runs-on: ubuntu-latest
-    container: ubuntu:24.04
     steps:
       - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy rustfmt
+
       - uses: actions/checkout@v4
+
       - name: Check Code
         run: |
           ./scripts/check.sh
@@ -26,7 +29,11 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy rustfmt
+
       - uses: actions/checkout@v4
+
       - name: Check Code
         run: |
           ./scripts/check.sh
@@ -36,7 +43,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy rustfmt
+
       - uses: actions/checkout@v4
+
       - name: Check Code
         shell: pwsh
         run: |
@@ -121,7 +132,7 @@ jobs:
         if: steps.qemu-cache.outputs.cache-hit != 'true'
         run: |
           cd qemu-upstream
-          ./configure --enable-plugins --target-list=x86_64-softmmu
+          ./configure --enable-plugins
           make -C build -j$(nproc)
           make -C install
           cd ..
@@ -181,6 +192,7 @@ jobs:
         run: |
           brew update
           brew install pkg-config glib pixman gettext meson ninja
+          python3 -m pip install distlib
 
       - name: Cache QEMU
         id: qemu-cache-macos
@@ -201,7 +213,7 @@ jobs:
         if: steps.qemu-cache-macos.outputs.cache-hit != 'true'
         run: |
           cd qemu-upstream
-          ./configure --enable-plugins --target-list=x86_64-softmmu
+          ./configure --enable-plugins
           make -j"$(sysctl -n hw.logicalcpu)"
           sudo make install
           cd ..
@@ -229,11 +241,15 @@ jobs:
     runs-on: windows-latest
 
     env:
-      QEMU_VERSION: 10.0.0-2
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
       FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
 
     steps:
+      - name: Set QEMU Version
+        run: |
+          QEMU_VERSION=$(curl -L https://packages.msys2.org/packages/mingw-w64-ucrt-x86_64-qemu | grep 'Version:' -A1 | grep -oP '([0-9]+.){2}[0-9]+')
+          echo "QEMU_VERSION=${QEMU_VERSION}" >> $GITHUB_ENV
+
       # Cache MSYS2 
       - name: Cache MSYS2 packages
         id: msys2-cache
