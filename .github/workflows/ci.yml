@@ -201,7 +201,6 @@ jobs:
           brew update
           brew install pkg-config glib pixman gettext meson ninja
           brew install python
-          brew install venv
           python3 -m venv qemu
 
       - name: Activate virtualenv
@@ -256,17 +255,14 @@ jobs:
     runs-on: windows-latest
 
     env:
+      QEMU_VERSION: "10.1.0-1"
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
       FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
 
     steps:
       - name: Set QEMU Version
         run: |
-          $url = "https://packages.msys2.org/base/mingw-w64-qemu"
-          $content = (Invoke-WebRequest -Uri $url -UseBasicParsing).Content
-          $version = [regex]::Match($content, 'Version:\s*-\s*([0-9]+\.[0-9]+\.[0-9]+-[0-9]+)').Groups[1].Value
-          Write-Output $version
-          echo "QEMU_VERSION=$version" >> $GITHUB_ENV
+          echo "QEMU_VERSION=$QEMU_VERSION" >> $GITHUB_ENV
 
       # Cache MSYS2 
       - name: Cache MSYS2 packages
