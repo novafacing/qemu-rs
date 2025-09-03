@@ -229,6 +229,9 @@ jobs:
 
       - name: Test QEMU Install
         run: |
+          ls qemu-upstream
+          ls qemu-upstream/build
+          ls qemu-upstream/build/qemu-x86_64
           qemu-upstream/build/qemu-x86_64 --version
           qemu-x86_64 --version
 
