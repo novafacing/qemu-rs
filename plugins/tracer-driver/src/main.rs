@@ -11,25 +11,13 @@ use std::{
     path::{Path, PathBuf},
 };
 use tokio::{
-    fs::{read, remove_file, write},
+    fs::{read, remove_file},
     join, main, spawn,
     task::spawn_blocking,
 };
-use tracer::Event;
+use tracer_events::Event;
 use tracing::{debug, level_filters::LevelFilter, subscriber::set_global_default};
 use tracing_subscriber::fmt;
-
-#[cfg(debug_assertions)]
-const PLUGIN: &[u8] = include_bytes!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../target/debug/libtracer.so"
-));
-
-#[cfg(not(debug_assertions))]
-const PLUGIN: &[u8] = include_bytes!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../target/release/libtracer.so"
-));
 
 fn tmp(prefix: &str, suffix: &str) -> PathBuf {
     PathBuf::from(format!(
@@ -52,6 +40,9 @@ struct Args {
     #[clap(short = 'Q', long, default_value = "qemu-x86_64")]
     /// The alternative QEMU binary to use
     pub qemu_bin: PathBuf,
+    #[clap(short = 'P', long)]
+    /// The path to the plugin to use
+    pub plugin_path: PathBuf,
     #[clap(short = 'i', long)]
     /// Whether instructions should be logged
     pub log_insns: bool,
@@ -89,6 +80,9 @@ struct Args {
     #[clap(short = 'Q', long, default_value = "qemu-x86_64")]
     /// The alternative QEMU binary to use
     pub qemu_bin: PathBuf,
+    #[clap(short = 'P', long)]
+    /// The path to the plugin to use
+    pub plugin_path: PathBuf,
     #[clap(short = 'i', long)]
     /// Whether instructions should be logged
     pub log_insns: bool,
@@ -294,11 +288,6 @@ async fn main() -> Result<()> {
     debug!("{args:?}");
 
     let socket_path = tmp("/tmp/qemu-", ".sock");
-    let plugin_path = tmp("/tmp/qemu-", ".so");
-
-    debug!("Writing plugin to {}", plugin_path.display());
-
-    write(&plugin_path, PLUGIN).await?;
 
     let input = if let Some(input_file) = args.input_file.as_ref() {
         let Ok(input_file) = input_file.canonicalize() else {
@@ -314,7 +303,7 @@ async fn main() -> Result<()> {
 
     let listen_sock = UnixListener::bind(&socket_path)?;
 
-    let qemu_args = args.to_qemu_args(&socket_path, &plugin_path)?;
+    let qemu_args = args.to_qemu_args(&socket_path, &args.plugin_path)?;
 
     let socket_task = spawn_blocking(move || {
         debug!("Listening for events on socket");
@@ -330,7 +319,6 @@ async fn main() -> Result<()> {
 
     let (qemu_res, socket_res) = join!(socket_task, qemu_task);
 
-    remove_file(&plugin_path).await?;
     remove_file(&socket_path).await?;
 
     qemu_res??;

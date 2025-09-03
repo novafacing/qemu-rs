@@ -14,7 +14,6 @@ use qemu_plugin::{
 };
 #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 use qemu_plugin::{RegisterDescriptor, qemu_plugin_get_registers};
-use serde::{Deserialize, Serialize};
 use serde_cbor::to_writer;
 use std::{
     collections::HashMap,
@@ -22,22 +21,18 @@ use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
 };
+use tracer_events::{Event, InstructionEvent, MemoryEvent, SyscallEvent, SyscallSource};
 use typed_builder::TypedBuilder;
 use yaxpeax_x86::amd64::InstDecoder;
 
-#[derive(TypedBuilder, Clone, Debug, Deserialize, Serialize)]
-pub struct InstructionEvent {
-    pub vaddr: u64,
-    pub haddr: u64,
-    pub disas: String,
-    pub symbol: Option<String>,
-    pub data: Vec<u8>,
+trait FromInstruction {
+    fn from_instruction(ins: &Instruction) -> Result<Self>
+    where
+        Self: Sized;
 }
 
-impl TryFrom<&Instruction<'_>> for InstructionEvent {
-    type Error = Error;
-
-    fn try_from(value: &Instruction) -> Result<Self> {
+impl FromInstruction for InstructionEvent {
+    fn from_instruction(value: &Instruction) -> Result<Self> {
         let data = value.data();
         let decoder = InstDecoder::default();
         let disas = decoder
@@ -55,21 +50,14 @@ impl TryFrom<&Instruction<'_>> for InstructionEvent {
     }
 }
 
-#[derive(TypedBuilder, Clone, Debug, Deserialize, Serialize)]
-pub struct MemoryEvent {
-    pub vaddr: u64,
-    pub haddr: Option<u64>,
-    pub haddr_is_io: Option<bool>,
-    pub haddr_device_name: Option<String>,
-    pub size_shift: usize,
-    pub size_bytes: usize,
-    pub sign_extended: bool,
-    pub is_store: bool,
-    pub big_endian: bool,
+trait FromMemoryInfoVaddr {
+    fn from_memory_info_vaddr(info: &MemoryInfo, vaddr: u64) -> Result<Self>
+    where
+        Self: Sized;
 }
 
-impl MemoryEvent {
-    fn try_from(value: &MemoryInfo, vaddr: u64) -> Result<Self> {
+impl FromMemoryInfoVaddr for MemoryEvent {
+    fn from_memory_info_vaddr(value: &MemoryInfo, vaddr: u64) -> Result<Self> {
         let haddr = value.hwaddr(vaddr);
         Ok(Self::builder()
             .vaddr(vaddr)
@@ -89,42 +77,6 @@ impl MemoryEvent {
             .big_endian(value.big_endian())
             .build())
     }
-}
-
-#[derive(TypedBuilder, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct SyscallSource {
-    plugin_id: PluginId,
-    vcpu_index: VCPUIndex,
-}
-
-#[derive(TypedBuilder, Clone, Debug, Deserialize, Serialize)]
-pub struct SyscallEvent {
-    pub num: i64,
-    pub return_value: i64,
-    pub args: [u64; 8],
-    #[cfg(not(any(
-        feature = "plugin-api-v0",
-        feature = "plugin-api-v1",
-        feature = "plugin-api-v2",
-        feature = "plugin-api-v3"
-    )))]
-    #[builder(default)]
-    pub buffers: HashMap<usize, Vec<u8>>,
-}
-
-#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Registers(pub HashMap<String, Vec<u8>>);
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum Event {
-    Instruction {
-        event: InstructionEvent,
-        #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
-        registers: Registers,
-    },
-    Memory(MemoryEvent),
-    Syscall(SyscallEvent),
 }
 
 #[derive(TypedBuilder, Clone, Debug)]
@@ -186,7 +138,7 @@ impl HasCallbacks for Tracer {
         tb: TranslationBlock,
     ) -> Result<()> {
         tb.instructions().try_for_each(|insn| {
-            let event = InstructionEvent::try_from(&insn)?;
+            let event = InstructionEvent::from_instruction(&insn)?;
 
             #[cfg(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))]
             if self.log_insns {
@@ -224,6 +176,8 @@ impl HasCallbacks for Tracer {
                         tx.lock()
                             .map_err(|e| anyhow!("Failed to lock tx: {}", e))
                             .and_then(|tx| {
+                                use tracer_events::{Event, Registers};
+
                                 to_writer(
                                     tx.as_ref().ok_or_else(|| anyhow!("No tx"))?,
                                     &Event::Instruction {
@@ -257,7 +211,9 @@ impl HasCallbacks for Tracer {
                             .and_then(|tx| {
                                 to_writer(
                                     tx.as_ref().ok_or_else(|| anyhow!("No tx"))?,
-                                    &Event::Memory(MemoryEvent::try_from(&info, vaddr)?),
+                                    &Event::Memory(MemoryEvent::from_memory_info_vaddr(
+                                        &info, vaddr,
+                                    )?),
                                 )
                                 .map_err(|e| anyhow!(e))
                             })

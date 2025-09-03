@@ -1,0 +1,17 @@
+[package]
+name = "tracer-events"
+authors.workspace = true
+categories.workspace = true
+description.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+publish.workspace = true
+readme.workspace = true
+repository.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde = { version = "1.0.219", features = ["derive"] }
+typed-builder = "0.21.2"
