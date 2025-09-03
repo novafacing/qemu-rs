@@ -7,7 +7,7 @@ use windows::Win32::System::WindowsProgramming::DELAYLOAD_INFO;
 /// loads the DLL at runtime.
 type DelayHook = unsafe extern "C" fn(dli_notify: DliNotify, pdli: DELAYLOAD_INFO) -> HMODULE;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 /// Helper function invoked when failures occur in delay linking (as opposed to
 /// notifications)
 static __pfnDliFailureHook2: DelayHook = delaylink_hook;

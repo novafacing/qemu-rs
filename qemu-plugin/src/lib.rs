@@ -146,7 +146,7 @@ unsafe extern "C" {
 
 #[cfg(windows)]
 lazy_static::lazy_static! {
-    static ref G_FREE : libloading::os::windows::Symbol<unsafe extern fn(*mut c_void)> = {
+    static ref G_FREE : libloading::os::windows::Symbol<unsafe extern "C" fn(*mut c_void)> = {
         let lib =
             libloading::os::windows::Library::open_already_loaded("libglib-2.0-0.dll")
                 .expect("libglib-2.0-0.dll should already be loaded");
@@ -162,7 +162,7 @@ lazy_static::lazy_static! {
     not(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))
 ))]
 lazy_static::lazy_static! {
-    static ref G_BYTE_ARRAY_NEW: libloading::os::windows::Symbol<unsafe extern fn() -> *mut GByteArray> = {
+    static ref G_BYTE_ARRAY_NEW: libloading::os::windows::Symbol<unsafe extern "C" fn() -> *mut GByteArray> = {
         let lib =
             libloading::os::windows::Library::open_already_loaded("libglib-2.0-0.dll")
                 .expect("libglib-2.0-0.dll should already be loaded");
@@ -178,7 +178,7 @@ lazy_static::lazy_static! {
     not(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))
 ))]
 lazy_static::lazy_static! {
-    static ref G_BYTE_ARRAY_FREE: libloading::os::windows::Symbol<unsafe extern fn(*mut c_void, bool) -> *mut u8> = {
+    static ref G_BYTE_ARRAY_FREE: libloading::os::windows::Symbol<unsafe extern "C" fn(*mut c_void, bool) -> *mut u8> = {
         let lib =
             libloading::os::windows::Library::open_already_loaded("libglib-2.0-0.dll")
                 .expect("libglib-2.0-0.dll should already be loaded");
@@ -194,7 +194,7 @@ lazy_static::lazy_static! {
     not(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))
 ))]
 lazy_static::lazy_static! {
-    static ref G_ARRAY_FREE: libloading::os::windows::Symbol<unsafe extern fn(*mut c_void, bool) -> *mut u8> = {
+    static ref G_ARRAY_FREE: libloading::os::windows::Symbol<unsafe extern "C" fn(*mut c_void, bool) -> *mut u8> = {
         let lib =
             libloading::os::windows::Library::open_already_loaded("libglib-2.0-0.dll")
                 .expect("libglib-2.0-0.dll should already be loaded");
