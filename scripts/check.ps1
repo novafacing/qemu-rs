@@ -16,7 +16,7 @@ $checkPaths = @(
 
 Push-Location $RepoRoot
 try {
-    & cargo fmt --all --check
+    & cargo fmt --all --check -vv
 } finally {
     Pop-Location
 }
@@ -29,11 +29,11 @@ foreach ($checkPath in $checkPaths) {
         --at-least-one-of=plugin-api-v0,plugin-api-v1,plugin-api-v2,plugin-api-v3,plugin-api-v4,plugin-api-v5 `
         --feature-powerset `
         --exclude-no-default-features `
-        check --lib
+        check --lib -vv
     & cargo +nightly hack --manifest-path $manifestPath `
         --mutually-exclusive-features=plugin-api-v0,plugin-api-v1,plugin-api-v2,plugin-api-v3,plugin-api-v4,plugin-api-v5 `
         --at-least-one-of=plugin-api-v0,plugin-api-v1,plugin-api-v2,plugin-api-v3,plugin-api-v4,plugin-api-v5 `
         --feature-powerset `
         --exclude-no-default-features `
-        clippy --lib
+        clippy --lib -vv
 }
