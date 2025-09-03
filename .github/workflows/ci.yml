@@ -73,8 +73,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 0
-            commit: b0ca999a43a22b38158a222233d3f5881648bb4f
           - version: 1
             commit: 1332b8dd434674480f0feb2cdf3bbaebb85b4240
           - version: 2
@@ -179,8 +177,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 0
-            commit: b0ca999a43a22b38158a222233d3f5881648bb4f
           - version: 1
             commit: 1332b8dd434674480f0feb2cdf3bbaebb85b4240
           - version: 2
