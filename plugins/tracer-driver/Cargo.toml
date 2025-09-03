@@ -1,0 +1,33 @@
+[package]
+name = "tracer-driver"
+authors.workspace = true
+categories.workspace = true
+description.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+publish.workspace = true
+readme.workspace = true
+repository.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+anyhow = "1.0.99"
+clap = { version = "4.5.47", features = ["derive"] }
+rand = "0.9.2"
+serde_cbor = "0.11.2"
+serde_json = "1.0.143"
+tokio = { version = "1.47.1", features = ["full"] }
+tracing = "0.1.41"
+tracing-subscriber = "0.3.20"
+tracer-events = { path = "../tracer-events" }
+
+[features]
+default = ["plugin-api-v5"]
+plugin-api-v0 = []
+plugin-api-v1 = []
+plugin-api-v2 = []
+plugin-api-v3 = []
+plugin-api-v4 = []
+plugin-api-v5 = []

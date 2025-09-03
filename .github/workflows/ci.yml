@@ -135,8 +135,7 @@ jobs:
         if: steps.qemu-cache.outputs.cache-hit != 'true'
         run: |
           git clone https://gitlab.com/qemu/qemu qemu-upstream
-          cd qemu-upstream
-          git checkout "${QEMU_COMMIT_HASH}"
+          git -C qemu-upstream checkout "${QEMU_COMMIT_HASH}"
 
       - name: Build QEMU
         if: steps.qemu-cache.outputs.cache-hit != 'true'
@@ -145,7 +144,6 @@ jobs:
           ./configure --enable-plugins
           make -C build -j$(nproc)
           make -C build install
-          cd ..
 
       - uses: dtolnay/rust-toolchain@nightly
 
@@ -157,18 +155,13 @@ jobs:
 
       - name: Run Tracer
         run: |
-          cd plugins/tracer
-          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features || exit 0
-          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
-          cargo run --features=plugin-api-v${{ matrix.version }} --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
-          cd ../..
+          cargo build --manifest-path=plugins/tracer/Cargo.toml -r --features=plugin-api-v${{ matrix.version }} --no-default-features
+          cargo run --manifest-path=plugins/tracer-driver/Cargo.toml -r --features=plugin-api-v${{ matrix.version }} --no-default-features -- -a /bin/ls -- -lah
 
       - name: Build and Test Tiny
         run: |
-          cd plugins/tiny
-          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
-          qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
-          cd ../..
+          cargo build --manifest-path=plugins/tiny/Cargo.toml -r --features=plugin-api-v${{ matrix.version }} --no-default-features
+          qemu-x86_64 -plugin target/release/libtiny.so /bin/ls -lah
 
   test_plugins_macos:
     name: Build Plugins API v${{ matrix.version }} (macOS)
@@ -215,23 +208,19 @@ jobs:
         if: steps.qemu-cache-macos.outputs.cache-hit != 'true'
         run: |
           git clone https://gitlab.com/qemu/qemu qemu-upstream
-          cd qemu-upstream
-          git checkout "${QEMU_COMMIT_HASH}"
-          cd ..
+          git -C qemu-upstream checkout "${QEMU_COMMIT_HASH}"
 
       - name: Build QEMU from source (softmmu)
         if: steps.qemu-cache-macos.outputs.cache-hit != 'true'
         run: |
           cd qemu-upstream
           ./configure --enable-plugins
-          make -j"$(sysctl -n hw.logicalcpu)"
-          ls build/
-          sudo make install
-          ls build/
-          cd ..
+          make -C build -j"$(sysctl -n hw.logicalcpu)"
+          sudo make -C build install
 
       - name: Test QEMU Install
         run: |
+          ls /opt/homebrew/bin/
           /opt/homebrew/bin/qemu-system-x86_64-unsigned --version
 
       - name: Cache Fedora Cloud Image
@@ -245,7 +234,6 @@ jobs:
         if: steps.fedora-cache.outputs.cache-hit != 'true'
         run: |
           curl -o Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 ${{ env.FEDORA_CLOUDIMG_URL }}
-          ls
 
       - name: Build Tiny
         run: |
@@ -254,7 +242,6 @@ jobs:
           timeout --preserve-status 180 /opt/homebrew/bin/qemu-system-x86_64-unsigned -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll" 2> err.txt > out.txt
           cat out.txt
           cat err.txt
-          cd ../..
 
   test_plugins_windows:
     name: Build and Test Plugins (Windows)
@@ -311,13 +298,10 @@ jobs:
         run: |
           $ProgressPreference = 'SilentlyContinue'
           Invoke-WebRequest -Uri ${{ env.FEDORA_CLOUDIMG_URL }} -OutFile Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2
-          ls
 
       - name: Build and Test Tiny
         run: |
-          cd plugins/tiny-system
-          cargo build -r
-          cd ../..
+          cargo build --manifest-path=plugins/tiny-system/Cargo.toml -r
           $process = Start-Process PowerShell.exe -NoNewWindow -RedirectStandardOutput out.txt -RedirectStandardError err.txt -PassThru -ArgumentList "-Command", "C:\msys-custom\msys64\ucrt64\bin\qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll"
           echo "Sleeping 180.0 seconds until booted (boot process took 118s first time)"
           Start-Sleep -Seconds 180.0

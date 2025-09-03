@@ -19,6 +19,8 @@ members = [
     "plugins/tiny",
     "plugins/tiny-system",
     "plugins/tracer",
+    "plugins/tracer-driver",
+    "plugins/tracer-events",
     "plugins/icount",
 ]
 default-members = ["qemu-plugin", "qemu-plugin-sys"]

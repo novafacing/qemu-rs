@@ -15,15 +15,8 @@ serde_cbor = "0.11.2"
 tokio = { version = "1.47.1", features = ["full"] }
 typed-builder = "0.21.2"
 yaxpeax-x86 = "2.0.0"
-
-# Dependencies only used by this crate's `tracer` binary. We do not use dev-dependencies
-# because they cannot be optional.
-clap = { version = "4.5.46", features = ["derive", "string"] }
-memfd-exec = { version = "0.2.1", optional = true }
-rand = "0.9.2"
 serde_json = "1.0.143"
-tracing = "0.1.41"
-tracing-subscriber = "0.3.20"
+tracer-events = { path = "../tracer-events" }
 
 [features]
 default = ["plugin-api-v5"]
