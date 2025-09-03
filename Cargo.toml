@@ -9,21 +9,20 @@ publish = true
 readme = "README.md"
 repository = "https://github.com/novafacing/qemu-rs"
 version = "10.1.0-v0"
+rust-version = "1.88"
 
 [workspace]
 resolver = "2"
 members = [
     "qemu-plugin",
     "qemu-plugin-sys",
-    "qemu-plugin-macro",
     "plugins/tiny",
     "plugins/tiny-system",
     "plugins/tracer",
     "plugins/icount",
 ]
-default-members = ["qemu-plugin", "qemu-plugin-sys", "qemu-plugin-macro"]
+default-members = ["qemu-plugin", "qemu-plugin-sys"]
 
 [workspace.dependencies]
 qemu-plugin = { version = "10.1.0-v0", path = "qemu-plugin", default-features = false }
 qemu-plugin-sys = { version = "10.1.0-v0", path = "qemu-plugin-sys", default-features = false }
-qemu-plugin-macro = { version = "10.1.0-v0", path = "qemu-plugin-macro" }

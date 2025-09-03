@@ -1,6 +1,6 @@
+use anyhow::Result;
 #[cfg(windows)]
 use anyhow::anyhow;
-use anyhow::Result;
 #[cfg(windows)]
 use std::{env::var, path::PathBuf, process::Command, str::FromStr};
 

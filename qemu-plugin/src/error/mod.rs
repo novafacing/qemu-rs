@@ -23,10 +23,14 @@ pub enum Error {
         /// The value of the key-value argument pair which does not correctly parse as boolean
         val: String,
     },
-    #[error("Setting the QEMU plugin uninstall callback was attempted concurrently and this attempt failed.")]
+    #[error(
+        "Setting the QEMU plugin uninstall callback was attempted concurrently and this attempt failed."
+    )]
     /// Error when the QEMU plugin uninstall callback is set concurrently
     ConcurrentPluginUninstallCallbackSet,
-    #[error("Setting the QEMU plugin reset callback was attempted concurrently and this attempt failed.")]
+    #[error(
+        "Setting the QEMU plugin reset callback was attempted concurrently and this attempt failed."
+    )]
     /// Error when the QEMU plugin reset callback is set concurrently
     ConcurrentPluginResetCallbackSet,
     #[error("Invalid state for plugin reset callback")]

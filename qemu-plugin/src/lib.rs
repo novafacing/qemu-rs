@@ -77,11 +77,19 @@ pub mod __ctor_export {
 }
 
 use crate::error::{Error, Result};
-#[cfg(feature = "num-traits")]
+#[cfg(all(
+    not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")),
+    feature = "num-traits"
+))]
 use num_traits::{FromBytes, PrimInt};
-#[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2"
+)))]
 use qemu_plugin_sys::qemu_plugin_cond;
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 use qemu_plugin_sys::{
     GArray, GByteArray, qemu_plugin_read_register, qemu_plugin_reg_descriptor,
     qemu_plugin_register, qemu_plugin_scoreboard, qemu_plugin_u64,
@@ -92,15 +100,21 @@ use qemu_plugin_sys::{
     qemu_plugin_tb, qemu_plugin_vcpu_simple_cb_t, qemu_plugin_vcpu_syscall_cb_t,
     qemu_plugin_vcpu_syscall_ret_cb_t, qemu_plugin_vcpu_tb_trans_cb_t,
 };
-#[cfg(feature = "plugin-api-v4")]
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3"
+)))]
 use qemu_plugin_sys::{qemu_plugin_mem_value, qemu_plugin_mem_value_type};
+#[cfg(not(feature = "plugin-api-v0"))]
+use std::path::PathBuf;
 use std::{
     ffi::{CStr, CString, c_uint, c_void},
     marker::PhantomData,
-    path::PathBuf,
     sync::{Mutex, OnceLock},
 };
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 use std::{
     fmt::{Debug, Formatter},
     mem::MaybeUninit,
@@ -117,7 +131,10 @@ unsafe extern "C" {
     fn g_free(mem: *mut c_void);
 }
 
-#[cfg(all(not(windows), not(feature = "plugin-api-v1")))]
+#[cfg(all(
+    not(windows),
+    not(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))
+))]
 unsafe extern "C" {
     /// glib g_byte_array_new is provided by the QEMU program we are being linked into
     fn g_byte_array_new() -> *mut GByteArray;
@@ -140,7 +157,10 @@ lazy_static::lazy_static! {
     };
 }
 
-#[cfg(all(windows, not(feature = "plugin-api-v1")))]
+#[cfg(all(
+    windows,
+    not(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))
+))]
 lazy_static::lazy_static! {
     static ref G_BYTE_ARRAY_NEW: libloading::os::windows::Symbol<unsafe extern fn() -> *mut GByteArray> = {
         let lib =
@@ -153,7 +173,10 @@ lazy_static::lazy_static! {
     };
 }
 
-#[cfg(all(windows, not(feature = "plugin-api-v1")))]
+#[cfg(all(
+    windows,
+    not(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))
+))]
 lazy_static::lazy_static! {
     static ref G_BYTE_ARRAY_FREE: libloading::os::windows::Symbol<unsafe extern fn(*mut c_void, bool) -> *mut u8> = {
         let lib =
@@ -166,7 +189,10 @@ lazy_static::lazy_static! {
     };
 }
 
-#[cfg(all(windows, not(feature = "plugin-api-v1")))]
+#[cfg(all(
+    windows,
+    not(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))
+))]
 lazy_static::lazy_static! {
     static ref G_ARRAY_FREE: libloading::os::windows::Symbol<unsafe extern fn(*mut c_void, bool) -> *mut u8> = {
         let lib =
@@ -192,7 +218,10 @@ unsafe fn g_free(mem: *mut c_void) {
     unsafe { G_FREE(mem) }
 }
 
-#[cfg(all(windows, not(feature = "plugin-api-v1")))]
+#[cfg(all(
+    windows,
+    not(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))
+))]
 /// Define g_byte_array_new, because on Windows we cannot delay link it
 ///
 /// # Safety
@@ -204,7 +233,10 @@ unsafe fn g_byte_array_new() -> *mut GByteArray {
     unsafe { G_BYTE_ARRAY_NEW() }
 }
 
-#[cfg(all(windows, not(feature = "plugin-api-v1")))]
+#[cfg(all(
+    windows,
+    not(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))
+))]
 /// Define g_byte_array_free, because on Windows we cannot delay link it
 ///
 /// # Safety
@@ -217,7 +249,10 @@ unsafe fn g_byte_array_free(array: *mut GByteArray, free_segment: bool) -> *mut 
     unsafe { G_BYTE_ARRAY_FREE(array as *mut c_void, free_segment) }
 }
 
-#[cfg(all(windows, not(feature = "plugin-api-v1")))]
+#[cfg(all(
+    windows,
+    not(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))
+))]
 /// Define g_array_free, because on Windows we cannot delay link it
 ///
 /// # Safety
@@ -231,7 +266,7 @@ unsafe fn g_array_free(array: *mut GArray, free_segment: bool) -> *mut u8 {
 
 /// The index of a vCPU
 pub type VCPUIndex = c_uint;
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 /// u64 member of an entry in a scoreboard, allows access to a specific u64 member in
 /// one given entry, located at a specified offset. Inline operations expect this as an
 /// entry.
@@ -240,7 +275,11 @@ pub type PluginU64 = qemu_plugin_u64;
 pub type CallbackFlags = qemu_plugin_cb_flags;
 /// Memory read/write flags
 pub type MemRW = qemu_plugin_mem_rw;
-#[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2"
+)))]
 /// A condition for a callback to be run
 pub type PluginCondition = qemu_plugin_cond;
 /// Plugin operations for inline operations
@@ -439,7 +478,11 @@ impl<'a> TranslationBlock<'a> {
         };
     }
 
-    #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2"
+    )))]
     /// Register a callback to be conditionally run on execution of this translation
     /// block
     ///
@@ -467,7 +510,11 @@ impl<'a> TranslationBlock<'a> {
         )
     }
 
-    #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2"
+    )))]
     /// Register a callback to be conditionally run on execution of this translation
     /// block
     ///
@@ -579,7 +626,11 @@ impl<'a> Instruction<'a> {
 }
 
 impl<'a> Instruction<'a> {
-    #[cfg(any(feature = "plugin-api-v1", feature = "plugin-api-v2"))]
+    #[cfg(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2"
+    ))]
     /// Returns the data for this instruction. This method may only be called inside the
     /// callback in which the instruction is obtained, but the resulting data is owned.
     pub fn data(&self) -> Vec<u8> {
@@ -599,7 +650,11 @@ impl<'a> Instruction<'a> {
         data
     }
 
-    #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2"
+    )))]
     /// Reads the data for this instruction returning number of bytes read. This method may only be
     /// called inside the callback in which the instruction is obtained.
     pub fn read_data(&self, data: &mut [u8]) -> usize {
@@ -613,7 +668,11 @@ impl<'a> Instruction<'a> {
         }
     }
 
-    #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2"
+    )))]
     /// Returns the data for this instruction. This method may only be called inside the
     /// callback in which the instruction is obtained, but the resulting data is owned.
     pub fn data(&self) -> Vec<u8> {
@@ -660,6 +719,7 @@ impl<'a> Instruction<'a> {
         }
     }
 
+    #[cfg(not(feature = "plugin-api-v0"))]
     /// Returns the symbol associated with this instruction, if one exists and the
     /// binary contains a symbol table
     pub fn symbol(&self) -> Result<Option<String>> {
@@ -723,7 +783,11 @@ impl<'a> Instruction<'a> {
     /// - `cond`: The condition for the callback to be run
     /// - `entry`: The entry to increment the scoreboard for
     /// - `immediate`: The immediate value to use for the callback
-    #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2"
+    )))]
     pub fn register_conditional_execute_callback<F>(
         &self,
         cb: F,
@@ -753,7 +817,11 @@ impl<'a> Instruction<'a> {
     /// - `cond`: The condition for the callback to be run
     /// - `entry`: The entry to increment the scoreboard for
     /// - `immediate`: The immediate value to use for the callback
-    #[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2"
+    )))]
     pub fn register_conditional_execute_callback_flags<F>(
         &self,
         cb: F,
@@ -874,14 +942,24 @@ impl<'a> MemoryInfo<'a> {
     }
 
     /// Return last value loaded/stored
-    #[cfg(feature = "plugin-api-v4")]
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2",
+        feature = "plugin-api-v3"
+    )))]
     pub fn value(&self) -> MemValue {
         let qemu_mem_value = unsafe { crate::sys::qemu_plugin_mem_get_value(self.memory_info) };
         MemValue::from(qemu_mem_value)
     }
 }
 
-#[cfg(feature = "plugin-api-v4")]
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3"
+)))]
 #[derive(Clone)]
 /// Memory value loaded/stored (in memory callback)
 ///
@@ -899,7 +977,12 @@ pub enum MemValue {
     U128(u128),
 }
 
-#[cfg(feature = "plugin-api-v4")]
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3"
+)))]
 impl From<qemu_plugin_mem_value> for MemValue {
     fn from(value: qemu_plugin_mem_value) -> Self {
         unsafe {
@@ -918,7 +1001,7 @@ impl From<qemu_plugin_mem_value> for MemValue {
     }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 #[derive(Clone)]
 /// Wrapper structure for a `qemu_plugin_register_descriptor`
 ///
@@ -937,7 +1020,7 @@ pub struct RegisterDescriptor<'a> {
     marker: PhantomData<&'a ()>,
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 impl<'a> From<qemu_plugin_reg_descriptor> for RegisterDescriptor<'a> {
     fn from(descriptor: qemu_plugin_reg_descriptor) -> Self {
         let name = unsafe { CStr::from_ptr(descriptor.name) }
@@ -965,7 +1048,7 @@ impl<'a> From<qemu_plugin_reg_descriptor> for RegisterDescriptor<'a> {
     }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 impl<'a> Debug for RegisterDescriptor<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("RegisterDescriptor")
@@ -975,7 +1058,7 @@ impl<'a> Debug for RegisterDescriptor<'a> {
     }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 impl<'a> RegisterDescriptor<'a> {
     /// Read a register value
     ///
@@ -1071,11 +1154,13 @@ impl<'a> HwAddr<'a> {
         unsafe { crate::sys::qemu_plugin_hwaddr_is_io(self.hwaddr as *mut qemu_plugin_hwaddr) }
     }
 
+    #[cfg(not(feature = "plugin-api-v0"))]
     /// Returns the physical address for the memory operation
     pub fn hwaddr(&self) -> u64 {
         unsafe { crate::sys::qemu_plugin_hwaddr_phys_addr(self.hwaddr as *mut qemu_plugin_hwaddr) }
     }
 
+    #[cfg(not(feature = "plugin-api-v0"))]
     /// Returns a string representing the device
     pub fn device_name(&self) -> Result<Option<String>> {
         let device_name = unsafe {
@@ -1092,7 +1177,7 @@ impl<'a> HwAddr<'a> {
     }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 /// A wrapper structure for a `qemu_plugin_scoreboard *`. This is a way of having one
 /// entry per VCPU, the count of which is managed automatically by QEMU. Keep in mind
 /// that additional entries *and* existing entries will be allocated and reallocated by
@@ -1106,7 +1191,7 @@ where
     marker: PhantomData<&'a T>,
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 impl<'a, T> Scoreboard<'a, T> {
     /// Allocate a new scoreboard object. This must be freed by calling
     /// `qemu_plugin_scoreboard_free` (or by being dropped).
@@ -1132,14 +1217,14 @@ impl<'a, T> Scoreboard<'a, T> {
     }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 impl<'a, T> Default for Scoreboard<'a, T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 impl<'a, T> Drop for Scoreboard<'a, T> {
     fn drop(&mut self) {
         unsafe {
@@ -1168,12 +1253,11 @@ static RESET_CALLBACK: OnceLock<
 /// Handle the invocation of the uninstall callback by calling the stored
 /// callback closure, if one exists.
 extern "C" fn handle_qemu_plugin_uninstall_callback(id: qemu_plugin_id_t) {
-    if let Some(callback) = UNINSTALL_CALLBACK.get() {
-        if let Ok(mut callback) = callback.lock() {
-            if let Some(callback) = callback.take() {
-                callback(id);
-            }
-        }
+    if let Some(callback) = UNINSTALL_CALLBACK.get()
+        && let Ok(mut callback) = callback.lock()
+        && let Some(callback) = callback.take()
+    {
+        callback(id);
     }
     // NOTE: An error here is ignored, and exceedingly fatal
 }
@@ -1181,12 +1265,11 @@ extern "C" fn handle_qemu_plugin_uninstall_callback(id: qemu_plugin_id_t) {
 /// Handle the invocation of the reset callback by calling the stored
 /// callback closure, if one exists.
 extern "C" fn handle_qemu_plugin_reset_callback(id: qemu_plugin_id_t) {
-    if let Some(callback) = UNINSTALL_CALLBACK.get() {
-        if let Ok(mut callback) = callback.lock() {
-            if let Some(callback) = callback.take() {
-                callback(id);
-            }
-        }
+    if let Some(callback) = UNINSTALL_CALLBACK.get()
+        && let Ok(mut callback) = callback.lock()
+        && let Some(callback) = callback.take()
+    {
+        callback(id);
     }
     // NOTE: An error here is ignored, and exceedingly fatal
 }
@@ -1348,7 +1431,11 @@ where
     tb.register_execute_callback_flags(cb, flags);
 }
 
-#[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2"
+)))]
 /// Register a callback to be conditionally called when a translation block is executed.
 ///
 /// # Arguments
@@ -1376,7 +1463,7 @@ pub fn qemu_plugin_register_vcpu_tb_exec_cond_cb<F>(
     tb.register_conditional_execute_callback_flags(cb, flags, cond, entry, immediate);
 }
 
-#[cfg(feature = "plugin-api-v1")]
+#[cfg(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 /// Register an inline callback to be called when a translation block is executed.
 ///
@@ -1402,7 +1489,7 @@ pub fn qemu_plugin_register_vcpu_tb_exec_inline(
     }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 /// Register an inline callback to be called when a translation block is executed.
 ///
@@ -1454,7 +1541,11 @@ where
     insn.register_execute_callback_flags(cb, flags);
 }
 
-#[cfg(not(any(feature = "plugin-api-v1", feature = "plugin-api-v2")))]
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2"
+)))]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 /// Register a callback to be conditionally called when an instruction is executed.
 ///
@@ -1478,7 +1569,7 @@ pub fn qemu_plugin_register_vcpu_insn_exec_cond_cb<F>(
     insn.register_conditional_execute_callback_flags(cb, flags, cond, entry, immediate);
 }
 
-#[cfg(feature = "plugin-api-v1")]
+#[cfg(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 /// Register an inline callback to be called when an instruction is executed.
 ///
@@ -1504,7 +1595,7 @@ pub fn qemu_plugin_register_vcpu_insn_exec_inline(
     }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 /// Register an inline callback to be called when an instruction is executed.
 ///
@@ -1564,7 +1655,7 @@ pub fn qemu_plugin_register_vcpu_mem_cb<F>(
     insn.register_memory_access_callback_flags(cb, rw, flags);
 }
 
-#[cfg(feature = "plugin-api-v1")]
+#[cfg(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 /// Register an inline callback for every memory transaction of a particular instruction.
 ///
@@ -1593,7 +1684,7 @@ pub fn qemu_plugin_register_vcpu_mem_inline(
     }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 /// Register an inline callback for every memory transaction of a particular instruction.
 ///
@@ -1698,6 +1789,35 @@ where
     Ok(())
 }
 
+#[cfg(feature = "plugin-api-v0")]
+/// Parse a boolean argument in the form of `=[on|yes|true|off|no|false]`.
+/// returns true if the combination @name=@val parses correctly to a boolean
+/// argument, and false otherwise. Note that in plugin API v0, this function is
+/// not available, so we implement it ourselves. This may ostensibly lead to
+/// different behavior.
+///
+/// # Arguments
+///
+/// - `name`: argument name, the part before the equals sign @val: argument
+///   value, what’s after the equals sign @ret: output return value
+/// - `val`: Argument value, what’s after the equals sign
+///
+pub fn qemu_plugin_bool_parse<S>(name: S, val: S) -> Result<bool>
+where
+    S: AsRef<str>,
+{
+    // We can't call sys::qemu_plugin_bool_parse directly because it doesn't exist in plugin-api-v0
+    match val.as_ref() {
+        "on" | "yes" | "true" => Ok(true),
+        "off" | "no" | "false" => Ok(false),
+        _ => Err(Error::InvalidBool {
+            name: name.as_ref().to_string(),
+            val: val.as_ref().to_string(),
+        }),
+    }
+}
+
+#[cfg(not(feature = "plugin-api-v0"))]
 /// Parse a boolean argument in the form of `=[on|yes|true|off|no|false]`. returns true
 /// if the combination @name=@val parses correctly to a boolean argument, and false
 /// otherwise.
@@ -1729,6 +1849,7 @@ where
     }
 }
 
+#[cfg(not(feature = "plugin-api-v0"))]
 /// Return the path to the binary file being executed if running in user mode,
 /// or None if running in System mode. Return an error if the path cannot be
 /// converted to a string.
@@ -1743,6 +1864,7 @@ pub fn qemu_plugin_path_to_binary() -> Result<Option<PathBuf>> {
     }
 }
 
+#[cfg(not(feature = "plugin-api-v0"))]
 /// Return the start of the text segment of the binary file being executed if
 /// running in user mode, or None if running in System mode. If not running in
 /// system mode, `None` may be interpreted as zero by callers, but the caller
@@ -1753,6 +1875,7 @@ pub fn qemu_plugin_start_code() -> Option<u64> {
     if start == 0 { None } else { Some(start) }
 }
 
+#[cfg(not(feature = "plugin-api-v0"))]
 /// Return the end of the text segment of the binary file being executed if
 /// running in user mode, or None if running in System mode. If not running in
 /// system mode, `None` may be interpreted as zero by callers, but the caller
@@ -1763,6 +1886,7 @@ pub fn qemu_plugin_end_code() -> Option<u64> {
     if end == 0 { None } else { Some(end) }
 }
 
+#[cfg(not(feature = "plugin-api-v0"))]
 /// Return the start address for the module of the binary file being executed if
 /// running in user mode, or None if running in System mode. If not running in
 /// system mode, `None` may be interpreted as zero by callers, but the caller
@@ -1773,7 +1897,7 @@ pub fn qemu_plugin_entry_code() -> Option<u64> {
     if entry == 0 { None } else { Some(entry) }
 }
 
-#[cfg(feature = "plugin-api-v1")]
+#[cfg(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))]
 /// Return the number of vCPUs, if running in system mode
 pub fn qemu_plugin_n_vcpus() -> Option<i32> {
     let vcpus = unsafe { crate::sys::qemu_plugin_n_vcpus() };
@@ -1781,7 +1905,7 @@ pub fn qemu_plugin_n_vcpus() -> Option<i32> {
     if vcpus == -1 { None } else { Some(vcpus) }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 /// Return the number of vCPUs, if running in system mode
 pub fn qemu_plugin_num_vcpus() -> Option<i32> {
     let vcpus = unsafe { crate::sys::qemu_plugin_num_vcpus() };
@@ -1789,7 +1913,7 @@ pub fn qemu_plugin_num_vcpus() -> Option<i32> {
     if vcpus == -1 { None } else { Some(vcpus) }
 }
 
-#[cfg(feature = "plugin-api-v1")]
+#[cfg(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))]
 /// Return the maximum number of vCPUs, if running in system mode
 pub fn qemu_plugin_n_max_vcpus() -> Option<i32> {
     let max_cpus = unsafe { crate::sys::qemu_plugin_n_max_vcpus() };
@@ -1797,7 +1921,7 @@ pub fn qemu_plugin_n_max_vcpus() -> Option<i32> {
     if max_cpus == -1 { None } else { Some(max_cpus) }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 /// Returns a potentially empty list of registers. This should be used from a
 /// qemu_plugin_register_vcpu_init_cb callback after the vcpu has been initialized.
 pub fn qemu_plugin_get_registers<'a>() -> Result<Vec<RegisterDescriptor<'a>>> {
@@ -1826,6 +1950,7 @@ pub fn qemu_plugin_get_registers<'a>() -> Result<Vec<RegisterDescriptor<'a>>> {
 }
 
 #[cfg(not(any(
+    feature = "plugin-api-v0",
     feature = "plugin-api-v1",
     feature = "plugin-api-v2",
     feature = "plugin-api-v3"
@@ -1847,26 +1972,26 @@ pub fn qemu_plugin_read_memory_vaddr(addr: u64, len: usize) -> Result<Vec<u8>> {
     }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 /// Add a value to a `PluginU64` for a given VCPU
 pub fn qemu_plugin_u64_add(entry: PluginU64, vcpu_index: VCPUIndex, added: u64) -> Result<()> {
     unsafe { crate::sys::qemu_plugin_u64_add(entry, vcpu_index, added) };
     Ok(())
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 /// Get the value of a `PluginU64` for a given VCPU
 pub fn qemu_plugin_u64_get(entry: PluginU64, vcpu_index: VCPUIndex) -> u64 {
     unsafe { crate::sys::qemu_plugin_u64_get(entry, vcpu_index) }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 /// Set the value of a `PluginU64` for a given VCPU
 pub fn qemu_plugin_u64_set(entry: PluginU64, vcpu_index: VCPUIndex, value: u64) {
     unsafe { crate::sys::qemu_plugin_u64_set(entry, vcpu_index, value) }
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 /// Get the sum of all VCPU entries in a scoreboard
 pub fn qemu_plugin_scoreboard_sum(entry: PluginU64) -> u64 {
     unsafe { crate::sys::qemu_plugin_u64_sum(entry) }

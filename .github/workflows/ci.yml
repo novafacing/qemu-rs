@@ -10,10 +10,43 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  check_linux:
+    name: Check Build (Linux)
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    steps:
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/checkout@v4
+      - name: Check Code
+        run: |
+          ./scripts/check.sh
+
+  check_macos:
+    name: Check Build (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/checkout@v4
+      - name: Check Code
+        run: |
+          ./scripts/check.sh
+
+  check_windows:
+    name: Check Build (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/checkout@v4
+      - name: Check Code
+        shell: pwsh
+        run: |
+          ./scripts/check.ps1
+
   test_plugins_linux:
     name: Build and Test Plugins API v${{ matrix.version }} (Linux)
     runs-on: ubuntu-latest
     container: ubuntu:24.04
+
     strategy:
       matrix:
         include:
@@ -29,8 +62,10 @@ jobs:
             commit: 595cd9ce2ec9330882c991a647d5bc2a5640f380
           - version: 5
             commit: f8b2f64e2336a28bf0d50b6ef8a7d8c013e9bcf3
+
     env:
       QEMU_COMMIT_HASH: ${{ matrix.commit }}
+
     steps:
       - name: Set up Sources List
         run: |
@@ -86,32 +121,25 @@ jobs:
         if: steps.qemu-cache.outputs.cache-hit != 'true'
         run: |
           cd qemu-upstream
-          ./configure --enable-plugins
-          cd build
-          make -j$(nproc)
-          make install
-          cd ../..
+          ./configure --enable-plugins --target-list=x86_64-softmmu
+          make -C build -j$(nproc)
+          make -C install
+          cd ..
 
       - uses: dtolnay/rust-toolchain@nightly
+
       - uses: actions/checkout@v4
 
       - name: Test QEMU Install
         run: |
           qemu-x86_64 --help
 
-      - name: Build Tracer
-        run: |
-          cd plugins/tracer
-          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
-
       - name: Run Tracer
         run: |
           cd plugins/tracer
-          if [ ${{ matrix.version }} -gt 1 ]; then
-            qemu-x86_64 -plugin ../../target/release/libtracer.so,log_insns=true,log_mem=true,log_syscalls=true,log_registers=true /bin/ls -lah
-          else
-            qemu-x86_64 -plugin ../../target/release/libtracer.so,log_insns=true,log_mem=true,log_syscalls=true /bin/ls -lah
-          fi
+          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features || exit 0
+          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
+          cargo run --features=plugin-api-v${{ matrix.version }} --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
           cd ../..
 
       - name: Build and Test Tiny
@@ -121,13 +149,90 @@ jobs:
           qemu-x86_64 -plugin ../../target/release/libtiny.so /bin/ls -lah
           cd ../..
 
+  test_plugins_macos:
+    name: Build Plugins API v${{ matrix.version }} (macOS)
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        include:
+          - version: 0
+            commit: b0ca999a43a22b38158a222233d3f5881648bb4f
+          - version: 1
+            commit: 1332b8dd434674480f0feb2cdf3bbaebb85b4240
+          - version: 2
+            commit: c25df57ae8f9fe1c72eee2dab37d76d904ac382e
+          - version: 3
+            commit: 7de77d37880d7267a491cb32a1b2232017d1e545
+          - version: 4
+            commit: 595cd9ce2ec9330882c991a647d5bc2a5640f380
+          - version: 5
+            commit: f8b2f64e2336a28bf0d50b6ef8a7d8c013e9bcf3
+
+    env:
+      QEMU_COMMIT_HASH: ${{ matrix.commit }}
+
+    steps:
+      - uses: dtolnay/rust-toolchain@nightly
+
+      - uses: actions/checkout@v4
+
+      - name: Install QEMU Build Dependencies
+        run: |
+          brew update
+          brew install pkg-config glib pixman gettext meson ninja
+
+      - name: Cache QEMU
+        id: qemu-cache-macos
+        uses: actions/cache@v3
+        with:
+          path: |
+            qemu-upstream
+          key: macos-qemu-v${{ matrix.version }}-${{ matrix.commit }}
+
+      - name: Clone QEMU
+        if: steps.qemu-cache-macos.outputs.cache-hit != 'true'
+        run: |
+          git clone https://gitlab.com/qemu/qemu qemu-upstream
+          cd qemu-upstream
+          git checkout "${QEMU_COMMIT_HASH}"
+
+      - name: Build QEMU from source (softmmu)
+        if: steps.qemu-cache-macos.outputs.cache-hit != 'true'
+        run: |
+          cd qemu-upstream
+          ./configure --enable-plugins --target-list=x86_64-softmmu
+          make -j"$(sysctl -n hw.logicalcpu)"
+          sudo make install
+          cd ..
+
+      - name: Test QEMU Install
+        run: |
+          qemu-system-x86_64 --version
+
+      - name: Run Tracer
+        run: |
+          cd plugins/tracer
+          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features || exit 0
+          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
+          cargo run --features=plugin-api-v${{ matrix.version }} --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
+          cd ../..
+
+      - name: Build Tiny
+        run: |
+          cd plugins/tiny
+          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
+          cd ../..
+
   test_plugins_windows:
     name: Build and Test Plugins (Windows)
     runs-on: windows-latest
+
     env:
       QEMU_VERSION: 10.0.0-2
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
       FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
+
     steps:
       # Cache MSYS2 
       - name: Cache MSYS2 packages

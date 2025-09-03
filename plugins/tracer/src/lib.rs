@@ -1,5 +1,6 @@
 use anyhow::{Error, Result, anyhow};
 #[cfg(not(any(
+    feature = "plugin-api-v0",
     feature = "plugin-api-v1",
     feature = "plugin-api-v2",
     feature = "plugin-api-v3"
@@ -11,7 +12,7 @@ use qemu_plugin::{
     plugin::{HasCallbacks, Register},
     register,
 };
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 use qemu_plugin::{RegisterDescriptor, qemu_plugin_get_registers};
 use serde::{Deserialize, Serialize};
 use serde_cbor::to_writer;
@@ -102,6 +103,7 @@ pub struct SyscallEvent {
     pub return_value: i64,
     pub args: [u64; 8],
     #[cfg(not(any(
+        feature = "plugin-api-v0",
         feature = "plugin-api-v1",
         feature = "plugin-api-v2",
         feature = "plugin-api-v3"
@@ -110,7 +112,7 @@ pub struct SyscallEvent {
     pub buffers: HashMap<usize, Vec<u8>>,
 }
 
-#[cfg(not(feature = "plugin-api-v1"))]
+#[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Registers(pub HashMap<String, Vec<u8>>);
 
@@ -118,7 +120,7 @@ pub struct Registers(pub HashMap<String, Vec<u8>>);
 pub enum Event {
     Instruction {
         event: InstructionEvent,
-        #[cfg(not(feature = "plugin-api-v1"))]
+        #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
         registers: Registers,
     },
     Memory(MemoryEvent),
@@ -130,7 +132,7 @@ struct Tracer {
     #[builder(default)]
     pub target_name: Option<String>,
     pub syscalls: Arc<Mutex<HashMap<SyscallSource, SyscallEvent>>>,
-    #[cfg(not(feature = "plugin-api-v1"))]
+    #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
     pub registers: Arc<Mutex<Vec<RegisterDescriptor<'static>>>>,
     #[builder(default)]
     pub tx: Arc<Mutex<Option<UnixStream>>>,
@@ -140,20 +142,20 @@ struct Tracer {
     pub log_mem: bool,
     #[builder(default)]
     pub log_syscalls: bool,
-    #[cfg(not(feature = "plugin-api-v1"))]
+    #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
     #[builder(default)]
     pub log_registers: bool,
 }
 
 impl Tracer {
     pub fn new() -> Self {
-        #[cfg(feature = "plugin-api-v1")]
+        #[cfg(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))]
         {
             Self::builder()
                 .syscalls(Arc::new(Mutex::new(HashMap::new())))
                 .build()
         }
-        #[cfg(not(feature = "plugin-api-v1"))]
+        #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
         {
             Self::builder()
                 .syscalls(Arc::new(Mutex::new(HashMap::new())))
@@ -164,7 +166,7 @@ impl Tracer {
 }
 
 impl HasCallbacks for Tracer {
-    #[cfg(not(feature = "plugin-api-v1"))]
+    #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
     fn on_vcpu_init(
         &mut self,
         _id: PluginId,
@@ -186,7 +188,7 @@ impl HasCallbacks for Tracer {
         tb.instructions().try_for_each(|insn| {
             let event = InstructionEvent::try_from(&insn)?;
 
-            #[cfg(feature = "plugin-api-v1")]
+            #[cfg(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))]
             if self.log_insns {
                 let tx = self.tx.clone();
 
@@ -206,8 +208,10 @@ impl HasCallbacks for Tracer {
                 });
             }
 
-            #[cfg(not(feature = "plugin-api-v1"))]
+            #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
             if self.log_insns {
+                use qemu_plugin::CallbackFlags;
+
                 let tx = self.tx.clone();
                 let registers = self
                     .registers
@@ -215,29 +219,32 @@ impl HasCallbacks for Tracer {
                     .map_err(|e| anyhow!("Failed to lock registers: {}", e))?
                     .clone();
 
-                insn.register_execute_callback(move |_| {
-                    tx.lock()
-                        .map_err(|e| anyhow!("Failed to lock tx: {}", e))
-                        .and_then(|tx| {
-                            to_writer(
-                                tx.as_ref().ok_or_else(|| anyhow!("No tx"))?,
-                                &Event::Instruction {
-                                    event: event.clone(),
-                                    registers: Registers(
-                                        registers
-                                            .iter()
-                                            .map(|r| {
-                                                let value = r.read().unwrap_or_else(|_| vec![]);
-                                                (r.name.clone(), value)
-                                            })
-                                            .collect(),
-                                    ),
-                                },
-                            )
-                            .map_err(|e| anyhow!(e))
-                        })
-                        .expect("Failed to send instruction event");
-                });
+                insn.register_execute_callback_flags(
+                    move |_| {
+                        tx.lock()
+                            .map_err(|e| anyhow!("Failed to lock tx: {}", e))
+                            .and_then(|tx| {
+                                to_writer(
+                                    tx.as_ref().ok_or_else(|| anyhow!("No tx"))?,
+                                    &Event::Instruction {
+                                        event: event.clone(),
+                                        registers: Registers(
+                                            registers
+                                                .iter()
+                                                .map(|r| {
+                                                    let value = r.read().unwrap_or_else(|_| vec![]);
+                                                    (r.name.clone(), value)
+                                                })
+                                                .collect(),
+                                        ),
+                                    },
+                                )
+                                .map_err(|e| anyhow!(e))
+                            })
+                            .expect("Failed to send instruction event");
+                    },
+                    CallbackFlags::QEMU_PLUGIN_CB_R_REGS,
+                );
             }
 
             if self.log_mem {
@@ -285,6 +292,7 @@ impl HasCallbacks for Tracer {
         }
 
         #[cfg(any(
+            feature = "plugin-api-v0",
             feature = "plugin-api-v1",
             feature = "plugin-api-v2",
             feature = "plugin-api-v3"
@@ -296,6 +304,7 @@ impl HasCallbacks for Tracer {
             .build();
 
         #[cfg(not(any(
+            feature = "plugin-api-v0",
             feature = "plugin-api-v1",
             feature = "plugin-api-v2",
             feature = "plugin-api-v3"
@@ -344,6 +353,7 @@ impl HasCallbacks for Tracer {
         Ok(())
     }
 
+    #[allow(unused_variables)]
     fn on_syscall_return(
         &mut self,
         id: PluginId,
@@ -371,6 +381,7 @@ impl HasCallbacks for Tracer {
             .ok_or_else(|| anyhow!("No syscall event found"))?;
 
         #[cfg(not(any(
+            feature = "plugin-api-v0",
             feature = "plugin-api-v1",
             feature = "plugin-api-v2",
             feature = "plugin-api-v3"
@@ -382,13 +393,12 @@ impl HasCallbacks for Tracer {
                 Some("arm") => Some(3),
                 Some("aarch64") => Some(63),
                 _ => None,
-            } {
-                if num == read_sysno {
-                    let addr = event.args[1];
-                    let len = event.args[2] as usize;
-                    let buffer = qemu_plugin_read_memory_vaddr(addr, len)?;
-                    event.buffers.insert(1, buffer);
-                }
+            } && num == read_sysno
+            {
+                let addr = event.args[1];
+                let len = event.args[2] as usize;
+                let buffer = qemu_plugin_read_memory_vaddr(addr, len)?;
+                event.buffers.insert(1, buffer);
             }
         }
 
@@ -413,7 +423,7 @@ pub struct PluginArgs {
     pub log_insns: bool,
     pub log_mem: bool,
     pub log_syscalls: bool,
-    #[cfg(not(feature = "plugin-api-v1"))]
+    #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
     pub log_registers: bool,
     pub socket_path: PathBuf,
 }
@@ -422,7 +432,7 @@ impl TryFrom<&Args> for PluginArgs {
     type Error = Error;
 
     fn try_from(value: &Args) -> Result<Self> {
-        #[cfg(feature = "plugin-api-v1")]
+        #[cfg(any(feature = "plugin-api-v0", feature = "plugin-api-v1"))]
         {
             Ok(Self::builder()
                 .log_insns(
@@ -461,7 +471,7 @@ impl TryFrom<&Args> for PluginArgs {
                 )
                 .build())
         }
-        #[cfg(not(feature = "plugin-api-v1"))]
+        #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
         {
             Ok(Self::builder()
                 .log_insns(
@@ -524,7 +534,7 @@ impl Register for Tracer {
         self.log_mem = plugin_args.log_mem;
         self.log_syscalls = plugin_args.log_syscalls;
 
-        #[cfg(not(feature = "plugin-api-v1"))]
+        #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
         {
             self.log_registers = plugin_args.log_registers;
         }
