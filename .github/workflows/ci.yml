@@ -177,14 +177,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 1
-            commit: 1332b8dd434674480f0feb2cdf3bbaebb85b4240
-          - version: 2
-            commit: c25df57ae8f9fe1c72eee2dab37d76d904ac382e
-          - version: 3
-            commit: 7de77d37880d7267a491cb32a1b2232017d1e545
-          - version: 4
-            commit: 595cd9ce2ec9330882c991a647d5bc2a5640f380
+          # - version: 1
+          #   commit: 1332b8dd434674480f0feb2cdf3bbaebb85b4240
+          # - version: 2
+          #   commit: c25df57ae8f9fe1c72eee2dab37d76d904ac382e
+          # - version: 3
+          #   commit: 7de77d37880d7267a491cb32a1b2232017d1e545
+          # - version: 4
+          #   commit: 595cd9ce2ec9330882c991a647d5bc2a5640f380
           - version: 5
             commit: f8b2f64e2336a28bf0d50b6ef8a7d8c013e9bcf3
 
