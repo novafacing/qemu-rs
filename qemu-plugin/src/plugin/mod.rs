@@ -472,7 +472,7 @@ macro_rules! register {
         )]
         // On Windows, it's from .CRT$XCA to .CRT$XCZ, where usually XCU =
         // early, XCT = middle, XCL = late
-        #[cfg_attr(windows, link_section = ".CRT$XCU")]
+        #[cfg_attr(windows, unsafe(link_section = ".CRT$XCU"))]
         static __PLUGIN_CTOR: unsafe extern "C" fn() = __plugin_ctor;
     };
 }
