@@ -7,7 +7,7 @@ $RepoRoot = (Resolve-Path (Join-Path $ScriptDir '..')).Path
 
 $checkPaths = @(
     (Join-Path $RepoRoot 'qemu-plugin'),
-    (Join-Path $RepoRoot 'qemu-plugin-sys'),
+    (Join-Path $RepoRoot 'qemu-plugin-sys')
     # (Join-Path $RepoRoot 'plugins/icount'),
     # (Join-Path $RepoRoot 'plugins/tiny'),
     # (Join-Path $RepoRoot 'plugins/tiny-system'),
