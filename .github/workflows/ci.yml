@@ -260,10 +260,7 @@ jobs:
     steps:
       - name: Set QEMU Version
         run: |
-          $Response = Invoke-WebRequest -Uri "https://packages.msys2.org/packages/mingw-w64-ucrt-x86_64-qemu" -UseBasicParsing
-          $Content = $Response.Content
-          $VersionMatch = $Content | Select-String -Pattern "Version:" -Context 0,1
-          $QEMU_VERSION = $VersionMatch.Context.PostContext | Select-String -Pattern "([0-9]+\.){2}[0-9]+" | ForEach-Object { $_.Matches.Value }
+          $QEMU_VERSION = (Invoke-WebRequest "https://packages.msys2.org/packages/mingw-w64-ucrt-x86_64-qemu" -UseBasicParsing).Content -split "`n" | Where-Object { $_ -match "Version:" } | Select-Object -Next 1 | ForEach-Object { if ($_ -match "([0-9]+\.){2}[0-9]+") { $matches[0] } }
           echo "QEMU_VERSION=$QEMU_VERSION" >> $GITHUB_ENV
 
       # Cache MSYS2 
