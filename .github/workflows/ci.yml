@@ -190,7 +190,7 @@ jobs:
 
     env:
       QEMU_COMMIT_HASH: ${{ matrix.commit }}
-      FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
+      FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/42/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2"
 
     steps:
       - uses: dtolnay/rust-toolchain@nightly
@@ -232,26 +232,26 @@ jobs:
 
       - name: Test QEMU Install
         run: |
-          qemu-x86_64-unsigned --version
+          qemu-system-x86_64-unsigned --version
 
       - name: Cache Fedora Cloud Image
         id: fedora-cache
         uses: actions/cache@v3
         with:
-          path: Fedora-Cloud-Base-39-1.5.x86_64.qcow2
-          key: fedora-cloud-39-1.5
+          path: Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2
+          key: fedora-Cloud-42-1.1
 
       - name: Download Cloud Image
         if: steps.fedora-cache.outputs.cache-hit != 'true'
         run: |
-          curl -o Fedora-Cloud-Base-39-1.5.x86_64.qcow2 ${{ env.FEDORA_CLOUDIMG_URL }}
+          curl -o Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 ${{ env.FEDORA_CLOUDIMG_URL }}
           ls
 
       - name: Build Tiny
         run: |
           cd plugins/tiny-system
           cargo build -r
-          timeout --preserve-status 180 qemu-system-aarch64-unsigned -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll" 2> err.txt > out.txt
+          timeout --preserve-status 180 qemu-system-x86_64-unsigned -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll" 2> err.txt > out.txt
           cat out.txt
           cat err.txt
           cd ../..
@@ -263,7 +263,7 @@ jobs:
     env:
       QEMU_VERSION: "10.1.0-1"
       RUSTUP_URL: "https://win.rustup.rs/x86_64"
-      FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
+      FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/42/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2"
 
     steps:
       - name: Set QEMU Version
@@ -303,14 +303,14 @@ jobs:
         id: fedora-cache
         uses: actions/cache@v3
         with:
-          path: Fedora-Cloud-Base-39-1.5.x86_64.qcow2
-          key: fedora-cloud-39-1.5
+          path: Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2
+          key: Fedora-Cloud-42-1.1
 
       - name: Download Cloud Image
         if: steps.fedora-cache.outputs.cache-hit != 'true'
         run: |
           $ProgressPreference = 'SilentlyContinue'
-          Invoke-WebRequest -Uri ${{ env.FEDORA_CLOUDIMG_URL }} -OutFile Fedora-Cloud-Base-39-1.5.x86_64.qcow2
+          Invoke-WebRequest -Uri ${{ env.FEDORA_CLOUDIMG_URL }} -OutFile Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2
           ls
 
       - name: Build and Test Tiny
