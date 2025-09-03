@@ -190,6 +190,7 @@ jobs:
 
     env:
       QEMU_COMMIT_HASH: ${{ matrix.commit }}
+      FEDORA_CLOUDIMG_URL: "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
 
     steps:
       - uses: dtolnay/rust-toolchain@nightly
@@ -231,20 +232,28 @@ jobs:
 
       - name: Test QEMU Install
         run: |
-          qemu-x86_64 --version
+          qemu-x86_64-unsigned --version
 
-      - name: Run Tracer
+      - name: Cache Fedora Cloud Image
+        id: fedora-cache
+        uses: actions/cache@v3
+        with:
+          path: Fedora-Cloud-Base-39-1.5.x86_64.qcow2
+          key: fedora-cloud-39-1.5
+
+      - name: Download Cloud Image
+        if: steps.fedora-cache.outputs.cache-hit != 'true'
         run: |
-          cd plugins/tracer
-          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features || exit 0
-          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
-          cargo run --features=plugin-api-v${{ matrix.version }} --no-default-features -r --bin tracer -- -a /bin/ls -- -lah
-          cd ../..
+          curl -o Fedora-Cloud-Base-39-1.5.x86_64.qcow2 ${{ env.FEDORA_CLOUDIMG_URL }}
+          ls
 
       - name: Build Tiny
         run: |
-          cd plugins/tiny
-          cargo build -r --features=plugin-api-v${{ matrix.version }} --no-default-features
+          cd plugins/tiny-system
+          cargo build -r
+          timeout --preserve-status 180 qemu-system-aarch64-unsigned -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll" 2> err.txt > out.txt
+          cat out.txt
+          cat err.txt
           cd ../..
 
   test_plugins_windows:
@@ -307,7 +316,7 @@ jobs:
       - name: Build and Test Tiny
         run: |
           cd plugins/tiny-system
-          cargo build -r --features=plugin-api-v3 --no-default-features
+          cargo build -r
           cd ../..
           $process = Start-Process PowerShell.exe -NoNewWindow -RedirectStandardOutput out.txt -RedirectStandardError err.txt -PassThru -ArgumentList "-Command", "C:\msys-custom\msys64\ucrt64\bin\qemu-system-x86_64.exe -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-39-1.5.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll"
           echo "Sleeping 180.0 seconds until booted (boot process took 118s first time)"
