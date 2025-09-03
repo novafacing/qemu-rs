@@ -224,14 +224,13 @@ jobs:
           cd qemu-upstream
           ./configure --enable-plugins
           make -j"$(sysctl -n hw.logicalcpu)"
+          ls build/
           sudo make install
+          ls build/
           cd ..
 
       - name: Test QEMU Install
         run: |
-          ls qemu-upstream
-          ls qemu-upstream/build
-          ls qemu-upstream/build/qemu-x86_64
           qemu-upstream/build/qemu-x86_64 --version
           qemu-x86_64 --version
 
