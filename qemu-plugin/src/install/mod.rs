@@ -1,12 +1,13 @@
 //! Installation for the QEMU plugin
 
+use crate::qemu_plugin_bool_parse;
 use qemu_plugin_sys::{
     QEMU_PLUGIN_VERSION, qemu_info_t, qemu_info_t__bindgen_ty_1,
-    qemu_info_t__bindgen_ty_2__bindgen_ty_1, qemu_plugin_bool_parse, qemu_plugin_id_t,
+    qemu_info_t__bindgen_ty_2__bindgen_ty_1, qemu_plugin_id_t,
 };
 use std::{
     collections::HashMap,
-    ffi::{CStr, CString, c_char, c_int},
+    ffi::{CStr, c_char, c_int},
 };
 
 use crate::{error::Error, plugin::PLUGIN};
@@ -34,14 +35,7 @@ pub enum Value {
 
 impl Value {
     fn new(key: &str, value: &str) -> Result<Self, Error> {
-        let mut maybe_bool = false;
-        if unsafe {
-            qemu_plugin_bool_parse(
-                CString::new(key)?.as_ptr(),
-                CString::new(value)?.as_ptr(),
-                &mut maybe_bool,
-            )
-        } {
+        if let Ok(maybe_bool) = qemu_plugin_bool_parse(key, value) {
             Ok(Self::Bool(maybe_bool))
         } else if let Ok(int) = value.parse::<i64>() {
             Ok(Self::Integer(int))

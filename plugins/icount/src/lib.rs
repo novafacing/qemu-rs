@@ -1,8 +1,6 @@
 use anyhow::Result;
-#[cfg(not(feature = "plugin-api-v1"))]
-use qemu_plugin::VCPUIndex;
 use qemu_plugin::{
-    PluginId, TranslationBlock,
+    PluginId, TranslationBlock, VCPUIndex,
     plugin::{HasCallbacks, Register},
     register,
 };
