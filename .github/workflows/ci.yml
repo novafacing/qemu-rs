@@ -205,7 +205,7 @@ jobs:
 
       - name: Activate virtualenv
         run: |
-          . .qemu/bin/activate
+          . qemu/bin/activate
           echo PATH=$PATH >> $GITHUB_ENV
 
       - name: Cache QEMU
