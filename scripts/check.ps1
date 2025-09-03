@@ -33,6 +33,6 @@ $commonArgs = @(
 foreach ($checkPath in $checkPaths) {
     $manifestPath = Join-Path $checkPath 'Cargo.toml'
 
-    & cargo '+nightly' 'hack' '--manifest-path' $manifestPath @commonArgs 'check'
-    & cargo '+nightly' 'hack' '--manifest-path' $manifestPath @commonArgs 'clippy'
+    & cargo +nightly hack --manifest-path $manifestPath @commonArgs check
+    & cargo +nightly hack --manifest-path $manifestPath @commonArgs clippy
 }

@@ -201,7 +201,9 @@ jobs:
           brew update
           brew install pkg-config glib pixman gettext meson ninja
           brew install python
-          brew install distlib
+          brew install venv
+          python3 -m venv qemu
+          source qemu/bin/activate
 
       - name: Cache QEMU
         id: qemu-cache-macos
