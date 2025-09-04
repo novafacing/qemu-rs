@@ -12,7 +12,11 @@ CHECK_PATHS=(
     "$REPO_ROOT/plugins/tiny"
     "$REPO_ROOT/plugins/tiny-system"
     "$REPO_ROOT/plugins/tracer"
+    "$REPO_ROOT/plugins/tracer-driver"
 )
+
+cargo +nightly check --manifest-path "$REPO_ROOT/plugins/tracer-events/Cargo.toml"
+cargo +nightly clippy --manifest-path "$REPO_ROOT/plugins/tracer-events/Cargo.toml"
 
 FEATURES="plugin-api-v0,plugin-api-v1,plugin-api-v2,plugin-api-v3,plugin-api-v4,plugin-api-v5"
 
@@ -28,11 +32,11 @@ for CHECK_PATH in "${CHECK_PATHS[@]}"; do
         "--at-least-one-of=$FEATURES" \
         "--feature-powerset" \
         "--exclude-no-default-features" \
-        check --lib
+        check
     cargo +nightly hack --manifest-path "$MANIFEST_PATH" \
         "--mutually-exclusive-features=$FEATURES" \
         "--at-least-one-of=$FEATURES" \
         "--feature-powerset" \
         "--exclude-no-default-features" \
-        clippy --lib
+        clippy
 done

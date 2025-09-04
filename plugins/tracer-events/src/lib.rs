@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use typed_builder::TypedBuilder;
 
-#[derive(TypedBuilder, Clone, Debug, Deserialize, Serialize)]
+#[derive(TypedBuilder, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct InstructionEvent {
     pub vaddr: u64,
     pub haddr: u64,
@@ -11,7 +11,7 @@ pub struct InstructionEvent {
     pub data: Vec<u8>,
 }
 
-#[derive(TypedBuilder, Clone, Debug, Deserialize, Serialize)]
+#[derive(TypedBuilder, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct MemoryEvent {
     pub vaddr: u64,
     pub haddr: Option<u64>,
@@ -24,13 +24,13 @@ pub struct MemoryEvent {
     pub big_endian: bool,
 }
 
-#[derive(TypedBuilder, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(TypedBuilder, Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct SyscallSource {
     plugin_id: u64,
     vcpu_index: u32,
 }
 
-#[derive(TypedBuilder, Clone, Debug, Deserialize, Serialize)]
+#[derive(TypedBuilder, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SyscallEvent {
     pub num: i64,
     pub return_value: i64,
@@ -39,7 +39,7 @@ pub struct SyscallEvent {
     pub buffers: HashMap<usize, Vec<u8>>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Registers(pub HashMap<String, Vec<u8>>);
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
