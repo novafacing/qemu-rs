@@ -235,7 +235,7 @@ jobs:
         run: |
           curl -o Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 ${{ env.FEDORA_CLOUDIMG_URL }}
 
-      - name: Build Tiny
+      - name: Build And Test Tiny System
         run: |
           cd plugins/tiny-system
           cargo build -r
