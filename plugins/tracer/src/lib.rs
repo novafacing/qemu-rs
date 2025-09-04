@@ -152,6 +152,7 @@ impl HasCallbacks for Tracer {
                                 tx.as_ref().ok_or_else(|| anyhow!("No tx"))?,
                                 &Event::Instruction {
                                     event: event.clone(),
+                                    registers: Default::default(),
                                 },
                             )
                             .map_err(|e| anyhow!(e))
