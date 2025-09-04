@@ -239,7 +239,7 @@ jobs:
         run: |
           cd plugins/tiny-system
           cargo build -r
-          timeout --preserve-status 180 /opt/homebrew/bin/qemu-system-x86_64 -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll" 2> err.txt > out.txt
+          timeout --preserve-status 180 /opt/homebrew/bin/qemu-system-x86_64 -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/tiny_system.dll 2> err.txt > out.txt
           cat out.txt
           cat err.txt
 

@@ -1,0 +1,181 @@
+//! Memory-related functionality for QEMU plugins
+
+#[cfg(not(feature = "plugin-api-v0"))]
+use crate::Result;
+use crate::sys::{qemu_plugin_hwaddr, qemu_plugin_meminfo_t};
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3"
+)))]
+use crate::sys::{qemu_plugin_mem_value, qemu_plugin_mem_value_type};
+use std::marker::PhantomData;
+
+/// Wrapper structure for a `qemu_plugin_meminfo_t`
+///
+/// # Safety
+///
+/// This structure is safe to use during the invocation of the callback which receives it as an
+/// argument. The structure is always opaque, and therefore may not be accessed directly.
+pub struct MemoryInfo<'a> {
+    memory_info: qemu_plugin_meminfo_t,
+    marker: PhantomData<&'a ()>,
+}
+
+impl<'a> From<qemu_plugin_meminfo_t> for MemoryInfo<'a> {
+    fn from(info: qemu_plugin_meminfo_t) -> Self {
+        Self {
+            memory_info: info,
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<'a> MemoryInfo<'a> {
+    /// Returns the size of the access in base-2, e.g. 0 for byte, 1 for 16-bit, 2 for
+    /// 32-bit, etc.
+    pub fn size_shift(&self) -> usize {
+        (unsafe { crate::sys::qemu_plugin_mem_size_shift(self.memory_info) }) as usize
+    }
+
+    /// Returns whether the access was sign extended
+    pub fn sign_extended(&self) -> bool {
+        unsafe { crate::sys::qemu_plugin_mem_is_sign_extended(self.memory_info) }
+    }
+
+    /// Returns whether the access was big-endian
+    pub fn big_endian(&self) -> bool {
+        unsafe { crate::sys::qemu_plugin_mem_is_big_endian(self.memory_info) }
+    }
+
+    /// Returns whether the access was a store
+    pub fn is_store(&self) -> bool {
+        unsafe { crate::sys::qemu_plugin_mem_is_store(self.memory_info) }
+    }
+
+    /// Return a handle to query details about the physical address backing the virtual address
+    /// in system emulation. In user-mode, this method always returns `None`.
+    pub fn hwaddr(&'a self, vaddr: u64) -> Option<HwAddr<'a>> {
+        let hwaddr = unsafe { crate::sys::qemu_plugin_get_hwaddr(self.memory_info, vaddr) };
+        if hwaddr.is_null() {
+            None
+        } else {
+            Some(HwAddr::from(hwaddr))
+        }
+    }
+
+    /// Return last value loaded/stored
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2",
+        feature = "plugin-api-v3"
+    )))]
+    pub fn value(&self) -> MemValue {
+        let qemu_mem_value = unsafe { crate::sys::qemu_plugin_mem_get_value(self.memory_info) };
+        MemValue::from(qemu_mem_value)
+    }
+}
+
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3"
+)))]
+#[derive(Clone)]
+/// Memory value loaded/stored (in memory callback)
+///
+/// Wrapper structure for a `qemu_plugin_mem_value`
+pub enum MemValue {
+    /// 8-bit value
+    U8(u8),
+    /// 16-bit value
+    U16(u16),
+    /// 32-bit value
+    U32(u32),
+    /// 64-bit value
+    U64(u64),
+    /// 128-bit value
+    U128(u128),
+}
+
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3"
+)))]
+impl From<qemu_plugin_mem_value> for MemValue {
+    fn from(value: qemu_plugin_mem_value) -> Self {
+        unsafe {
+            match value.type_ {
+                qemu_plugin_mem_value_type::QEMU_PLUGIN_MEM_VALUE_U8 => Self::U8(value.data.u8_),
+                qemu_plugin_mem_value_type::QEMU_PLUGIN_MEM_VALUE_U16 => Self::U16(value.data.u16_),
+                qemu_plugin_mem_value_type::QEMU_PLUGIN_MEM_VALUE_U32 => Self::U32(value.data.u32_),
+                qemu_plugin_mem_value_type::QEMU_PLUGIN_MEM_VALUE_U64 => Self::U64(value.data.u64_),
+                qemu_plugin_mem_value_type::QEMU_PLUGIN_MEM_VALUE_U128 => {
+                    let high = value.data.u128_.high as u128;
+                    let low = value.data.u128_.low as u128;
+                    Self::U128(high << 64 | low)
+                }
+            }
+        }
+    }
+}
+
+/// Wrapper structure for a `qemu_plugin_hwaddr *`
+///
+/// # Safety
+///
+/// This structure is safe to use as long as the pointer is valid. The pointer is
+/// always opaque, and therefore may not be dereferenced.
+pub struct HwAddr<'a> {
+    hwaddr: usize,
+    marker: PhantomData<&'a ()>,
+}
+
+impl<'a> From<*mut qemu_plugin_hwaddr> for HwAddr<'a> {
+    fn from(hwaddr: *mut qemu_plugin_hwaddr) -> Self {
+        Self {
+            hwaddr: hwaddr as usize,
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<'a> HwAddr<'a> {
+    /// Returns whether the memory operation is to MMIO. Returns false if the operation is to
+    /// RAM.
+    pub fn is_io(&self) -> bool {
+        unsafe { crate::sys::qemu_plugin_hwaddr_is_io(self.hwaddr as *mut qemu_plugin_hwaddr) }
+    }
+
+    #[cfg(not(feature = "plugin-api-v0"))]
+    /// Returns the physical address for the memory operation
+    pub fn hwaddr(&self) -> u64 {
+        unsafe { crate::sys::qemu_plugin_hwaddr_phys_addr(self.hwaddr as *mut qemu_plugin_hwaddr) }
+    }
+
+    #[cfg(not(feature = "plugin-api-v0"))]
+    /// Returns a string representing the device
+    pub fn device_name(&self) -> Result<Option<String>> {
+        let device_name = unsafe {
+            crate::sys::qemu_plugin_hwaddr_device_name(self.hwaddr as *mut qemu_plugin_hwaddr)
+        };
+
+        if device_name.is_null() {
+            Ok(None)
+        } else {
+            let device_name_string = unsafe {
+                use std::ffi::CStr;
+                CStr::from_ptr(device_name)
+            }
+            .to_str()?
+            .to_string();
+            // NOTE: The string is static, so we do not free it
+            Ok(Some(device_name_string))
+        }
+    }
+}
