@@ -10,6 +10,17 @@ use crate::sys::{qemu_plugin_hwaddr, qemu_plugin_meminfo_t};
     feature = "plugin-api-v3"
 )))]
 use crate::sys::{qemu_plugin_mem_value, qemu_plugin_mem_value_type};
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3",
+    feature = "plugin-api-v4"
+)))]
+use crate::{
+    Error,
+    sys::{GByteArray, qemu_plugin_hwaddr_operation_result},
+};
 use std::marker::PhantomData;
 
 /// Wrapper structure for a `qemu_plugin_meminfo_t`
@@ -177,5 +188,179 @@ impl<'a> HwAddr<'a> {
             // NOTE: The string is static, so we do not free it
             Ok(Some(device_name_string))
         }
+    }
+}
+
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3",
+    feature = "plugin-api-v4"
+)))]
+/// Read memory from a virtual address. The address must be valid and mapped.
+pub fn qemu_plugin_read_memory_vaddr(addr: u64, buf: &mut [u8]) -> Result<()> {
+    let mut buf = GByteArray {
+        data: buf.as_mut_ptr(),
+        len: buf.len() as u32,
+    };
+
+    if unsafe {
+        crate::sys::qemu_plugin_read_memory_vaddr(
+            addr,
+            &mut buf as *mut GByteArray,
+            buf.len as usize,
+        )
+    } {
+        Ok(())
+    } else {
+        Err(Error::VaddrReadError { addr, len: buf.len })
+    }
+}
+
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3",
+    feature = "plugin-api-v4"
+)))]
+/// Write memory to a virtual address. The address must be valid and mapped.
+pub fn qemu_plugin_write_memory_vaddr(addr: u64, buf: &mut [u8]) -> Result<()> {
+    let mut buf = GByteArray {
+        data: buf.as_mut_ptr(),
+        len: buf.len() as u32,
+    };
+
+    if unsafe { crate::sys::qemu_plugin_write_memory_vaddr(addr, &mut buf as *mut GByteArray) } {
+        Ok(())
+    } else {
+        Err(Error::VaddrWriteError { addr, len: buf.len })
+    }
+}
+
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3",
+    feature = "plugin-api-v4"
+)))]
+#[derive(thiserror::Error, Debug, Clone, Copy, PartialEq, Eq)]
+/// The result of a hardware operation
+pub enum HwaddrOperationResult {
+    #[error("Operation completed successfully")]
+    /// Operation completed successfully
+    Ok = 0,
+    #[error("Unspecified error")]
+    /// Unspecified error
+    Error = 1,
+    #[error("Device error")]
+    /// Device error
+    DeviceError = 2,
+    #[error("Access denied")]
+    /// Access denied
+    AccessDenied = 3,
+    /// Invalid address
+    #[error("Invalid address")]
+    InvalidAddress = 4,
+    /// Invalid address space
+    #[error("Invalid address space")]
+    InvalidAddressSpace = 5,
+}
+
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3",
+    feature = "plugin-api-v4"
+)))]
+impl From<qemu_plugin_hwaddr_operation_result> for HwaddrOperationResult {
+    fn from(value: qemu_plugin_hwaddr_operation_result) -> Self {
+        match value {
+            qemu_plugin_hwaddr_operation_result::QEMU_PLUGIN_HWADDR_OPERATION_OK => Self::Ok,
+            qemu_plugin_hwaddr_operation_result::QEMU_PLUGIN_HWADDR_OPERATION_ERROR => Self::Error,
+            qemu_plugin_hwaddr_operation_result::QEMU_PLUGIN_HWADDR_OPERATION_DEVICE_ERROR => Self::DeviceError,
+            qemu_plugin_hwaddr_operation_result::QEMU_PLUGIN_HWADDR_OPERATION_ACCESS_DENIED => Self::AccessDenied,
+            qemu_plugin_hwaddr_operation_result::QEMU_PLUGIN_HWADDR_OPERATION_INVALID_ADDRESS => Self::InvalidAddress,
+            qemu_plugin_hwaddr_operation_result::QEMU_PLUGIN_HWADDR_OPERATION_INVALID_ADDRESS_SPACE => Self::InvalidAddressSpace,
+        }
+    }
+}
+
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3",
+    feature = "plugin-api-v4"
+)))]
+/// Read memory from a hardware address. The address must be valid and mapped.
+pub fn qemu_plugin_read_memory_hwaddr(addr: u64, buf: &mut [u8]) -> Result<()> {
+    let mut buf = GByteArray {
+        data: buf.as_mut_ptr(),
+        len: buf.len() as u32,
+    };
+
+    match unsafe {
+        crate::sys::qemu_plugin_read_memory_hwaddr(
+            addr,
+            &mut buf as *mut GByteArray,
+            buf.len as usize,
+        )
+    }
+    .into()
+    {
+        HwaddrOperationResult::Ok => Ok(()),
+        error => Err(Error::HwaddrReadError {
+            addr,
+            len: buf.len,
+            result: error,
+        }),
+    }
+}
+
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3",
+    feature = "plugin-api-v4"
+)))]
+/// Read memory from a virtual address. The address must be valid and mapped.
+pub fn qemu_plugin_write_memory_hwaddr(addr: u64, buf: &mut [u8]) -> Result<()> {
+    let mut buf = GByteArray {
+        data: buf.as_mut_ptr(),
+        len: buf.len() as u32,
+    };
+
+    match unsafe { crate::sys::qemu_plugin_write_memory_hwaddr(addr, &mut buf as *mut GByteArray) }
+        .into()
+    {
+        HwaddrOperationResult::Ok => Ok(()),
+        error => Err(Error::HwaddrWriteError {
+            addr,
+            len: buf.len,
+            result: error,
+        }),
+    }
+}
+
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3",
+    feature = "plugin-api-v4"
+)))]
+/// Translate a virtual address to a hardware address. If the address is not
+/// mapped, an error is returned.
+pub fn qemu_plugin_translate_vaddr(vaddr: u64) -> Result<u64> {
+    let mut hwaddr: u64 = 0;
+    if unsafe { crate::sys::qemu_plugin_translate_vaddr(vaddr, &mut hwaddr as *mut _) } {
+        Ok(hwaddr)
+    } else {
+        Err(Error::VaddrTranslateError { vaddr })
     }
 }

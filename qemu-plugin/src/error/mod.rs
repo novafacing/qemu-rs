@@ -61,13 +61,88 @@ pub enum Error {
         /// The register name
         name: String,
     },
+    #[error("Error while writing register {name}")]
+    /// Error when writing a register fails
+    RegisterWriteError {
+        /// The register name
+        name: String,
+    },
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2",
+        feature = "plugin-api-v3",
+        feature = "plugin-api-v4"
+    )))]
     #[error("Error while reading {len} bytes from virtual address {addr:#x}")]
     /// Error when reading memory from a virtual address fails
     VaddrReadError {
         /// The address read from
         addr: u64,
         /// The number of bytes read
-        len: usize,
+        len: u32,
+    },
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2",
+        feature = "plugin-api-v3",
+        feature = "plugin-api-v4"
+    )))]
+    #[error("Error while writing {len} bytes to virtual address {addr:#x}")]
+    /// Error when writing memory from a virtual address fails
+    VaddrWriteError {
+        /// The address written to
+        addr: u64,
+        /// The number of bytes written
+        len: u32,
+    },
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2",
+        feature = "plugin-api-v3",
+        feature = "plugin-api-v4"
+    )))]
+    #[error("Error while reading {len} bytes from hardware address {addr:#x}: {result}")]
+    /// Error when reading memory from a hardware address fails
+    HwaddrReadError {
+        /// The address read from
+        addr: u64,
+        /// The number of bytes read
+        len: u32,
+        /// The operation result
+        result: crate::HwaddrOperationResult,
+    },
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2",
+        feature = "plugin-api-v3",
+        feature = "plugin-api-v4"
+    )))]
+    #[error("Error while writing {len} bytes to hardware address {addr:#x}: {result}")]
+    /// Error when writing memory from a hardware address fails
+    HwaddrWriteError {
+        /// The address written to
+        addr: u64,
+        /// The number of bytes written
+        len: u32,
+        /// The operation result
+        result: crate::HwaddrOperationResult,
+    },
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2",
+        feature = "plugin-api-v3",
+        feature = "plugin-api-v4"
+    )))]
+    #[error("Error while translating virtual address {vaddr:#x} to hardware address")]
+    /// Error when translating a virtual address to a hardware address fails
+    VaddrTranslateError {
+        /// The virtual address that failed to translate
+        vaddr: u64,
     },
     #[error(transparent)]
     /// A transparently wrapped `std::str::Utf8Error`

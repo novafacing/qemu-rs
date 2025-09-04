@@ -959,7 +959,10 @@ pub fn qemu_plugin_read_memory_vaddr(addr: u64, len: usize) -> Result<Vec<u8>> {
 
     let data = unsafe { g_byte_array_new() };
     if !unsafe { crate::sys::qemu_plugin_read_memory_vaddr(addr, data, len) } {
-        Err(Error::VaddrReadError { addr, len })
+        Err(Error::VaddrReadError {
+            addr,
+            len: len as u32,
+        })
     } else {
         Ok(unsafe { from_raw_parts((*data).data, (*data).len as usize) }.to_vec())
     }
