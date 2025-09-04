@@ -942,32 +942,6 @@ pub fn qemu_plugin_get_registers<'a>() -> Result<Vec<RegisterDescriptor<'a>>> {
     Ok(registers)
 }
 
-#[cfg(not(any(
-    feature = "plugin-api-v0",
-    feature = "plugin-api-v1",
-    feature = "plugin-api-v2",
-    feature = "plugin-api-v3"
-)))]
-/// Returns the contents of virtual memory
-///
-/// # Arguments
-///
-/// - `addr`: The virtual address to read from
-/// - `len`: The number of bytes to read
-pub fn qemu_plugin_read_memory_vaddr(addr: u64, len: usize) -> Result<Vec<u8>> {
-    use std::slice::from_raw_parts;
-
-    let data = unsafe { g_byte_array_new() };
-    if !unsafe { crate::sys::qemu_plugin_read_memory_vaddr(addr, data, len) } {
-        Err(Error::VaddrReadError {
-            addr,
-            len: len as u32,
-        })
-    } else {
-        Ok(unsafe { from_raw_parts((*data).data, (*data).len as usize) }.to_vec())
-    }
-}
-
 #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 /// Add a value to a `PluginU64` for a given VCPU
 pub fn qemu_plugin_u64_add(entry: PluginU64, vcpu_index: VCPUIndex, added: u64) -> Result<()> {

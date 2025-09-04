@@ -1,15 +1,14 @@
 //! Memory-related functionality for QEMU plugins
 
-#[cfg(not(feature = "plugin-api-v0"))]
-use crate::Result;
-use crate::sys::{qemu_plugin_hwaddr, qemu_plugin_meminfo_t};
 #[cfg(not(any(
     feature = "plugin-api-v0",
     feature = "plugin-api-v1",
     feature = "plugin-api-v2",
-    feature = "plugin-api-v3"
+    feature = "plugin-api-v3",
 )))]
-use crate::sys::{qemu_plugin_mem_value, qemu_plugin_mem_value_type};
+use crate::Error;
+#[cfg(not(feature = "plugin-api-v0"))]
+use crate::Result;
 #[cfg(not(any(
     feature = "plugin-api-v0",
     feature = "plugin-api-v1",
@@ -17,10 +16,15 @@ use crate::sys::{qemu_plugin_mem_value, qemu_plugin_mem_value_type};
     feature = "plugin-api-v3",
     feature = "plugin-api-v4"
 )))]
-use crate::{
-    Error,
-    sys::{GByteArray, qemu_plugin_hwaddr_operation_result},
-};
+use crate::sys::qemu_plugin_hwaddr_operation_result;
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3"
+)))]
+use crate::sys::{GByteArray, qemu_plugin_mem_value, qemu_plugin_mem_value_type};
+use crate::sys::{qemu_plugin_hwaddr, qemu_plugin_meminfo_t};
 use std::marker::PhantomData;
 
 /// Wrapper structure for a `qemu_plugin_meminfo_t`
@@ -195,8 +199,7 @@ impl<'a> HwAddr<'a> {
     feature = "plugin-api-v0",
     feature = "plugin-api-v1",
     feature = "plugin-api-v2",
-    feature = "plugin-api-v3",
-    feature = "plugin-api-v4"
+    feature = "plugin-api-v3"
 )))]
 /// Read memory from a virtual address. The address must be valid and mapped.
 pub fn qemu_plugin_read_memory_vaddr(addr: u64, buf: &mut [u8]) -> Result<()> {

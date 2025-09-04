@@ -277,7 +277,8 @@ impl HasCallbacks for Tracer {
                 if num == write_sysno {
                     let addr = a2;
                     let len = a3 as usize;
-                    let buffer = qemu_plugin_read_memory_vaddr(addr, len)?;
+                    let mut buffer = vec![0; len];
+                    qemu_plugin_read_memory_vaddr(addr, &mut buffer)?;
                     [(1, buffer)].into_iter().collect::<HashMap<_, _>>()
                 } else {
                     Default::default()
@@ -354,7 +355,8 @@ impl HasCallbacks for Tracer {
             {
                 let addr = event.args[1];
                 let len = event.args[2] as usize;
-                let buffer = qemu_plugin_read_memory_vaddr(addr, len)?;
+                let mut buffer = vec![0; len];
+                qemu_plugin_read_memory_vaddr(addr, &mut buffer)?;
                 event.buffers.insert(1, buffer);
             }
         }
