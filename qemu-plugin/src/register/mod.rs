@@ -16,6 +16,15 @@ use std::{
     marker::PhantomData,
 };
 
+#[cfg(not(any(
+    feature = "plugin-api-v0",
+    feature = "plugin-api-v1",
+    feature = "plugin-api-v2",
+    feature = "plugin-api-v3",
+    feature = "plugin-api-v4"
+)))]
+use crate::sys::{GByteArray, qemu_plugin_write_register};
+
 #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 #[derive(Clone)]
 /// Wrapper structure for a `qemu_plugin_register_descriptor`
@@ -110,6 +119,33 @@ impl<'a> RegisterDescriptor<'a> {
         );
 
         Ok(data)
+    }
+
+    #[cfg(not(any(
+        feature = "plugin-api-v0",
+        feature = "plugin-api-v1",
+        feature = "plugin-api-v2",
+        feature = "plugin-api-v3",
+        feature = "plugin-api-v4"
+    )))]
+    /// Read a register value
+    ///
+    /// This must only be called in a callback which has been registered with
+    /// `CallbackFlags::QEMU_PLUGIN_CB_RW_REGS`, otherwise it will fail.
+    pub fn write(&self, data: &mut [u8]) -> Result<()> {
+        let mut buf = GByteArray {
+            data: data.as_mut_ptr(),
+            len: data.len() as u32,
+        };
+        if unsafe { qemu_plugin_write_register(self.handle as *mut _, &mut buf as *mut GByteArray) }
+            == 0
+        {
+            Err(Error::RegisterWriteError {
+                name: self.name.clone(),
+            })
+        } else {
+            Ok(())
+        }
     }
 
     #[cfg(feature = "num-traits")]
