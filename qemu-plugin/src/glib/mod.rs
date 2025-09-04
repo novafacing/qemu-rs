@@ -2,7 +2,6 @@
 
 #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 use crate::sys::{GArray, GByteArray};
-#[cfg(not(windows))]
 use std::ffi::c_void;
 
 #[cfg(not(windows))]
