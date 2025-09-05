@@ -220,7 +220,7 @@ jobs:
       - name: Test QEMU Install
         run: |
           ls qemu-upstream/build
-          qemu-upstream/build/qemu-system-x86_64 --version
+          qemu-upstream/build/qemu-system-x86_64-unsigned --version
 
       - name: Cache Fedora Cloud Image
         id: fedora-cache
