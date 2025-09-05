@@ -92,25 +92,25 @@ jobs:
         run: |
           cat <<EOF > /etc/apt/sources.list.d/ubuntu.sources
           Types: deb
-          URIs: mirror://mirrors.ubuntu.com/mirrors.txt
+          URIs: http://azure.archive.ubuntu.com/ubuntu/
           Suites: noble noble-updates noble-backports
           Components: main universe restricted multiverse
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 
           Types: deb
-          URIs: mirror://mirrors.ubuntu.com/mirrors.txt
+          URIs: http://azure.security.ubuntu.com/ubuntu/
           Suites: noble-security
           Components: main universe restricted multiverse
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 
           Types: deb-src
-          URIs: mirror://mirrors.ubuntu.com/mirrors.txt
+          URIs: http://azure.archive.ubuntu.com/ubuntu/
           Suites: noble noble-updates noble-backports
           Components: main universe restricted multiverse
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 
           Types: deb-src
-          URIs: mirror://mirrors.ubuntu.com/mirrors.txt
+          URIs: http://azure.security.ubuntu.com/ubuntu/
           Suites: noble-security
           Components: main universe restricted multiverse
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
