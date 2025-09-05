@@ -216,12 +216,11 @@ jobs:
           cd qemu-upstream
           ./configure --enable-plugins
           make -C build -j"$(sysctl -n hw.logicalcpu)"
-          sudo make -C build install
 
       - name: Test QEMU Install
         run: |
-          ls /opt/homebrew/bin/
-          /opt/homebrew/bin/qemu-system-x86_64 --version
+          ls qemu-upstream/build
+          qemu-upstream/build/qemu-system-x86_64 --version
 
       - name: Cache Fedora Cloud Image
         id: fedora-cache
@@ -237,10 +236,8 @@ jobs:
 
       - name: Build And Test Tiny System
         run: |
-          cd plugins/tiny-system
-          cargo build -r
-          ls target/release
-          timeout --preserve-status 180 /opt/homebrew/bin/qemu-system-x86_64 -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/libtiny_system.so 2> err.txt > out.txt || exit 0
+          cargo build -r --manifest-path=plugins/tiny-system/Cargo.toml
+          timeout --preserve-status 180 qemu-upstream/build/qemu-system-x86_64 -machine type=q35 -m 2G -nographic -device virtio-net-pci,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22 -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/libtiny_system.so 2> err.txt > out.txt || exit 0
           cat out.txt
           cat err.txt
 
