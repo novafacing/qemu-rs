@@ -239,6 +239,8 @@ jobs:
           timeout --preserve-status 180 qemu-upstream/build/qemu-system-x86_64-unsigned -machine type=q35 -m 2G -nographic -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/libtiny_system.dylib 2> err.txt > out.txt || exit 0
           cat out.txt
           cat err.txt
+          # Make sure out.txt contains "on_vcpu_resume" which shows the plugin was loaded and ran
+          grep "on_vcpu_resume" out.txt
 
   test_plugins_windows:
     name: Build and Test Plugins (Windows)
@@ -306,3 +308,5 @@ jobs:
           Stop-Process -Id $process.id -ErrorAction SilentlyContinue
           cat out.txt
           cat err.txt
+          # Make sure out.txt contains "on_vcpu_resume" which shows the plugin was loaded and ran
+          Select-String -Path out.txt -Pattern "on_vcpu_resume"
