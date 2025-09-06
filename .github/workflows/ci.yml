@@ -156,12 +156,20 @@ jobs:
       - name: Run Tracer
         run: |
           cargo build --manifest-path=plugins/tracer/Cargo.toml -r --features=plugin-api-v${{ matrix.version }} --no-default-features
-          cargo run --manifest-path=plugins/tracer-driver/Cargo.toml -r --features=plugin-api-v${{ matrix.version }} --no-default-features -- -P target/release/libtracer.so -a /bin/ls -- -lah
+          cargo run --manifest-path=plugins/tracer-driver/Cargo.toml -r --features=plugin-api-v${{ matrix.version }} --no-default-features -- -P target/release/libtracer.so -a /bin/ls -- -lah 2> err.txt > out.txt
+          tail -n 100 err.txt
+          tail -n 100 out.txt
+          # Ensure out.txt contains at least one line that starts with '{"Instruction":'
+          grep -E '^\{"Instruction":' out.txt
 
       - name: Build and Test Tiny
         run: |
           cargo build --manifest-path=plugins/tiny/Cargo.toml -r --features=plugin-api-v${{ matrix.version }} --no-default-features
-          qemu-x86_64 -plugin target/release/libtiny.so /bin/ls -lah
+          qemu-x86_64 -plugin target/release/libtiny.so /bin/ls -lah 2> err.txt > out.txt
+          tail -n 100 err.txt
+          tail -n 100 out.txt
+          # Ensure out.txt contains at least one line of the format <hex numebr>: string
+          grep -E '^[0-9a-fA-F]+: .+' out.txt
 
   test_plugins_macos:
     name: Build Plugins API v${{ matrix.version }} (macOS)
@@ -237,8 +245,8 @@ jobs:
         run: |
           cargo build -r --manifest-path=plugins/tiny-system/Cargo.toml
           timeout --preserve-status 180 qemu-upstream/build/qemu-system-x86_64-unsigned -machine type=q35 -m 2G -nographic -drive if=virtio,format=qcow2,file=Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2 -drive if=virtio,format=raw,file=.github/rsrc/seed.img -plugin target/release/libtiny_system.dylib 2> err.txt > out.txt || exit 0
-          cat out.txt
-          cat err.txt
+          tail -n 100 out.txt
+          tail -n 100 err.txt
           # Make sure out.txt contains "on_vcpu_resume" which shows the plugin was loaded and ran
           grep "on_vcpu_resume" out.txt
 
@@ -306,7 +314,7 @@ jobs:
           Start-Sleep -Seconds 180.0
           echo "Stopping process"
           Stop-Process -Id $process.id -ErrorAction SilentlyContinue
-          cat out.txt
-          cat err.txt
+          Get-Content -Tail 100 out.txt
+          Get-Content -Tail 100 err.txt
           # Make sure out.txt contains "on_vcpu_resume" which shows the plugin was loaded and ran
           Select-String -Path out.txt -Pattern "on_vcpu_resume"
