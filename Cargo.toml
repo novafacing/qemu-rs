@@ -1,6 +1,6 @@
 [workspace.package]
 authors = ["Rowan Hart <rowanbhart@gmail.com>"]
-categories = ["virtualization", "emulator", "qemu"]
+categories = ["virtualization"]
 description = "Rust bindings and binary installers for QEMU"
 edition = "2024"
 homepage = "https://github.com/novafacing/qemu-rs"
