@@ -156,7 +156,7 @@ jobs:
         if: steps.qemu-cache.outputs.cache-hit != 'true'
         run: |
           cd qemu-upstream
-          ./configure --enable-plugins
+          ./configure --enable-plugins --target-list="x86_64-linux-user x86_64-softmmu"
           make -C build -j$(nproc)
           make -C build install
 
@@ -236,7 +236,7 @@ jobs:
         if: steps.qemu-cache-macos.outputs.cache-hit != 'true'
         run: |
           cd qemu-upstream
-          ./configure --enable-plugins
+          ./configure --enable-plugins --target-list="x86_64-linux-user x86_64-softmmu"
           make -C build -j"$(sysctl -n hw.logicalcpu)"
 
       - name: Test QEMU Install
