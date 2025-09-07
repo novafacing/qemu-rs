@@ -98,7 +98,7 @@ jobs:
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 
           Types: deb
-          URIs: http://azure.security.ubuntu.com/ubuntu/
+          URIs: http://security.ubuntu.com/ubuntu/
           Suites: noble-security
           Components: main universe restricted multiverse
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
@@ -110,7 +110,7 @@ jobs:
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 
           Types: deb-src
-          URIs: http://azure.security.ubuntu.com/ubuntu/
+          URIs: http://security.ubuntu.com/ubuntu/
           Suites: noble-security
           Components: main universe restricted multiverse
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
