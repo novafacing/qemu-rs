@@ -8,6 +8,7 @@ use crate::sys::qemu_plugin_scoreboard;
 use std::{marker::PhantomData, mem::MaybeUninit};
 
 #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
+#[derive(Debug)]
 /// A wrapper structure for a `qemu_plugin_scoreboard *`. This is a way of having one
 /// entry per VCPU, the count of which is managed automatically by QEMU. Keep in mind
 /// that additional entries *and* existing entries will be allocated and reallocated by

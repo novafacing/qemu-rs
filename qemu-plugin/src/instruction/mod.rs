@@ -16,6 +16,7 @@ use std::{
     marker::PhantomData,
 };
 
+#[derive(Debug, Clone)]
 /// Wrapper structure for a `qemu_plugin_insn *`
 ///
 /// # Safety

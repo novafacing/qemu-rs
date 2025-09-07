@@ -27,6 +27,7 @@ use crate::sys::{GByteArray, qemu_plugin_mem_value, qemu_plugin_mem_value_type};
 use crate::sys::{qemu_plugin_hwaddr, qemu_plugin_meminfo_t};
 use std::marker::PhantomData;
 
+#[derive(Debug, Clone)]
 /// Wrapper structure for a `qemu_plugin_meminfo_t`
 ///
 /// # Safety
@@ -140,6 +141,7 @@ impl From<qemu_plugin_mem_value> for MemValue {
     }
 }
 
+#[derive(Debug, Clone)]
 /// Wrapper structure for a `qemu_plugin_hwaddr *`
 ///
 /// # Safety
