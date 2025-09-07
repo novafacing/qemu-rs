@@ -3,10 +3,7 @@
 use std::sync::{Mutex, OnceLock};
 
 use crate::{
-    PluginId, TranslationBlock, VCPUIndex,
-    install::{Args, Info},
-};
-use crate::{
+    Args, Error, Info, PluginId, Result, TranslationBlock, VCPUIndex,
     qemu_plugin_register_flush_cb, qemu_plugin_register_vcpu_exit_cb,
     qemu_plugin_register_vcpu_idle_cb, qemu_plugin_register_vcpu_init_cb,
     qemu_plugin_register_vcpu_resume_cb, qemu_plugin_register_vcpu_syscall_cb,
@@ -186,7 +183,7 @@ extern "C" fn handle_qemu_plugin_register_syscall_ret_cb(
 /// struct MyPlugin;
 ///
 /// impl qemu_plugin::plugin::HasCallbacks for MyPlugin {
-///     fn on_translation_block_translate(&mut self, _: qemu_plugin::PluginId, tb: qemu_plugin::TranslationBlock) -> anyhow::Result<()> {
+///     fn on_translation_block_translate(&mut self, _: qemu_plugin::PluginId, tb: qemu_plugin::TranslationBlock) -> qemu_plugin::Result<()> {
 ///         println!("Translation block translated");
 ///         Ok(())
 ///     }
@@ -203,7 +200,7 @@ extern "C" fn handle_qemu_plugin_register_syscall_ret_cb(
 ///
 /// impl qemu_plugin::plugin::HasCallbacks for MyPlugin {}
 /// impl qemu_plugin::plugin::Register for MyPlugin {
-///    fn register(&mut self, id: qemu_plugin::PluginId, args: &qemu_plugin::install::Args, info: &qemu_plugin::install::Info) -> Result<(), anyhow::Error> {
+///    fn register(&mut self, id: qemu_plugin::PluginId, args: &qemu_plugin::install::Args, info: &qemu_plugin::install::Info) -> Result<(), qemu_plugin::Error> {
 ///       // Custom registration logic here
 ///       Ok(())
 ///    }
@@ -224,7 +221,7 @@ extern "C" fn handle_qemu_plugin_register_syscall_ret_cb(
 ///        id: qemu_plugin::PluginId,
 ///        args: &qemu_plugin::install::Args,
 ///        info: &qemu_plugin::install::Info,
-///     ) -> Result<(), anyhow::Error> {
+///     ) -> Result<()> {
 ///         // Custom registration logic here, maybe registering a different
 ///         // function as a callback rather than using `HasCallbacks`
 ///         Ok(())
@@ -237,12 +234,7 @@ pub trait Register: HasCallbacks + Send + Sync + 'static {
     /// Called by QEMU when registering the plugin. This method should only be overridden if no
     /// default callbacks are desired, and will require re-implementing handlers which is not
     /// recommended.
-    fn register_default(
-        &mut self,
-        id: PluginId,
-        args: &Args,
-        info: &Info,
-    ) -> Result<(), anyhow::Error> {
+    fn register_default(&mut self, id: PluginId, args: &Args, info: &Info) -> Result<()> {
         qemu_plugin_register_vcpu_init_cb(id, Some(handle_qemu_plugin_register_vcpu_init_cb))?;
 
         qemu_plugin_register_vcpu_exit_cb(id, Some(handle_qemu_plugin_register_vcpu_exit_cb))?;
@@ -273,7 +265,7 @@ pub trait Register: HasCallbacks + Send + Sync + 'static {
     #[allow(unused)]
     /// Called when registering the plugin. User definition of on-registration behavior should
     /// be implemented here.
-    fn register(&mut self, id: PluginId, args: &Args, info: &Info) -> Result<(), anyhow::Error> {
+    fn register(&mut self, id: PluginId, args: &Args, info: &Info) -> Result<()> {
         Ok(())
     }
 }
@@ -287,7 +279,7 @@ pub trait Register: HasCallbacks + Send + Sync + 'static {
 ///
 /// impl qemu_plugin::plugin::HasCallbacks for MyPlugin {
 ///     // This callback will be registered on plugin load
-///     fn on_translation_block_translate(&mut self, _: qemu_plugin::PluginId, tb: qemu_plugin::TranslationBlock) -> anyhow::Result<()> {
+///     fn on_translation_block_translate(&mut self, _: qemu_plugin::PluginId, tb: qemu_plugin::TranslationBlock) -> qemu_plugin::Result<()> {
 ///         println!("Translation block translated");
 ///         Ok(())
 ///     }
@@ -310,14 +302,14 @@ pub trait HasCallbacks: Send + Sync + 'static {
     /// struct MyPlugin;
     ///
     /// impl qemu_plugin::plugin::HasCallbacks for MyPlugin {
-    ///     fn on_vcpu_init(&mut self, id: qemu_plugin::PluginId, vcpu_id: qemu_plugin::VCPUIndex) -> Result<(), anyhow::Error> {
+    ///     fn on_vcpu_init(&mut self, id: qemu_plugin::PluginId, vcpu_id: qemu_plugin::VCPUIndex) -> Result<(), qemu_plugin::Error> {
     ///         println!("vCPU {} initialized for plugin {}", vcpu_id, id);
     ///         Ok(())
     ///     }
     /// }
     /// ```
     /// struct MyPlugin;
-    fn on_vcpu_init(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<(), anyhow::Error> {
+    fn on_vcpu_init(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<()> {
         Ok(())
     }
 
@@ -330,7 +322,7 @@ pub trait HasCallbacks: Send + Sync + 'static {
     /// * `vcpu_id` - The ID of the vCPU
     ///
     /// # Example
-    fn on_vcpu_exit(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<(), anyhow::Error> {
+    fn on_vcpu_exit(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<()> {
         Ok(())
     }
 
@@ -341,7 +333,7 @@ pub trait HasCallbacks: Send + Sync + 'static {
     ///
     /// * `id` - The ID of the plugin
     /// * `vcpu_id` - The ID of the vCPU
-    fn on_vcpu_idle(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<(), anyhow::Error> {
+    fn on_vcpu_idle(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<()> {
         Ok(())
     }
 
@@ -352,7 +344,7 @@ pub trait HasCallbacks: Send + Sync + 'static {
     ///
     /// * `id` - The ID of the plugin
     /// * `vcpu_id` - The ID of the vCPU
-    fn on_vcpu_resume(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<(), anyhow::Error> {
+    fn on_vcpu_resume(&mut self, id: PluginId, vcpu_id: VCPUIndex) -> Result<()> {
         Ok(())
     }
 
@@ -363,11 +355,7 @@ pub trait HasCallbacks: Send + Sync + 'static {
     ///
     /// * `id` - The ID of the plugin
     /// * `tb` - The translation block
-    fn on_translation_block_translate(
-        &mut self,
-        id: PluginId,
-        tb: TranslationBlock,
-    ) -> Result<(), anyhow::Error> {
+    fn on_translation_block_translate(&mut self, id: PluginId, tb: TranslationBlock) -> Result<()> {
         Ok(())
     }
 
@@ -377,7 +365,7 @@ pub trait HasCallbacks: Send + Sync + 'static {
     /// # Arguments
     ///
     /// * `id` - The ID of the plugin
-    fn on_flush(&mut self, id: PluginId) -> Result<(), anyhow::Error> {
+    fn on_flush(&mut self, id: PluginId) -> Result<()> {
         Ok(())
     }
 
@@ -410,7 +398,7 @@ pub trait HasCallbacks: Send + Sync + 'static {
         a6: u64,
         a7: u64,
         a8: u64,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -429,7 +417,7 @@ pub trait HasCallbacks: Send + Sync + 'static {
         vcpu_index: VCPUIndex,
         num: i64,
         ret: i64,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<()> {
         Ok(())
     }
 }
@@ -448,7 +436,7 @@ pub static PLUGIN: OnceLock<Mutex<Box<dyn Plugin>>> = OnceLock::new();
 pub fn register_plugin(plugin: impl Plugin) {
     PLUGIN
         .set(Mutex::new(Box::new(plugin)))
-        .map_err(|_| anyhow::anyhow!("Failed to set plugin"))
+        .map_err(|_| Error::PluginInstanceSetError)
         .expect("Failed to set plugin");
 }
 

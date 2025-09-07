@@ -1,9 +1,4 @@
-use anyhow::Result;
-use qemu_plugin::{
-    PluginId, TranslationBlock,
-    plugin::{HasCallbacks, Register},
-    register,
-};
+use qemu_plugin::{HasCallbacks, PluginId, Register, Result, TranslationBlock, register};
 #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 use qemu_plugin::{RegisterDescriptor, VCPUIndex, qemu_plugin_get_registers};
 

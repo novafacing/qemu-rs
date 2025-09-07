@@ -1,4 +1,4 @@
-use anyhow::{Error, Result, anyhow};
+use anyhow::anyhow;
 #[cfg(not(any(
     feature = "plugin-api-v0",
     feature = "plugin-api-v1",
@@ -7,10 +7,8 @@ use anyhow::{Error, Result, anyhow};
 )))]
 use qemu_plugin::qemu_plugin_read_memory_vaddr;
 use qemu_plugin::{
-    Instruction, MemRW, MemoryInfo, PluginId, TranslationBlock, VCPUIndex,
-    install::{Args, Info, Value},
-    plugin::{HasCallbacks, Register},
-    register,
+    Args, Error, HasCallbacks, Info, Instruction, MemRW, MemoryInfo, PluginId, Register, Result,
+    TranslationBlock, VCPUIndex, Value, register,
 };
 #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
 use qemu_plugin::{RegisterDescriptor, qemu_plugin_get_registers};
@@ -119,11 +117,7 @@ impl Tracer {
 
 impl HasCallbacks for Tracer {
     #[cfg(not(any(feature = "plugin-api-v0", feature = "plugin-api-v1")))]
-    fn on_vcpu_init(
-        &mut self,
-        _id: PluginId,
-        _vcpu_id: VCPUIndex,
-    ) -> std::prelude::v1::Result<(), anyhow::Error> {
+    fn on_vcpu_init(&mut self, _id: PluginId, _vcpu_id: VCPUIndex) -> Result<()> {
         *self
             .registers
             .lock()

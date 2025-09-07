@@ -8,7 +8,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 qemu-plugin = { workspace = true, default-features = false }
-anyhow = "1.0.99"
 
 [features]
 default = ["plugin-api-v5"]

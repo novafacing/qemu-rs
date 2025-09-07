@@ -9,13 +9,10 @@
 //! `Plugin`, and the library takes care of the rest.
 //!
 //! ```rust,ignore
-//! use anyhow::Result;
-//! use ctor::ctor;
 //! use qemu_plugin::{
-//!     plugin::{HasCallbacks, Plugin, Register, init_plugin},
-//!     PluginId, TranslationBlock,
+//!     HasCallbacks, Plugin, Register, register, Error, Result, PluginId,
+//!     TranslationBlock,
 //! };
-//! use std::sync::Mutex;
 //!
 //! struct TinyTrace;
 //!
@@ -33,17 +30,14 @@
 //!             }
 //!
 //!             println!("{:08x}: {}", insn.vaddr(), insn.disas()?);
-//!             Ok::<(), anyhow::Error>(())
+//!             Ok::<(), Error>(())
 //!         })?;
 //!
 //!         Ok(())
 //!     }
 //! }
 //!
-//! #[ctor]
-//! fn init() {
-//!     init_plugin(TinyTrace).expect("Failed to initialize plugin");
-//! }
+//! register!(TinyTrace);
 //! ```
 //!
 //! The above `src/lib.rs` in a Cargo project with the following `Cargo.toml` will compile to
@@ -59,10 +53,7 @@
 //! crate-type = ["cdylib"]
 //!
 //! [dependencies]
-//! qemu-plugin = "9.2.0-v0"
-//! anyhow = "1.0.75"
-//! ffi = "0.1.0"
-//! ctor = "0.2.6"
+//! qemu-plugin = "10.1.0-v1"
 //! ```
 
 #![deny(missing_docs)]
@@ -71,12 +62,6 @@
 #[cfg(windows)]
 mod win_link_hook;
 
-/// Used by the init_plugin! macro, should not be used directly
-pub mod __ctor_export {
-    pub use ctor::*;
-}
-
-use crate::error::{Error, Result};
 use crate::sys::{
     qemu_plugin_cb_flags, qemu_plugin_id_t, qemu_plugin_insn, qemu_plugin_mem_rw,
     qemu_plugin_meminfo_t, qemu_plugin_op, qemu_plugin_simple_cb_t, qemu_plugin_tb,
