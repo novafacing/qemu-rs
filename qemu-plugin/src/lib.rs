@@ -53,7 +53,7 @@
 //! crate-type = ["cdylib"]
 //!
 //! [dependencies]
-//! qemu-plugin = "10.1.0-v1"
+//! qemu-plugin = "10.1.0-v2"
 //! ```
 
 #![deny(missing_docs)]
