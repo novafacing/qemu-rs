@@ -1,8 +1,5 @@
-use anyhow::Result;
 use qemu_plugin::{
-    PluginId, TranslationBlock, VCPUIndex,
-    plugin::{HasCallbacks, Register},
-    register,
+    HasCallbacks, PluginId, Register, Result, TranslationBlock, VCPUIndex, register,
 };
 
 #[derive(Default)]

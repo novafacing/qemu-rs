@@ -143,15 +143,136 @@ pub enum Error {
         /// The virtual address that failed to translate
         vaddr: u64,
     },
+    #[error("Error while setting global plugin instance")]
+    /// Error when setting the global plugin instance fails
+    PluginInstanceSetError,
     #[error(transparent)]
     /// A transparently wrapped `std::str::Utf8Error`
-    Utf8Error(#[from] std::str::Utf8Error),
+    StdUtf8Error(#[from] std::str::Utf8Error),
+    #[error(transparent)]
+    /// A transparently wrapped `core::convert::Infallible`
+    Infallible(#[from] core::convert::Infallible),
+    #[error(transparent)]
+    /// A transparently wrapped `std::alloc::LayoutError`
+    LayoutError(#[from] std::alloc::LayoutError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::array::TryFromSliceError`
+    TryFromSliceError(#[from] std::array::TryFromSliceError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::cell::BorrowError`
+    BorrowError(#[from] std::cell::BorrowError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::cell::BorrowMutError`
+    BorrowMutError(#[from] std::cell::BorrowMutError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::char::CharTryFromError`
+    CharTryFromError(#[from] std::char::CharTryFromError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::char::DecodeUtf16Error`
+    DecodeUtf16Error(#[from] std::char::DecodeUtf16Error),
+    #[error(transparent)]
+    /// A transparently wrapped `std::char::ParseCharError`
+    ParseCharError(#[from] std::char::ParseCharError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::char::TryFromCharError`
+    TryFromCharError(#[from] std::char::TryFromCharError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::collections::TryReserveError`
+    TryReserveError(#[from] std::collections::TryReserveError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::env::JoinPathsError`
+    JoinPathsError(#[from] std::env::JoinPathsError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::env::VarError`
+    VarError(#[from] std::env::VarError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::ffi::FromBytesUntilNulError`
+    FromBytesUntilNulError(#[from] std::ffi::FromBytesUntilNulError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::ffi::FromBytesWithNulError`
+    FromBytesWithNulError(#[from] std::ffi::FromBytesWithNulError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::ffi::FromVecWithNulError`
+    FromVecWithNulError(#[from] std::ffi::FromVecWithNulError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::ffi::IntoStringError`
+    IntoStringError(#[from] std::ffi::IntoStringError),
     #[error(transparent)]
     /// A transparently wrapped `std::ffi::NulError`
     NulError(#[from] std::ffi::NulError),
     #[error(transparent)]
+    /// A transparently wrapped `std::fmt::Error`
+    FmtError(#[from] std::fmt::Error),
+    #[error(transparent)]
+    /// A transparently wrapped `std::fs::TryLockError`
+    FsTryLockError(#[from] std::fs::TryLockError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::io::Error`
+    IoError(#[from] std::io::Error),
+    #[error(transparent)]
+    /// A transparently wrapped `std::net::AddrParseError`
+    AddrParseError(#[from] std::net::AddrParseError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::num::ParseFloatError`
+    ParseFloatError(#[from] std::num::ParseFloatError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::num::ParseIntError`
+    ParseIntError(#[from] std::num::ParseIntError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::num::TryFromIntError`
+    TryFromIntError(#[from] std::num::TryFromIntError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::path::StripPrefixError`
+    StripPrefixError(#[from] std::path::StripPrefixError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::str::ParseBoolError`
+    ParseBoolError(#[from] std::str::ParseBoolError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::string::FromUtf8Error`
+    FromUtf8Error(#[from] std::string::FromUtf8Error),
+    #[error(transparent)]
+    /// A transparently wrapped `std::string::FromUtf16Error`
+    FromUtf16Error(#[from] std::string::FromUtf16Error),
+    #[error(transparent)]
+    /// A transparently wrapped `std::sync::mpsc::RecvError`
+    RecvError(#[from] std::sync::mpsc::RecvError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::sync::mpsc::RecvTimeoutError`
+    RecvTimeoutError(#[from] std::sync::mpsc::RecvTimeoutError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::sync::mpsc::TryRecvError`
+    TryRecvError(#[from] std::sync::mpsc::TryRecvError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::thread::AccessError`
+    AccessError(#[from] std::thread::AccessError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::time::SystemTimeError`
+    SystemTimeError(#[from] std::time::SystemTimeError),
+    #[error(transparent)]
+    /// A transparently wrapped `std::time::TryFromFloatSecsError`
+    TryFromFloatSecsError(#[from] std::time::TryFromFloatSecsError),
+    #[cfg(windows)]
+    #[error(transparent)]
+    /// A transparently wrapped `std::os::windows::io::InvalidHandleError`
+    InvalidHandleError(#[from] std::os::windows::io::InvalidHandleError),
+    #[cfg(windows)]
+    #[error(transparent)]
+    /// A transparently wrapped `std::os::windows::io::NullHandleError`
+    NullHandleError(#[from] std::os::windows::io::NullHandleError),
+    #[cfg(feature = "anyhow")]
+    #[error(transparent)]
     /// A transparently wrapped `anyhow::Error`
-    Other(#[from] anyhow::Error),
+    AnyhowError(#[from] anyhow::Error),
+    #[error(transparent)]
+    /// A transparently wrapped `Box<dyn std::error::Error>`
+    BoxedError(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
+}
+
+#[allow(dead_code)]
+/// Assert that Error is Send + Sync
+fn _assert_error_is_send_sync() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<Error>();
 }
 
 /// Result type for the qemu-plugin crate

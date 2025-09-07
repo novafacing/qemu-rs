@@ -31,7 +31,7 @@ use std::{ffi::c_void, marker::PhantomData};
 ///         &mut self,
 ///         id: qemu_plugin::PluginId,
 ///         tb: qemu_plugin::TranslationBlock,
-///     ) -> anyhow::Result<()> {
+///     ) -> Result<()> {
 ///         for insn in tb.instructions() {
 ///             println!("{:08x}: {}", insn.vaddr(), insn.disas()?);
 ///         }   

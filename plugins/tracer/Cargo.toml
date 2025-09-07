@@ -9,7 +9,9 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 anyhow = "1.0.99"
-qemu-plugin = { workspace = true, default-features = false }
+qemu-plugin = { workspace = true, default-features = false, features = [
+    "anyhow",
+] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_cbor = "0.11.2"
 tokio = { version = "1.47.1", features = ["full"] }

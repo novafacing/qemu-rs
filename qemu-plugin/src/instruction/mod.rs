@@ -35,7 +35,7 @@ use std::{
 ///         &mut self,
 ///         id: qemu_plugin::PluginId,
 ///         tb: qemu_plugin::TranslationBlock,
-///     ) -> anyhow::Result<()> {
+///     ) -> Result<()> {
 ///         for insn in tb.instructions() {
 ///             let vaddr = insn.vaddr();
 ///             let disas = insn.disas()?;
