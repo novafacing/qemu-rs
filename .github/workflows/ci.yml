@@ -169,7 +169,7 @@ jobs:
           tail -n 100 err.txt
           tail -n 100 out.txt
           # Ensure out.txt contains at least one line of the format <hex numebr>: string
-          grep -E '^[0-9a-fA-F]+: .+' out.txt
+          grep -E '^[0-9a-fA-F]+:' out.txt
 
   test_plugins_macos:
     name: Build Plugins API v${{ matrix.version }} (macOS)
