@@ -12,6 +12,7 @@ use crate::{
 use crate::{PluginCondition, PluginU64};
 use std::{ffi::c_void, marker::PhantomData};
 
+#[derive(Debug, Clone)]
 /// Wrapper structure for a `qemu_plugin_tb *`
 ///
 /// # Safety

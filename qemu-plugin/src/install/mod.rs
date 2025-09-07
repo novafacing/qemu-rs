@@ -20,6 +20,7 @@ pub static qemu_plugin_version: c_int = QEMU_PLUGIN_VERSION as c_int;
 /// Code returned from `qemu_plugin_install` to indicate successful installation
 pub const PLUGIN_INSTALL_SUCCESS: c_int = 0;
 
+#[derive(Debug, Clone)]
 /// A value passed to a QEMU plugin via the command line, either as a boolean,
 /// integer, or string. Booleans are parsed using the `qemu_plugin_bool_parse`
 /// function, integers are parsed from strings, and strings are taken as-is.
@@ -45,6 +46,7 @@ impl Value {
     }
 }
 
+#[derive(Debug, Clone)]
 /// Arguments to QEMU as passed to `qemu_plugin_install`. `qemu_plugin_install`
 /// takes a comma-separated list of key=value pairs, such as
 /// `val1=foo,val2=bar`.
@@ -88,6 +90,7 @@ impl Args {
     }
 }
 
+#[derive(Debug, Clone)]
 /// The version specification of the QEMU plugin API
 pub struct Version {
     /// Current plugin API version
@@ -105,6 +108,7 @@ impl From<&qemu_info_t__bindgen_ty_1> for Version {
     }
 }
 
+#[derive(Debug, Clone)]
 /// Information about the virtualized system, present if the emulator is running
 /// in full system emulation mode
 pub struct System {
@@ -123,6 +127,7 @@ impl From<&qemu_info_t__bindgen_ty_2__bindgen_ty_1> for System {
     }
 }
 
+#[derive(Debug, Clone)]
 /// Information about the simulation, including the target name, version, and virtual
 /// system information
 pub struct Info {
