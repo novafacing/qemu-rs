@@ -92,7 +92,7 @@ jobs:
         run: |
           cat <<EOF > /etc/apt/sources.list.d/ubuntu.sources
           Types: deb
-          URIs: http://azure.archive.ubuntu.com/ubuntu/
+          URIs: http://archive.ubuntu.com/ubuntu/
           Suites: noble noble-updates noble-backports
           Components: main universe restricted multiverse
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
@@ -104,7 +104,7 @@ jobs:
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 
           Types: deb-src
-          URIs: http://azure.archive.ubuntu.com/ubuntu/
+          URIs: http://archive.ubuntu.com/ubuntu/
           Suites: noble noble-updates noble-backports
           Components: main universe restricted multiverse
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
@@ -116,12 +116,27 @@ jobs:
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
           EOF
       
-      - name: Install QEMU Build Dependencies
+      - name: Create APT Script
         run: |
+          cat <<EOF > install-apt-packages.sh
           apt -y update
           apt -y install git curl build-essential
           apt -y source qemu
           apt -y build-dep qemu
+          EOF
+          chmod +x install-apt-packages.sh
+
+      - name: Cache apt packages  
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('install-deps.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      - name: Install APT Packages
+        run: |
+          ./install-apt-packages.sh
 
       - name: Cache QEMU
         id: qemu-cache
